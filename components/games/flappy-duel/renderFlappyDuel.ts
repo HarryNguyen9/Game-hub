@@ -65,7 +65,7 @@ function drawPig(ctx: CanvasRenderingContext2D, options: { x: number; y: number;
   const squash = self ? flapPulse * 0.12 : 0;
   ctx.save();
   ctx.translate(x, y);
-  ctx.rotate(Math.max(-0.42, Math.min(0.55, velocity / 17)));
+  ctx.rotate(Math.max(-0.25, Math.min(0.28, velocity / 28)));
   ctx.scale(1 + squash, 1 - squash);
   ctx.globalAlpha = alive ? 1 : 0.72;
 
@@ -76,22 +76,22 @@ function drawPig(ctx: CanvasRenderingContext2D, options: { x: number; y: number;
 
   ctx.fillStyle = "rgba(16,32,51,0.12)";
   ctx.beginPath();
-  ctx.ellipse(0, size * 0.55, size * 0.62, size * 0.16, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, size * 0.58, size * 0.58, size * 0.14, 0, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = earColor;
   ctx.strokeStyle = self ? "#102033" : "#475569";
   ctx.lineWidth = self ? 3 : 2.2;
   ctx.beginPath();
-  ctx.moveTo(-size * 0.45, -size * 0.34);
-  ctx.quadraticCurveTo(-size * 0.62, -size * 0.88, -size * 0.18, -size * 0.62);
-  ctx.quadraticCurveTo(-size * 0.23, -size * 0.42, -size * 0.45, -size * 0.34);
+  ctx.moveTo(-size * 0.42, -size * 0.36);
+  ctx.quadraticCurveTo(-size * 0.55, -size * 0.83, -size * 0.1, -size * 0.64);
+  ctx.quadraticCurveTo(-size * 0.18, -size * 0.42, -size * 0.42, -size * 0.36);
   ctx.fill();
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(size * 0.45, -size * 0.34);
-  ctx.quadraticCurveTo(size * 0.62, -size * 0.88, size * 0.18, -size * 0.62);
-  ctx.quadraticCurveTo(size * 0.23, -size * 0.42, size * 0.45, -size * 0.34);
+  ctx.moveTo(size * 0.42, -size * 0.36);
+  ctx.quadraticCurveTo(size * 0.55, -size * 0.83, size * 0.1, -size * 0.64);
+  ctx.quadraticCurveTo(size * 0.18, -size * 0.42, size * 0.42, -size * 0.36);
   ctx.fill();
   ctx.stroke();
 
@@ -99,31 +99,31 @@ function drawPig(ctx: CanvasRenderingContext2D, options: { x: number; y: number;
   ctx.strokeStyle = self ? "#102033" : "#475569";
   ctx.lineWidth = self ? 3.5 : 2.5;
   ctx.beginPath();
-  ctx.ellipse(0, 0, size * 0.64, size * 0.6, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 0, size * 0.62, size * 0.62, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
   ctx.fillStyle = "rgba(255,255,255,0.38)";
   ctx.beginPath();
-  ctx.ellipse(-size * 0.22, -size * 0.18, size * 0.18, size * 0.12, -0.45, 0, Math.PI * 2);
+  ctx.ellipse(-size * 0.22, -size * 0.2, size * 0.16, size * 0.1, -0.45, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = "#fff";
   ctx.beginPath();
-  ctx.arc(-size * 0.22, -size * 0.12, size * 0.13, 0, Math.PI * 2);
-  ctx.arc(size * 0.22, -size * 0.12, size * 0.13, 0, Math.PI * 2);
+  ctx.arc(-size * 0.2, -size * 0.12, size * 0.12, 0, Math.PI * 2);
+  ctx.arc(size * 0.2, -size * 0.12, size * 0.12, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = "#102033";
   ctx.beginPath();
-  ctx.arc(-size * 0.18, -size * 0.11, size * 0.055, 0, Math.PI * 2);
-  ctx.arc(size * 0.18, -size * 0.11, size * 0.055, 0, Math.PI * 2);
+  ctx.arc(-size * 0.2, -size * 0.11, size * 0.05, 0, Math.PI * 2);
+  ctx.arc(size * 0.2, -size * 0.11, size * 0.05, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = snoutColor;
   ctx.strokeStyle = self ? "#102033" : "#64748b";
   ctx.lineWidth = self ? 2.8 : 2;
   ctx.beginPath();
-  ctx.ellipse(0, size * 0.12, size * 0.29, size * 0.21, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, size * 0.13, size * 0.3, size * 0.22, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
@@ -137,13 +137,13 @@ function drawPig(ctx: CanvasRenderingContext2D, options: { x: number; y: number;
   ctx.lineWidth = Math.max(2, size * 0.08);
   ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.moveTo(-size * 0.58, size * 0.04);
-  ctx.lineTo(-size * 0.82, -size * 0.06 - flapPulse * size * 0.16);
+  ctx.moveTo(-size * 0.54, size * 0.2);
+  ctx.lineTo(-size * 0.76, size * 0.08 - flapPulse * size * 0.14);
   ctx.stroke();
 
   ctx.beginPath();
-  ctx.moveTo(size * 0.56, size * 0.16);
-  ctx.bezierCurveTo(size * 0.8, size * 0.02, size * 0.83, size * 0.32, size * 0.62, size * 0.3);
+  ctx.moveTo(size * 0.54, size * 0.23);
+  ctx.bezierCurveTo(size * 0.76, size * 0.12, size * 0.78, size * 0.38, size * 0.58, size * 0.34);
   ctx.stroke();
 
   ctx.fillStyle = "#ff7aa0";

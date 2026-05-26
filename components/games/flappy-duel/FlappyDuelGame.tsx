@@ -112,34 +112,37 @@ export function FlappyDuelGame({
 
   return (
     <div className={expanded ? "fixed inset-0 z-50 flex h-dvh flex-col gap-3 overflow-y-auto bg-white p-3" : "relative mt-4 grid gap-4"}>
-      <Button
-        type="button"
-        variant="secondary"
-        className="absolute right-4 top-4 z-20 grid size-11 shrink-0 place-items-center rounded-2xl bg-white/92 p-0 shadow-sm"
-        onClick={onToggleExpanded}
-        aria-label={expanded ? "Exit full screen" : "Open full screen"}
-        title={expanded ? "Small" : "Full"}
-      >
-        {expanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-      </Button>
-      <div className="flex flex-col gap-3 rounded-3xl bg-slate-50 px-4 py-3 pr-20 sm:flex-row sm:items-center sm:justify-between">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-3xl bg-slate-50 px-4 py-3">
         <span className={`w-fit rounded-full px-3 py-1 text-xs font-black ${connected ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
           {connectionLabel}
         </span>
-        <div className="flex min-w-0 flex-wrap items-center gap-2 sm:justify-end">
-          <div className="flex min-w-0 flex-1 flex-wrap gap-2 sm:flex-none sm:justify-end">
+        <div className="min-w-0 overflow-hidden">
+          <div className="flex min-w-0 items-center gap-2 overflow-x-auto py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {leaderboard.map((player) => (
-              <span key={player.userId} className={`flex max-w-[11rem] items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-black shadow-sm ${player.alive ? "text-slate-700" : "text-slate-400"}`}>
-                <span className="grid size-5 shrink-0 place-items-center rounded-full bg-rose-100 text-[10px] text-rose-600">
-                  {player.displayName.charAt(0).toUpperCase()}
-                </span>
-                <span className="truncate">{player.displayName}</span>
-                <span>{player.score}</span>
+              <span
+                key={player.userId}
+                className={`flex min-w-0 max-w-[9.5rem] shrink-0 items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-black shadow-sm sm:max-w-[11rem] ${
+                  player.alive ? "text-slate-700" : "text-slate-400"
+                }`}
+              >
+                <span className="grid size-5 shrink-0 place-items-center rounded-full bg-rose-100 text-[10px] text-rose-600">{player.displayName.charAt(0).toUpperCase()}</span>
+                <span className="min-w-0 truncate">{player.displayName}</span>
+                <span className="shrink-0">{player.score}</span>
                 <span className={`size-2 shrink-0 rounded-full ${player.alive ? "bg-emerald-400" : "bg-slate-300"}`} />
               </span>
             ))}
           </div>
         </div>
+        <Button
+          type="button"
+          variant="secondary"
+          className="grid size-11 shrink-0 place-items-center rounded-2xl bg-white/92 p-0 shadow-sm"
+          onClick={onToggleExpanded}
+          aria-label={expanded ? "Exit full screen" : "Open full screen"}
+          title={expanded ? "Small" : "Full"}
+        >
+          {expanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+        </Button>
       </div>
       {error && <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</p>}
       <div
