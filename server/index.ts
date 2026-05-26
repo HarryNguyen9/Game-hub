@@ -56,5 +56,5 @@ io = createSocketServer(httpServer);
 
 httpServer.listen(port, hostname, () => {
   console.log(`Socket.IO server ready at http://${hostname}:${port}`);
-  console.log("Socket features: room-lifecycle, flappy-duel-runtime, fleet-duel-runtime, game-sync-ack");
+  console.log("Socket features: room-lifecycle, flappy-rush-runtime, fleet-duel-runtime, game-sync-ack");
 });

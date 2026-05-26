@@ -9,7 +9,7 @@ import { GAME_CATALOG } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
-function FlappyDuelPreview() {
+function FlappyRushPreview() {
   return (
     <div className="relative mb-4 h-28 overflow-hidden rounded-[1.5rem] bg-gradient-to-b from-sky-200 via-emerald-50 to-amber-100 shadow-inner">
       <div className="absolute left-7 top-5 h-4 w-16 rounded-full bg-white/55" />
@@ -43,8 +43,8 @@ function FlappyDuelPreview() {
           </div>
         </div>
       </div>
-      <div className="absolute left-5 top-4 rounded-full bg-white/70 px-2 py-1 text-[10px] font-black uppercase text-rose-500">Live duel</div>
-      <div className="absolute right-5 top-4 rounded-full bg-white/70 px-2 py-1 text-[10px] font-black uppercase text-sky-700">4 Players</div>
+      <div className="absolute left-5 top-4 rounded-full bg-white/70 px-2 py-1 text-[10px] font-black uppercase text-sky-700">1-4 Players</div>
+      <div className="absolute right-5 top-4 rounded-full bg-white/70 px-2 py-1 text-[10px] font-black uppercase text-rose-500">Realtime</div>
     </div>
   );
 }
@@ -53,8 +53,8 @@ function FleetDuelPreview() {
   return (
     <div className="relative mb-4 h-28 overflow-hidden rounded-[1.5rem] bg-gradient-to-b from-cyan-200 via-sky-100 to-blue-200 shadow-inner">
       <div className="absolute inset-x-0 bottom-0 h-12 bg-cyan-300/50" />
-      <div className="absolute left-5 top-5 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-cyan-700">2 Players</div>
-      <div className="absolute right-5 top-5 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-blue-700">Turn-based</div>
+      <div className="absolute left-5 top-4 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-cyan-700">2 Players</div>
+      <div className="absolute right-5 top-4 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-blue-700">Turn-based</div>
       <div className="absolute left-8 top-16 h-1.5 w-20 rounded-full bg-white/60" />
       <div className="absolute right-8 top-20 h-1.5 w-24 rounded-full bg-white/50" />
       <div className="absolute left-[24%] top-[48%]">
@@ -109,7 +109,7 @@ export default async function DashboardPage() {
       <section className="grid gap-4 md:grid-cols-4">
         {GAME_CATALOG.map((game) => (
           <article key={game.id} className="rounded-[1.75rem] bg-white/86 p-4 shadow-sm ring-1 ring-white">
-            {game.id === "flappy-duel" ? <FlappyDuelPreview /> : <FleetDuelPreview />}
+            {game.id === "flappy-rush" ? <FlappyRushPreview /> : <FleetDuelPreview />}
             <h2 className="font-black">{game.name}</h2>
             <p className="mt-1 text-sm font-medium text-slate-500">{game.description}</p>
             <p className="mt-2 text-xs font-black text-slate-400">{game.minPlayers}-{game.maxPlayers} players</p>

@@ -86,7 +86,7 @@ add column if not exists max_players integer not null default 12;
 
 update public.rooms
 set min_players = case when game_key = 'fleet-duel' then 2 else coalesce(min_players, 1) end,
-    max_players = case when game_key = 'fleet-duel' then 2 when game_key = 'flappy-duel' then 4 else coalesce(max_players, 12) end;
+    max_players = case when game_key = 'fleet-duel' then 2 when game_key = 'flappy-rush' then 4 else coalesce(max_players, 12) end;
 
 do $$
 begin
@@ -102,6 +102,8 @@ begin
 end $$;
 
 alter table public.rooms alter column game_key drop not null;
+
+update public.rooms set game_key = 'flappy-rush' where game_key = 'flappy-duel';
 
 do $$
 declare
@@ -181,6 +183,8 @@ create table if not exists public.game_sessions (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+update public.game_sessions set game_key = 'flappy-rush' where game_key = 'flappy-duel';
 
 create index if not exists idx_app_users_display_name on public.app_users using gin (to_tsvector('simple', display_name));
 create index if not exists idx_rooms_status on public.rooms(status);

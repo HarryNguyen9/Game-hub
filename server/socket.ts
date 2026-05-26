@@ -2,7 +2,7 @@ import { Server } from "socket.io";
 import type { Server as HttpServer } from "node:http";
 import { registerRoomHandlers } from "./room-handlers";
 import { authenticateSocket } from "./auth";
-import { registerFlappyDuelHandlers } from "./socket/flappy-duel-handlers";
+import { registerFlappyRushHandlers } from "./socket/flappy-rush-handlers";
 import { registerFleetDuelHandlers } from "./socket/fleet-duel-handlers";
 import type { AuthedSocket } from "./auth";
 
@@ -63,7 +63,7 @@ export function createSocketServer(httpServer: HttpServer) {
     const user = (socket as AuthedSocket).data.user;
     if (user?.userId) socket.join(`user:${user.userId}`);
     registerRoomHandlers(io, socket);
-    registerFlappyDuelHandlers(io, socket);
+    registerFlappyRushHandlers(io, socket);
     registerFleetDuelHandlers(io, socket);
   });
 

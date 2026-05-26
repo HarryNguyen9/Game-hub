@@ -226,10 +226,10 @@ The Socket.IO server runs as a separate long-running Node process in `server/ind
 
 Game metadata lives in `lib/constants.ts`. Each game declares `minPlayers` and `maxPlayers`; the room stores those values when the host chooses a game. Server routes and Socket.IO start/join handlers validate the stored limits, so clients cannot force a larger room size.
 
-- `Flappy Duel`: 1-4 active players.
+- `Flappy Rush`: 1-4 active players.
 - `Fleet Duel`: exactly 2 active players.
 
-## Testing Flappy Duel Locally
+## Testing Flappy Rush Locally
 
 Run the web app and socket server:
 
@@ -239,21 +239,21 @@ npm run dev
 
 Open two or three browser sessions with different accounts:
 
-1. Account A creates a room, chooses `Flappy Duel`, and shares the 4-digit room code.
+1. Account A creates a room, chooses `Flappy Rush`, and shares the 4-digit room code.
 2. Account B joins by code, clicks Ready, then A clicks Start Game.
 3. Both players should see a `3..2..1` countdown and a canvas game.
 4. Tap on mobile, click the canvas, or press Space on desktop to flap. Space does not scroll the page during play. The client only sends `game:input` with `input: "flap"`; physics, pipes, score, death, and game end are calculated on the Socket.IO server.
 5. Open Account C after the game starts. C should enter `waiting_next_round` and see the waiting message instead of controlling the current game.
 6. When all active birds crash, the leaderboard appears. The host can click Back to Lobby, which moves all members back to the lobby and resets player ready state.
 
-The Flappy Duel client renders canvas frames with `requestAnimationFrame` and interpolates between server snapshots for smoother motion. A tiny local visual-only flap prediction makes your own bird feel responsive, but official position, score, death, pipes, and winner always come from the server snapshot.
+The Flappy Rush client renders canvas frames with `requestAnimationFrame` and interpolates between server snapshots for smoother motion. A tiny local visual-only flap prediction makes your own pig feel responsive, but official position, score, death, pipes, and winner always come from the server snapshot.
 
 ## Realtime Stability Checklist
 
 Use two or three browser sessions with different accounts:
 
 - Refresh during lobby: user reconnects to the same room and sees current members/ready state.
-- Refresh during playing: active players receive the current Flappy Duel snapshot again.
+- Refresh during playing: active players receive the current Flappy Rush snapshot again.
 - Player disconnect while playing: the game loop continues and reconnect restores spectating/playing state.
 - Host refresh while playing: room does not close during a quick reconnect.
 - Host leave while playing: room closes, members are redirected, and the Flappy loop is cleaned up.
@@ -264,7 +264,7 @@ Use two or three browser sessions with different accounts:
 - Invalid input after death: server ignores/rejects input; client never sends y, velocity, or score.
 - Token refresh/reconnect: reload the room after login and verify a new socket token connects.
 
-## Flappy Duel Gameplay QA
+## Flappy Rush Gameplay QA
 
 - Mobile browser: tap feels immediate, page does not scroll/select text while tapping the canvas.
 - Desktop browser: Space and click flap once per press/click; holding Space does not spam key-repeat inputs.

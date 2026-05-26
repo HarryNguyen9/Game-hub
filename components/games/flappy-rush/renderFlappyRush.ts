@@ -1,4 +1,4 @@
-import type { FlappySnapshot } from "@/lib/games/flappy-duel/types";
+import type { FlappySnapshot } from "@/lib/games/flappy-rush/types";
 
 type RenderOptions = {
   currentUserId: string;
@@ -154,7 +154,7 @@ function drawPig(ctx: CanvasRenderingContext2D, options: { x: number; y: number;
   ctx.restore();
 }
 
-export function renderFlappyDuel(ctx: CanvasRenderingContext2D, options: RenderOptions) {
+export function renderFlappyRush(ctx: CanvasRenderingContext2D, options: RenderOptions) {
   const { previousSnapshot, currentSnapshot: snapshot, currentUserId, interpolation, predictedSelfY, lastFlapAt, lastCrashAt } = options;
   const { worldWidth, worldHeight, birdSize, pipeWidth, pipeGap } = snapshot.config;
   const now = performance.now();

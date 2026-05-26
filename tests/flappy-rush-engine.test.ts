@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { applyFlap, createFlappyState, stepFlappyState } from "@/lib/games/flappy-duel/engine";
-import { FLAPPY_CONFIG } from "@/lib/games/flappy-duel/config";
+import { applyFlap, createFlappyState, stepFlappyState } from "@/lib/games/flappy-rush/engine";
+import { FLAPPY_CONFIG } from "@/lib/games/flappy-rush/config";
 
-describe("flappy duel engine", () => {
+describe("flappy rush engine", () => {
   it("applies only flap input to server-owned velocity", () => {
     const state = createFlappyState("session-1", "room-1", [{ userId: "u1", username: "a", displayName: "A" }]);
     state.status = "playing";

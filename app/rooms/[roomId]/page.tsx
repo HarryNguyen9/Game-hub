@@ -4,7 +4,7 @@ import { RoomClient } from "@/components/room-client";
 import { getCurrentUserWithProfile } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/server";
 import { GAME_CATALOG } from "@/lib/constants";
-import type { FlappySnapshot } from "@/lib/games/flappy-duel/types";
+import type { FlappySnapshot } from "@/lib/games/flappy-rush/types";
 import type { FleetSnapshot, FleetState } from "@/lib/games/fleet-duel/types";
 import { serializeFleetStateForUser } from "@/lib/games/fleet-duel/serializer";
 
@@ -72,7 +72,7 @@ export default async function RoomPage({ params }: PageProps) {
       .limit(1)
       .maybeSingle();
 
-    if (session?.game_key === "flappy-duel") {
+    if (session?.game_key === "flappy-rush") {
       const snapshot = (session.state as FlappySnapshot | null) ?? null;
       if (snapshot?.roomId === roomId && snapshot.status === "ended") initialGameSnapshot = snapshot;
     }
@@ -83,7 +83,7 @@ export default async function RoomPage({ params }: PageProps) {
       }
     }
   }
-  const effectiveGameKey = room.game_key || (initialGameSnapshot ? "flappy-duel" : initialFleetSnapshot ? "fleet-duel" : null);
+  const effectiveGameKey = room.game_key || (initialGameSnapshot ? "flappy-rush" : initialFleetSnapshot ? "fleet-duel" : null);
   const game = GAME_CATALOG.find((item) => item.id === effectiveGameKey);
 
   return (

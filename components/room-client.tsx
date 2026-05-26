@@ -6,10 +6,10 @@ import { io, type Socket } from "socket.io-client";
 import { LogOut, Maximize2, Minimize2, Play, RotateCcw } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { FlappyDuelGame } from "@/components/games/flappy-duel/FlappyDuelGame";
+import { FlappyRushGame } from "@/components/games/flappy-rush/FlappyRushGame";
 import { FleetDuelGame } from "@/components/games/fleet-duel/FleetDuelGame";
 import { GAME_CATALOG } from "@/lib/constants";
-import type { FlappySnapshot } from "@/lib/games/flappy-duel/types";
+import type { FlappySnapshot } from "@/lib/games/flappy-rush/types";
 import type { FleetSnapshot } from "@/lib/games/fleet-duel/types";
 
 type RoomStatus = "waiting" | "playing" | "ended" | "closed";
@@ -197,9 +197,9 @@ export function RoomClient({
   const canStart = isHost && status === "waiting" && Boolean(gameKey) && hasEnoughPlayers && lobbyMembers.length <= maxPlayers && unreadyPlayers.length === 0;
   const selectedGame = GAME_CATALOG.find((game) => game.id === gameKey);
   const isLateJoiner = currentMember?.participationStatus === "waiting_next_round";
-  const isFlappyActivePlayer = (status === "playing" || status === "ended") && gameKey === "flappy-duel" && currentMember?.participationStatus === "active_game";
+  const isFlappyActivePlayer = (status === "playing" || status === "ended") && gameKey === "flappy-rush" && currentMember?.participationStatus === "active_game";
   const isFleetActivePlayer = (status === "playing" || status === "ended") && gameKey === "fleet-duel" && currentMember?.participationStatus === "active_game";
-  const isFlappyLobby = status === "waiting" && gameKey === "flappy-duel";
+  const isFlappyLobby = status === "waiting" && gameKey === "flappy-rush";
   const startButton = isHost && status === "waiting" ? (
     <Button disabled={!canStart || Boolean(pendingAction)} onClick={() => emitAction("start", "room:start_game")}>
       <Play size={18} /> {pendingAction === "start" ? "Starting..." : "Start Game"}
@@ -265,7 +265,7 @@ export function RoomClient({
           )}
         </div>
         {isFlappyActivePlayer ? (
-          <FlappyDuelGame
+          <FlappyRushGame
             roomId={roomId}
             currentUserId={currentUserId}
             isHost={isHost}
@@ -299,7 +299,7 @@ export function RoomClient({
             <div className="flex flex-col gap-3 rounded-3xl bg-slate-50 px-4 py-3 pr-20 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-black text-slate-500">Game stage</p>
-                <p className="text-lg font-black text-slate-900">Flappy Duel</p>
+                <p className="text-lg font-black text-slate-900">Flappy Rush</p>
               </div>
             </div>
             <div className="relative grid min-h-[22rem] flex-1 place-items-center overflow-hidden rounded-[1.5rem] bg-sky-100 p-5 text-center shadow-inner max-[700px]:landscape:min-h-[16rem]">

@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import type { PointerEvent } from "react";
 import { Maximize2, Minimize2, RotateCcw, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { FlappySnapshot } from "@/lib/games/flappy-duel/types";
-import { renderFlappyDuel } from "./renderFlappyDuel";
-import { useFlappyDuelSocket } from "./useFlappyDuelSocket";
+import type { FlappySnapshot } from "@/lib/games/flappy-rush/types";
+import { renderFlappyRush } from "./renderFlappyRush";
+import { useFlappyRushSocket } from "./useFlappyRushSocket";
 
-export function FlappyDuelGame({
+export function FlappyRushGame({
   roomId,
   currentUserId,
   isHost,
@@ -35,7 +35,7 @@ export function FlappyDuelGame({
   const lastCrashAtRef = useRef<number | null>(null);
   const lastPointerFlapAtRef = useRef(0);
   const roomEnded = roomStatus === "ended";
-  const { snapshot, countdown, error, connected, flap, backToLobby, lastFlapAtRef } = useFlappyDuelSocket(roomId, currentUserId, onGameEnd, initialSnapshot, roomEnded);
+  const { snapshot, countdown, error, connected, flap, backToLobby, lastFlapAtRef } = useFlappyRushSocket(roomId, currentUserId, onGameEnd, initialSnapshot, roomEnded);
   const [returning, setReturning] = useState(false);
   const currentPlayer = snapshot?.players[currentUserId];
   const ended = snapshot?.status === "ended";
@@ -70,7 +70,7 @@ export function FlappyDuelGame({
             const target = self.alive && snapshotValue.status === "playing" ? predictedSelfYRef.current + self.velocity * 0.18 : self.y;
             predictedSelfYRef.current += (target - predictedSelfYRef.current) * 0.18;
           }
-          renderFlappyDuel(context, {
+          renderFlappyRush(context, {
             previousSnapshot: previousSnapshotRef.current,
             currentSnapshot: snapshotValue,
             currentUserId,
@@ -156,7 +156,7 @@ export function FlappyDuelGame({
           ref={canvasRef}
           onPointerDown={handlePointerDown}
           className={expanded ? "block h-auto max-h-full w-full select-none touch-none object-contain" : "absolute inset-0 block h-full w-full select-none touch-none object-contain"}
-          aria-label="Flappy Duel game canvas"
+          aria-label="Flappy Rush game canvas"
         />
         {countdown && (
           <div className="absolute inset-0 grid place-items-center bg-white/35">

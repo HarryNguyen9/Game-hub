@@ -1,9 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Server, Socket } from "socket.io";
-import { FLAPPY_CONFIG } from "../../lib/games/flappy-duel/config";
-import { applyFlap, createFlappyState, stepFlappyState } from "../../lib/games/flappy-duel/engine";
-import { serializeFlappyState } from "../../lib/games/flappy-duel/serializer";
-import type { FlappyState } from "../../lib/games/flappy-duel/types";
+import { FLAPPY_CONFIG } from "../../lib/games/flappy-rush/config";
+import { applyFlap, createFlappyState, stepFlappyState } from "../../lib/games/flappy-rush/engine";
+import { serializeFlappyState } from "../../lib/games/flappy-rush/serializer";
+import type { FlappyState } from "../../lib/games/flappy-rush/types";
 import type { AuthedSocket } from "../auth";
 
 type Runtime = {
@@ -46,7 +46,7 @@ function clearRuntime(roomId: string) {
   for (const key of lastInputAt.keys()) {
     if (key.startsWith(`${roomId}:`)) lastInputAt.delete(key);
   }
-  console.log("[flappy-duel] Runtime cleaned up", { roomId });
+  console.log("[flappy-rush] Runtime cleaned up", { roomId });
 }
 
 async function finishGame(io: Server, runtime: Runtime) {
@@ -67,19 +67,19 @@ async function finishGame(io: Server, runtime: Runtime) {
     .eq("id", state.sessionId);
 
   io.to(roomChannel(state.roomId)).emit("game:end", snapshot);
-  console.log("[flappy-duel] Game ended", { roomId: state.roomId, sessionId: state.sessionId });
+  console.log("[flappy-rush] Game ended", { roomId: state.roomId, sessionId: state.sessionId });
 }
 
 function emitSnapshot(io: Server, state: FlappyState) {
   io.to(roomChannel(state.roomId)).emit("game:snapshot", serializeFlappyState(state));
 }
 
-function currentFlappyDuelSnapshot(roomId: string): SyncResponse {
+function currentFlappyRushSnapshot(roomId: string): SyncResponse {
   const runtime = runtimes.get(roomId);
   if (!runtime) {
     return {
       ok: false,
-      error: "Flappy Duel runtime is not running on this socket server. Stop every old socket process, start npm run socket:dev again, then create/start a fresh room."
+      error: "Flappy Rush runtime is not running on this socket server. Stop every old socket process, start npm run socket:dev again, then create/start a fresh room."
     };
   }
 
@@ -92,8 +92,8 @@ function currentFlappyDuelSnapshot(roomId: string): SyncResponse {
   return { ok: true, snapshot, countdown };
 }
 
-export function emitCurrentFlappyDuelSnapshot(socket: Socket, roomId: string) {
-  const response = currentFlappyDuelSnapshot(roomId);
+export function emitCurrentFlappyRushSnapshot(socket: Socket, roomId: string) {
+  const response = currentFlappyRushSnapshot(roomId);
   if (!response.ok) {
     socket.emit("game:error", { message: response.error });
     return false;
@@ -106,7 +106,7 @@ export function emitCurrentFlappyDuelSnapshot(socket: Socket, roomId: string) {
   return true;
 }
 
-export function hasFlappyDuelRuntime(roomId: string) {
+export function hasFlappyRushRuntime(roomId: string) {
   return runtimes.has(roomId);
 }
 
@@ -133,9 +133,9 @@ function startLoop(io: Server, runtime: Runtime) {
   runtime.snapshotTimer = setInterval(() => emitSnapshot(io, runtime.state), 1000 / FLAPPY_CONFIG.snapshotRate);
 }
 
-export async function startFlappyDuel(io: Server, roomId: string, sessionId: string, activePlayers: ActivePlayerRow[]) {
+export async function startFlappyRush(io: Server, roomId: string, sessionId: string, activePlayers: ActivePlayerRow[]) {
   if (runtimes.has(roomId)) {
-    throw new Error("Flappy Duel runtime is already running for this room.");
+    throw new Error("Flappy Rush runtime is already running for this room.");
   }
 
   const players = activePlayers.map((member) => {
@@ -148,7 +148,7 @@ export async function startFlappyDuel(io: Server, roomId: string, sessionId: str
   });
 
   if (players.length === 0) {
-    throw new Error("Cannot start Flappy Duel without active lobby players.");
+    throw new Error("Cannot start Flappy Rush without active lobby players.");
   }
 
   const runtime: Runtime = {
@@ -158,7 +158,7 @@ export async function startFlappyDuel(io: Server, roomId: string, sessionId: str
     countdownTimer: null
   };
   runtimes.set(roomId, runtime);
-  console.log("[flappy-duel] Runtime started", { roomId, sessionId, players: players.length });
+  console.log("[flappy-rush] Runtime started", { roomId, sessionId, players: players.length });
 
   let remaining = FLAPPY_CONFIG.countdownSeconds;
   emitSnapshot(io, runtime.state);
@@ -176,7 +176,7 @@ export async function startFlappyDuel(io: Server, roomId: string, sessionId: str
   }, 1000);
 }
 
-export async function stopFlappyDuel(roomId: string) {
+export async function stopFlappyRush(roomId: string) {
   clearRuntime(roomId);
 }
 
@@ -184,7 +184,7 @@ function gameError(socket: Socket, message: string) {
   socket.emit("game:error", { message });
 }
 
-export function registerFlappyDuelHandlers(_io: Server, socket: Socket) {
+export function registerFlappyRushHandlers(_io: Server, socket: Socket) {
   const authedSocket = socket as AuthedSocket;
   const user = authedSocket.data.user;
 
@@ -216,7 +216,7 @@ export function registerFlappyDuelHandlers(_io: Server, socket: Socket) {
         return;
       }
 
-      const response = currentFlappyDuelSnapshot(roomId);
+      const response = currentFlappyRushSnapshot(roomId);
       reply?.(response);
       if (response.ok) {
         if (response.countdown) socket.emit("game:countdown", { roomId, sessionId: response.snapshot.sessionId, remaining: response.countdown });

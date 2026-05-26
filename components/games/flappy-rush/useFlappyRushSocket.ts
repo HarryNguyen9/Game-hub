@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
-import type { FlappySnapshot } from "@/lib/games/flappy-duel/types";
+import type { FlappySnapshot } from "@/lib/games/flappy-rush/types";
 
 type SyncResponse =
   | { ok: true; snapshot: FlappySnapshot; countdown: number | null }
   | { ok: false; error: string };
 
-export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGameEnd?: () => void, initialSnapshot?: FlappySnapshot | null, roomEnded = false) {
+export function useFlappyRushSocket(roomId: string, currentUserId: string, onGameEnd?: () => void, initialSnapshot?: FlappySnapshot | null, roomEnded = false) {
   const [snapshot, setSnapshot] = useState<FlappySnapshot | null>(initialSnapshot ?? null);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [error, setError] = useState("");

@@ -3,9 +3,9 @@ export const AVATAR_BUCKET = "avatars";
 
 export const GAME_CATALOG = [
   {
-    id: "flappy-duel",
-    name: "Flappy Duel",
-    displayName: "Flappy Duel",
+    id: "flappy-rush",
+    name: "Flappy Rush",
+    displayName: "Flappy Rush",
     shortLabel: "Flappy",
     description: "Real-time flying race with ghost pigs.",
     minPlayers: 1,
