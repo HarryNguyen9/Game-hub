@@ -33,7 +33,14 @@ export function FleetBoard({
   for (const shot of shots) shotCells.set(key(shot), shot);
 
   return (
-    <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${boardSize}, minmax(0, 1fr))` }}>
+    <div
+      className="grid gap-1.5 rounded-[1.35rem] border border-cyan-100/80 bg-cyan-100/80 p-2 shadow-inner"
+      style={{
+        gridTemplateColumns: `repeat(${boardSize}, minmax(0, 1fr))`,
+        backgroundImage:
+          "radial-gradient(circle at 18% 18%, rgba(255,255,255,0.7) 0 8%, transparent 9%), radial-gradient(circle at 78% 34%, rgba(255,255,255,0.5) 0 7%, transparent 8%), linear-gradient(135deg, rgba(186,230,253,0.95), rgba(207,250,254,0.88) 48%, rgba(224,242,254,0.95))"
+      }}
+    >
       {Array.from({ length: boardSize * boardSize }).map((_, index) => {
         const cell = { x: index % boardSize, y: Math.floor(index / boardSize) };
         const cellKey = key(cell);
@@ -41,18 +48,35 @@ export function FleetBoard({
         const shot = shotCells.get(cellKey);
         const hit = hitCells.has(cellKey) || shot?.result === "hit" || shot?.result === "sunk";
         const miss = shot?.result === "miss";
+        const cellState = hit ? "hit" : miss ? "miss" : ship ? "ship" : "water";
+
         return (
           <button
             key={cellKey}
             type="button"
             disabled={disabled}
             onClick={() => onCellClick?.(cell)}
-            className={`aspect-square rounded-lg border text-xs font-black transition ${
-              mode === "enemy" && !disabled ? "cursor-crosshair hover:scale-105 hover:bg-sky-100" : ""
-            } ${ship ? "border-sky-500 bg-sky-200" : "border-white/80 bg-white/65"} ${hit ? "bg-rose-200 text-rose-700" : ""} ${miss ? "bg-slate-100 text-slate-400" : ""}`}
+            className={`group relative grid aspect-square place-items-center overflow-hidden rounded-xl border text-xs font-black shadow-sm transition ${
+              mode === "enemy" && !disabled ? "cursor-crosshair hover:-translate-y-0.5 hover:scale-[1.03] hover:border-cyan-400 hover:bg-cyan-100" : ""
+            } ${
+              cellState === "water"
+                ? "border-sky-200/75 bg-sky-50/70 text-cyan-700"
+                : cellState === "ship"
+                  ? "border-cyan-500 bg-cyan-300 text-cyan-950"
+                  : cellState === "hit"
+                    ? "border-rose-300 bg-rose-100 text-rose-600"
+                    : "border-blue-100 bg-white/85 text-sky-400"
+            } ${disabled ? "cursor-default" : ""}`}
             aria-label={`${mode} cell ${cell.x + 1},${cell.y + 1}`}
           >
-            {hit ? "×" : miss ? "•" : ship && mode === "own" ? "■" : ""}
+            <span className="absolute inset-x-1 top-1 h-1 rounded-full bg-white/35" />
+            {hit ? (
+              <span className="relative text-base leading-none">x</span>
+            ) : miss ? (
+              <span className="relative size-2 rounded-full bg-sky-400/75" />
+            ) : ship && mode === "own" ? (
+              <span className="relative h-2.5 w-3/5 rounded-full bg-slate-700 shadow-[inset_0_-2px_0_rgba(255,255,255,0.22)]" />
+            ) : null}
           </button>
         );
       })}

@@ -118,7 +118,7 @@ export function FleetDuelGame({
 
       {snapshot.status === "setup" && (
         <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
-          <div className="rounded-3xl bg-white/80 p-4">
+          <div className="rounded-3xl border border-cyan-100/70 bg-gradient-to-br from-white via-cyan-50/80 to-sky-50 p-4 shadow-sm">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div>
                 <p className="font-black">Your board</p>
@@ -130,7 +130,7 @@ export function FleetDuelGame({
             </div>
             <FleetBoard boardSize={snapshot.boardSize} ships={ownShips} shots={enemyShotsOnMe} mode="own" disabled={snapshot.you.readyToBattle} onCellClick={placeLocal} />
           </div>
-          <div className="grid content-start gap-3 rounded-3xl bg-white/80 p-4">
+          <div className="grid content-start gap-3 rounded-3xl border border-cyan-100/70 bg-gradient-to-br from-white via-cyan-50/70 to-sky-50 p-4 shadow-sm">
             <Button type="button" variant="secondary" onClick={() => sendShips(randomFleet())} disabled={snapshot.you.readyToBattle}>
               <Shuffle size={16} /> Random Placement
             </Button>
@@ -157,11 +157,11 @@ export function FleetDuelGame({
 
       {snapshot.status === "battle" && snapshot.opponent && (
         <div className="grid gap-4 lg:grid-cols-2">
-          <div className="rounded-3xl bg-white/80 p-4">
+          <div className="rounded-3xl border border-cyan-100/70 bg-gradient-to-br from-white via-cyan-50/80 to-sky-50 p-4 shadow-sm">
             <p className="mb-3 font-black">Enemy waters</p>
             <FleetBoard boardSize={snapshot.boardSize} ships={snapshot.opponent.ships} shots={myShots} mode="enemy" disabled={!canFire} onCellClick={(cell) => fire(snapshot.sessionId, cell)} />
           </div>
-          <div className="rounded-3xl bg-white/80 p-4">
+          <div className="rounded-3xl border border-cyan-100/70 bg-gradient-to-br from-white via-cyan-50/80 to-sky-50 p-4 shadow-sm">
             <p className="mb-3 font-black">Your fleet</p>
             <FleetBoard boardSize={snapshot.boardSize} ships={snapshot.you.ships} shots={enemyShotsOnMe} mode="own" disabled />
           </div>
