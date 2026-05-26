@@ -58,6 +58,7 @@ export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGam
         return;
       }
       const socket = io(socketUrl, {
+        transports: ["websocket"],
         auth: { token: payload.token }
       });
       activeSocket = socket;

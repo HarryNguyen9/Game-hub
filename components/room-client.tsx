@@ -78,6 +78,7 @@ export function RoomClient({
         return;
       }
       const nextSocket = io(socketUrl, {
+        transports: ["websocket"],
         auth: { token: payload.token }
       });
       activeSocket = nextSocket;
