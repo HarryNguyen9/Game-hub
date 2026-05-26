@@ -83,15 +83,11 @@ function drawPig(ctx: CanvasRenderingContext2D, options: { x: number; y: number;
   ctx.strokeStyle = self ? "#102033" : "#475569";
   ctx.lineWidth = self ? 3 : 2.2;
   ctx.beginPath();
-  ctx.moveTo(-size * 0.32, -size * 0.32);
-  ctx.quadraticCurveTo(-size * 0.36, -size * 0.74, -size * 0.03, -size * 0.58);
-  ctx.quadraticCurveTo(-size * 0.08, -size * 0.4, -size * 0.32, -size * 0.32);
+  ctx.ellipse(-size * 0.25, -size * 0.42, size * 0.14, size * 0.2, -0.45, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(size * 0.32, -size * 0.3);
-  ctx.quadraticCurveTo(size * 0.5, -size * 0.64, size * 0.58, -size * 0.2);
-  ctx.quadraticCurveTo(size * 0.42, -size * 0.38, size * 0.32, -size * 0.3);
+  ctx.ellipse(size * 0.34, -size * 0.38, size * 0.12, size * 0.18, 0.45, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 

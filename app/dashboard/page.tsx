@@ -20,8 +20,8 @@ function FlappyRushPreview() {
       <div className="absolute bottom-2 right-10 h-10 w-9 rounded-t-lg border-2 border-emerald-500 bg-emerald-300" />
       <div className="absolute left-[27%] top-[45%]">
         <div className="relative h-10 w-11 -rotate-3 rounded-[50%] border-2 border-slate-800 bg-pink-300 shadow-md">
-          <div className="absolute -top-2 left-1.5 h-4 w-4 rotate-[-18deg] rounded-tl-full rounded-tr-full bg-pink-400" />
-          <div className="absolute -top-1 right-1 h-4 w-3 rotate-[28deg] rounded-tl-full rounded-tr-full bg-pink-400" />
+          <div className="absolute -top-1 left-2 h-3.5 w-3 rounded-full border border-slate-800 bg-pink-400" />
+          <div className="absolute -top-0.5 right-2 h-3 w-2.5 rounded-full border border-slate-800 bg-pink-400" />
           <div className="absolute left-5 top-2 h-2.5 w-2.5 rounded-full bg-white" />
           <div className="absolute right-1.5 top-2.5 h-2 w-2 rounded-full bg-white" />
           <div className="absolute left-[1.45rem] top-[0.65rem] h-1.5 w-1.5 rounded-full bg-slate-900" />

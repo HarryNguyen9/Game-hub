@@ -85,6 +85,12 @@ async function emitRoom(io: Server, roomId: string) {
   await broadcastOpenRooms(io);
 }
 
+async function stopGameRuntime(roomId: string, gameKey?: string | null) {
+  if (!gameKey || gameKey === "flappy-rush") await stopFlappyRush(roomId);
+  if (!gameKey || gameKey === "fleet-duel") await stopFleetDuel(roomId);
+  if (!gameKey || gameKey === "o-an-quan") await stopOAnQuan(roomId);
+}
+
 function roomError(socket: Socket, message: string) {
   socket.emit("room:error", { message });
 }
@@ -309,21 +315,45 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
   socket.on("room:leave", async ({ roomId }: { roomId?: string }) => {
     if (!roomId) return roomError(socket, "Room id is required.");
     const supabase = serviceClient();
-    const { data: room } = await supabase.from("rooms").select("host_user_id").eq("id", roomId).single();
+    const { data: room } = await supabase.from("rooms").select("host_user_id, status, game_key, min_players, max_players").eq("id", roomId).single();
     const channel = `room:${roomId}`;
+    if (!room) return roomError(socket, "Room not found.");
+    const game = getGameConfig(room?.game_key);
+    const isTwoPlayerGame = game?.maxPlayers === 2 || room?.max_players === 2;
+    const shouldShowOpponentLeft = isTwoPlayerGame && (room?.status === "playing" || room?.status === "ended");
 
     if (room?.host_user_id === user.userId) {
-      await stopFlappyRush(roomId);
-      await stopFleetDuel(roomId);
-      await stopOAnQuan(roomId);
+      await stopGameRuntime(roomId, room.game_key);
       const { error } = await supabase.from("rooms").delete().eq("id", roomId);
       if (error) return roomError(socket, `Could not close room: ${error.message}`);
-      io.to(channel).emit("room:closed", { roomId, message: "Host left. Room closed." });
+      if (shouldShowOpponentLeft) {
+        io.to(channel).emit("room:opponent_left", {
+          roomId,
+          action: "redirect_dashboard",
+          message: "Đối thủ đã rời phòng. Nhấn OK để kết thúc game và quay về dashboard."
+        });
+      } else {
+        io.to(channel).emit("room:closed", { roomId, message: "Host left. Room closed." });
+      }
       await broadcastOpenRooms(io);
       console.log("[room:leave] Host closed room", { roomId, userId: user.userId });
     } else {
+      if (shouldShowOpponentLeft) {
+        await stopGameRuntime(roomId, room.game_key);
+        await supabase.from("game_sessions").update({ status: "ended", ended_at: new Date().toISOString() }).eq("room_id", roomId).eq("status", "playing");
+        await supabase.from("rooms").update({ status: "waiting" }).eq("id", roomId);
+      }
       const { error } = await supabase.from("room_members").delete().match({ room_id: roomId, user_id: user.userId });
       if (error) return roomError(socket, `Could not leave room: ${error.message}`);
+      if (shouldShowOpponentLeft) {
+        await supabase.from("room_members").update({ participation_status: "lobby", ready: false }).eq("room_id", roomId);
+        await supabase.from("room_members").update({ ready: true, participation_status: "lobby" }).match({ room_id: roomId, user_id: room.host_user_id });
+        io.to(channel).emit("room:opponent_left", {
+          roomId,
+          action: "return_to_lobby",
+          message: "Đối thủ đã rời phòng. Nhấn OK để kết thúc game và quay lại lobby."
+        });
+      }
       await emitRoom(io, roomId);
       console.log("[room:leave] Player left room", { roomId, userId: user.userId });
     }

@@ -33,6 +33,11 @@ type Snapshot = {
   members: Member[];
 };
 
+type OpponentLeftNotice = {
+  message: string;
+  action: "redirect_dashboard" | "return_to_lobby";
+};
+
 function titleLabel(value: string) {
   return value
     .replaceAll("_", " ")
@@ -88,8 +93,8 @@ function GameOptionVisual({ gameId }: { gameId: string }) {
       <div className="absolute left-4 top-3 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-sky-700">1-4 players</div>
       <div className="absolute right-4 top-3 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-rose-500">Realtime</div>
       <div className="absolute left-[30%] top-[48%] h-10 w-11 -rotate-3 rounded-[50%] border-2 border-slate-800 bg-pink-300 shadow-md">
-        <div className="absolute -top-2 left-1.5 h-4 w-4 rotate-[-18deg] rounded-tl-full rounded-tr-full bg-pink-400" />
-        <div className="absolute -top-1 right-1 h-4 w-3 rotate-[28deg] rounded-tl-full rounded-tr-full bg-pink-400" />
+        <div className="absolute -top-1 left-2 h-3.5 w-3 rounded-full border border-slate-800 bg-pink-400" />
+        <div className="absolute -top-0.5 right-2 h-3 w-2.5 rounded-full border border-slate-800 bg-pink-400" />
         <div className="absolute left-5 top-2 h-2.5 w-2.5 rounded-full bg-white" />
         <div className="absolute right-1.5 top-2.5 h-2 w-2 rounded-full bg-white" />
         <div className="absolute left-[1.45rem] top-[0.65rem] h-1.5 w-1.5 rounded-full bg-slate-900" />
@@ -140,6 +145,16 @@ export function RoomClient({
   const [minPlayers, setMinPlayers] = useState(initialMinPlayers);
   const [maxPlayers, setMaxPlayers] = useState(initialMaxPlayers);
   const [gamePickerOpen, setGamePickerOpen] = useState(false);
+  const [opponentLeftNotice, setOpponentLeftNotice] = useState<OpponentLeftNotice | null>(null);
+
+  useEffect(() => {
+    if (!gamePickerOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [gamePickerOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -200,6 +215,11 @@ export function RoomClient({
         router.push("/dashboard");
         router.refresh();
       });
+      nextSocket.on("room:opponent_left", ({ message, action }: OpponentLeftNotice) => {
+        setPendingAction(null);
+        setGameExpanded(false);
+        setOpponentLeftNotice({ message, action });
+      });
     }
 
     connectSocket();
@@ -213,9 +233,21 @@ export function RoomClient({
   async function leaveRoom() {
     if (pendingAction) return;
     setPendingAction("leave");
-    socket?.emit("room:leave", { roomId });
-    await fetch(`/api/rooms/${roomId}`, { method: "DELETE" });
+    if (socket?.connected) {
+      socket.emit("room:leave", { roomId });
+    } else {
+      await fetch(`/api/rooms/${roomId}`, { method: "DELETE" });
+    }
     router.push("/dashboard");
+    router.refresh();
+  }
+
+  function acknowledgeOpponentLeft() {
+    const action = opponentLeftNotice?.action;
+    setOpponentLeftNotice(null);
+    if (action === "redirect_dashboard") {
+      router.push("/dashboard");
+    }
     router.refresh();
   }
 
@@ -346,6 +378,17 @@ export function RoomClient({
                   );
                 })}
               </div>
+            </div>
+          </div>
+        )}
+        {opponentLeftNotice && (
+          <div className="fixed inset-0 z-[60] grid place-items-center bg-slate-950/40 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Opponent left room">
+            <div className="w-full max-w-sm rounded-[2rem] bg-white p-6 text-center shadow-2xl">
+              <p className="text-2xl font-black text-slate-900">Game ended</p>
+              <p className="mt-3 text-sm font-bold leading-6 text-slate-500">{opponentLeftNotice.message}</p>
+              <Button className="mt-5 w-full justify-center" onClick={acknowledgeOpponentLeft}>
+                OK
+              </Button>
             </div>
           </div>
         )}
