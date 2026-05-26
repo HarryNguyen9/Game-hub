@@ -7,6 +7,8 @@ import { getActiveRoomForUser } from "@/lib/active-room";
 import { getCurrentUserWithProfile } from "@/lib/auth";
 import { GAME_CATALOG } from "@/lib/constants";
 
+export const dynamic = "force-dynamic";
+
 function FlappyDuelPreview() {
   return (
     <div className="relative mb-4 h-28 overflow-hidden rounded-[1.5rem] bg-gradient-to-b from-sky-200 via-emerald-50 to-amber-100 shadow-inner">
@@ -42,6 +44,7 @@ function FlappyDuelPreview() {
         </div>
       </div>
       <div className="absolute left-5 top-4 rounded-full bg-white/70 px-2 py-1 text-[10px] font-black uppercase text-rose-500">Live duel</div>
+      <div className="absolute right-5 top-4 rounded-full bg-white/70 px-2 py-1 text-[10px] font-black uppercase text-sky-700">4 Players</div>
     </div>
   );
 }
@@ -83,13 +86,19 @@ export default async function DashboardPage() {
         <h1 className="mt-1 text-3xl font-black text-slate-900 md:text-5xl">Pick a room, bring the snacks.</h1>
         <p className="mt-3 max-w-2xl text-slate-600">Online party games hub. Let have some fun with your friends!</p>
         <div className="mt-5 flex flex-wrap gap-3">
-          {activeRoom ? (
+          {activeRoom && (
             <ButtonLink href={`/rooms/${activeRoom.id}`}>
               <Plus size={18} /> Back to room
             </ButtonLink>
-          ) : (
+          )}
+          {!activeRoom && (
             <ButtonLink href="/rooms/create">
               <Plus size={18} /> Create room
+            </ButtonLink>
+          )}
+          {activeRoom && (
+            <ButtonLink href="/rooms/create" variant="secondary">
+              <Plus size={18} /> New room
             </ButtonLink>
           )}
           <ButtonLink href="/rooms/join" variant="secondary">

@@ -33,7 +33,10 @@ export default async function RoomPage({ params }: PageProps) {
     .eq("id", roomId)
     .single();
 
-  if (!room) notFound();
+  if (!room) {
+    await supabase.from("room_members").delete().match({ room_id: roomId, user_id: user.id });
+    notFound();
+  }
 
   const { data: memberRows } = await supabase
     .from("room_members")

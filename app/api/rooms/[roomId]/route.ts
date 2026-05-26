@@ -17,7 +17,10 @@ export async function GET(_request: Request, { params }: Params) {
     .eq("id", roomId)
     .single();
 
-  if (error || !room) return fail("Room not found.", 404);
+  if (error || !room) {
+    await supabase.from("room_members").delete().match({ room_id: roomId, user_id: session.userId });
+    return fail("Room not found.", 404);
+  }
   const isMember = room.room_members.some((member) => member.user_id === session.userId);
   if (!isMember && room.host_user_id !== session.userId) return fail("Join this room before opening it.", 403);
 
