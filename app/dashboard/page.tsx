@@ -1,4 +1,5 @@
 import { Plus, Ticket } from "lucide-react";
+import { unstable_noStore as noStore } from "next/cache";
 import { AppShell } from "@/components/app-shell";
 import { DashboardRoomList } from "@/components/dashboard-room-list";
 import { ButtonLink } from "@/components/ui/button";
@@ -71,6 +72,7 @@ function FleetDuelPreview() {
 }
 
 export default async function DashboardPage() {
+  noStore();
   const user = await getCurrentUserWithProfile();
   const activeRoom = await getActiveRoomForUser(user.id);
 
