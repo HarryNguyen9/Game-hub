@@ -13,6 +13,11 @@ export async function authenticateSocket(socket: Socket, next: (error?: Error) =
   const user = await verifySocketToken(token, process.env.SESSION_SECRET || "");
 
   if (!user) {
+    console.warn("[socket-auth] Unauthorized socket connection", {
+      hasToken: Boolean(token),
+      origin: socket.handshake.headers.origin,
+      hasSessionSecret: Boolean(process.env.SESSION_SECRET)
+    });
     next(new Error("Unauthorized"));
     return;
   }

@@ -76,7 +76,11 @@ export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGam
         });
       });
       socket.on("disconnect", () => setConnected(false));
-      socket.on("connect_error", () => setError("Could not connect to game server."));
+      socket.on("connect_error", (error) =>
+        setError(
+          `Could not connect to game server at ${socketUrl}. Check NEXT_PUBLIC_SOCKET_URL, Render APP_ORIGIN, and matching SESSION_SECRET. ${error.message ? `(${error.message})` : ""}`
+        )
+      );
       socket.on("game:countdown", ({ roomId: eventRoomId, remaining }: { roomId: string; remaining: number }) => {
         if (eventRoomId === roomId) setCountdown(remaining);
       });

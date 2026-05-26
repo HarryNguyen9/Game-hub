@@ -88,9 +88,11 @@ export function RoomClient({
         nextSocket.emit("room:join", { roomId });
       });
       nextSocket.on("disconnect", () => setConnected(false));
-      nextSocket.on("connect_error", () => {
+      nextSocket.on("connect_error", (error) => {
         setConnected(false);
-        setMessage("Could not connect to realtime server. Make sure npm run socket:dev is running.");
+        setMessage(
+          `Could not connect to realtime server at ${socketUrl}. Check NEXT_PUBLIC_SOCKET_URL, Render APP_ORIGIN, and matching SESSION_SECRET. ${error.message ? `(${error.message})` : ""}`
+        );
       });
       const applySnapshot = (snapshot: Snapshot) => {
         if (snapshot.roomId !== roomId) return;
