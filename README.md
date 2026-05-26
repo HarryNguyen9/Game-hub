@@ -35,8 +35,8 @@ SUPABASE_SERVICE_ROLE_KEY=
 SESSION_SECRET=use-a-long-random-string
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_SOCKET_URL=http://localhost:4000
-SOCKET_PORT=4000
 APP_ORIGIN=http://localhost:3000
+SOCKET_PORT=4000
 ```
 
 3. In Supabase SQL editor, run:
@@ -91,41 +91,87 @@ npm run socket:dev
 
 Open `http://localhost:3000`.
 
-## Deploy On Render
+To test the production-style split setup locally:
 
-Deploy this project as two Render services.
+```bash
+npm run build
+npm start
+```
 
-### Web Service
+In a second terminal:
 
-- Build Command: `npm install && npm run build`
-- Start Command: `npm start`
+```bash
+npm run socket:start
+```
 
-Set the web service env vars:
+Then open `http://localhost:3000`. For this mode, set `NEXT_PUBLIC_SOCKET_URL=http://localhost:4000`.
+
+## Deploy To Vercel And Render
+
+Production uses two services:
+
+- Vercel: Next.js web app
+- Render: Socket.IO/game server
+- Supabase: database and storage
+
+### 1. Push GitHub
+
+Push this repository to GitHub so both Vercel and Render can deploy from the same source.
+
+### 2. Deploy Web To Vercel
+
+- Framework: Next.js
+- Build Command: `npm run build`
+- Output: Vercel default
+
+Set Vercel env vars:
 
 ```env
+NEXT_PUBLIC_APP_URL=https://YOUR_VERCEL_DOMAIN.vercel.app
+NEXT_PUBLIC_SOCKET_URL=https://YOUR_RENDER_SOCKET_DOMAIN.onrender.com
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 SESSION_SECRET=
-NEXT_PUBLIC_APP_URL=https://your-web-service.onrender.com
-NEXT_PUBLIC_SOCKET_URL=https://your-socket-service.onrender.com
 ```
 
-### Socket Service
+### 3. Deploy Socket To Render
 
+- New Web Service
+- Same GitHub repo
 - Build Command: `npm install`
 - Start Command: `npm run socket:start`
 
-Set the socket service env vars:
+Set Render env vars:
 
 ```env
+APP_ORIGIN=https://YOUR_VERCEL_DOMAIN.vercel.app
 NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 SESSION_SECRET=
-APP_ORIGIN=https://your-web-service.onrender.com
+NODE_ENV=production
 ```
 
-Render provides `PORT` automatically for the socket service. `SOCKET_PORT` is only needed for local or custom hosting.
+Render provides `PORT` automatically. `server/index.ts` also supports `SOCKET_PORT` for local or custom hosting.
+
+### 4. Wire The URLs
+
+After Render creates the socket URL, update Vercel:
+
+```env
+NEXT_PUBLIC_SOCKET_URL=https://YOUR_RENDER_SOCKET_DOMAIN.onrender.com
+```
+
+Then redeploy Vercel, because `NEXT_PUBLIC_*` values are embedded at build time.
+
+After Vercel creates the web URL, update Render:
+
+```env
+APP_ORIGIN=https://YOUR_VERCEL_DOMAIN.vercel.app
+```
+
+Then redeploy Render so Socket.IO CORS accepts the Vercel origin.
 
 ## Routes
 

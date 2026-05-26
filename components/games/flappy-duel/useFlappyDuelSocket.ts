@@ -52,7 +52,12 @@ export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGam
         return;
       }
 
-      const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:4000", {
+      const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
+      if (!socketUrl) {
+        setError("Missing NEXT_PUBLIC_SOCKET_URL. Set it to the Socket.IO server URL.");
+        return;
+      }
+      const socket = io(socketUrl, {
         auth: { token: payload.token }
       });
       activeSocket = socket;

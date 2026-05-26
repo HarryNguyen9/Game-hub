@@ -6,6 +6,7 @@ import { createSocketServer } from "./socket";
 
 nextEnv.loadEnvConfig(process.cwd());
 
+const hostname = process.env.HOSTNAME || "0.0.0.0";
 const port = Number(process.env.PORT || process.env.SOCKET_PORT || 4000);
 let io: SocketServer | null = null;
 
@@ -31,7 +32,7 @@ const httpServer = createServer(async (request, response) => {
 
 io = createSocketServer(httpServer);
 
-httpServer.listen(port, () => {
-  console.log(`Socket.IO server ready at http://localhost:${port}`);
+httpServer.listen(port, hostname, () => {
+  console.log(`Socket.IO server ready at http://${hostname}:${port}`);
   console.log("Socket features: room-lifecycle, flappy-duel-runtime, game-sync-ack");
 });

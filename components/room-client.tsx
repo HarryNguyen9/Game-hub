@@ -72,7 +72,12 @@ export function RoomClient({
         setMessage(payload.error || "Could not connect to realtime server.");
         return;
       }
-      const nextSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:4000", {
+      const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
+      if (!socketUrl) {
+        setMessage("Missing NEXT_PUBLIC_SOCKET_URL. Set it to the Socket.IO server URL.");
+        return;
+      }
+      const nextSocket = io(socketUrl, {
         auth: { token: payload.token }
       });
       activeSocket = nextSocket;

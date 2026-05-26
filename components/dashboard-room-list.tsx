@@ -39,7 +39,9 @@ export function DashboardRoomList() {
       const response = await fetch("/api/socket-token");
       const payload = await response.json();
       if (!response.ok) return;
-      activeSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:4000", {
+      const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
+      if (!socketUrl) return;
+      activeSocket = io(socketUrl, {
         auth: { token: payload.token }
       });
       activeSocket.on("room:open_rooms_updated", ({ rooms: nextRooms }: { rooms: Room[] }) => setRooms(nextRooms || []));
