@@ -13,11 +13,22 @@ function normalizeOrigin(origin: string) {
   return origin.trim().replace(/\/+$/, "");
 }
 
+function originHost(origin: string) {
+  const normalized = normalizeOrigin(origin);
+  try {
+    return new URL(normalized.includes("://") ? normalized : `https://${normalized}`).host;
+  } catch {
+    return normalized.replace(/^https?:\/\//, "");
+  }
+}
+
 export function createSocketServer(httpServer: HttpServer) {
   const origins = allowedOrigins();
+  const originHosts = origins.map(originHost);
   const isAllowedOrigin = (origin?: string) => {
     const normalizedOrigin = origin ? normalizeOrigin(origin) : undefined;
-    return !normalizedOrigin || origins.includes(normalizedOrigin);
+    if (!normalizedOrigin) return true;
+    return origins.includes(normalizedOrigin) || originHosts.includes(originHost(normalizedOrigin));
   };
 
   const io = new Server(httpServer, {
