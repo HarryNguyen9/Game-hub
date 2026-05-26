@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     .from("rooms")
     .select("id, room_code, name, game_key, status, has_password, room_members(user_id)")
     .eq("room_code", parsed.data)
-    .in("status", ["waiting", "playing"])
+    .in("status", ["waiting", "playing", "ended"])
     .maybeSingle();
 
   if (error) {

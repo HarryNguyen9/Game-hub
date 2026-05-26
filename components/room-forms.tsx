@@ -65,7 +65,7 @@ export function JoinRoomForm() {
   const [joining, setJoining] = useState(false);
   const [roomInfo, setRoomInfo] = useState<{
     name: string;
-    status: "waiting" | "playing";
+    status: "waiting" | "playing" | "ended";
     hasPassword: boolean;
     playerCount: number;
   } | null>(null);
@@ -144,7 +144,7 @@ export function JoinRoomForm() {
         <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm font-bold text-slate-600">
           <p className="text-slate-900">{roomInfo.name}</p>
           <p className="mt-1">
-            {roomInfo.status === "playing" ? "In game" : "Waiting"} · {roomInfo.playerCount} players · {roomInfo.hasPassword ? "Password required" : "Public room"}
+            {roomInfo.status === "playing" ? "In game" : roomInfo.status === "ended" ? "Ended" : "Waiting"} · {roomInfo.playerCount} players · {roomInfo.hasPassword ? "Password required" : "Public room"}
           </p>
         </div>
       )}

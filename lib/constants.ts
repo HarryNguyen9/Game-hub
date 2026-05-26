@@ -5,7 +5,7 @@ export const GAME_CATALOG = [
   {
     id: "flappy-duel",
     name: "Flappy Duel",
-    description: "Server-authoritative flaps, shared pipes, last bird flying wins.",
+    description: "Server-authoritative flaps, shared pipes, last pig flying wins.",
     accent: "from-sky-200 to-lime-200"
   }
 ] as const;

@@ -16,17 +16,25 @@ function FlappyDuelPreview() {
       <div className="absolute right-10 top-0 h-9 w-9 rounded-b-lg border-2 border-emerald-500 bg-emerald-300" />
       <div className="absolute bottom-2 right-10 h-10 w-9 rounded-t-lg border-2 border-emerald-500 bg-emerald-300" />
       <div className="absolute left-[28%] top-[48%]">
-        <div className="relative h-9 w-11 -rotate-6 rounded-[50%] border-2 border-slate-800 bg-rose-400 shadow-md">
-          <div className="absolute -left-2 top-3 h-4 w-5 rounded-full bg-white/55" />
-          <div className="absolute right-2 top-2 h-3 w-3 rounded-full bg-white" />
-          <div className="absolute right-1 top-2.5 h-1.5 w-1.5 rounded-full bg-slate-900" />
-          <div className="absolute -right-4 top-4 h-0 w-0 border-y-[5px] border-l-[14px] border-y-transparent border-l-amber-300" />
+        <div className="relative h-10 w-10 -rotate-6 rounded-full border-2 border-slate-800 bg-pink-300 shadow-md">
+          <div className="absolute -top-2 left-1 h-4 w-4 rotate-[-24deg] rounded-tl-full rounded-tr-full bg-pink-400" />
+          <div className="absolute -top-2 right-1 h-4 w-4 rotate-[24deg] rounded-tl-full rounded-tr-full bg-pink-400" />
+          <div className="absolute left-2 top-2 h-2.5 w-2.5 rounded-full bg-white" />
+          <div className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-white" />
+          <div className="absolute left-[0.85rem] top-[0.6rem] h-1.5 w-1.5 rounded-full bg-slate-900" />
+          <div className="absolute right-[0.85rem] top-[0.6rem] h-1.5 w-1.5 rounded-full bg-slate-900" />
+          <div className="absolute bottom-2 left-1/2 h-4 w-6 -translate-x-1/2 rounded-full border border-slate-700 bg-pink-200">
+            <div className="absolute left-1.5 top-1.5 h-1 w-1 rounded-full bg-rose-500" />
+            <div className="absolute right-1.5 top-1.5 h-1 w-1 rounded-full bg-rose-500" />
+          </div>
+          <div className="absolute -right-2 top-5 h-3 w-3 rounded-full border-2 border-rose-400 border-l-transparent" />
         </div>
       </div>
       <div className="absolute left-[45%] top-[58%] opacity-40">
-        <div className="relative h-7 w-9 rotate-6 rounded-[50%] border-2 border-slate-600 bg-slate-400">
-          <div className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-white" />
-          <div className="absolute -right-3 top-3 h-0 w-0 border-y-[4px] border-l-[11px] border-y-transparent border-l-amber-300" />
+        <div className="relative h-8 w-8 rotate-6 rounded-full border-2 border-slate-600 bg-pink-200">
+          <div className="absolute left-1.5 top-1.5 h-2 w-2 rounded-full bg-white" />
+          <div className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-white" />
+          <div className="absolute bottom-1.5 left-1/2 h-3 w-5 -translate-x-1/2 rounded-full bg-pink-100" />
         </div>
       </div>
       <div className="absolute left-5 top-4 rounded-full bg-white/70 px-2 py-1 text-[10px] font-black uppercase text-rose-500">Live duel</div>

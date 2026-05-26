@@ -250,6 +250,7 @@ export function RoomClient({
             expanded={gameExpanded}
             onToggleExpanded={() => setGameExpanded((value) => !value)}
             initialSnapshot={endedGameSnapshot}
+            roomStatus={status === "ended" ? "ended" : "playing"}
           />
         ) : isFlappyLobby ? (
           <div className={gameExpanded ? "fixed inset-0 z-50 flex h-dvh flex-col gap-3 overflow-y-auto bg-white p-3" : "relative mt-4 grid gap-4"}>

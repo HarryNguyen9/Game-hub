@@ -18,7 +18,7 @@ async function findAvailableRoomCode(supabase: ReturnType<typeof createServiceCl
       .from("rooms")
       .select("id")
       .eq("room_code", code)
-      .in("status", ["waiting", "playing"])
+      .in("status", ["waiting", "playing", "ended"])
       .maybeSingle();
 
     if (error) throw new Error(`Could not check room code availability: ${error.message}`);
@@ -34,7 +34,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from("rooms")
     .select("id, room_code, name, game_key, status, has_password, host_user_id, created_at, app_users!rooms_host_user_id_fkey(username, display_name, avatar_url), room_members(user_id)")
-    .in("status", ["waiting", "playing"])
+    .in("status", ["waiting", "playing", "ended"])
     .order("status", { ascending: false })
     .order("created_at", { ascending: true })
     .limit(24);

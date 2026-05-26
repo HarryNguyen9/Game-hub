@@ -64,7 +64,7 @@ async function openRoomsSnapshot() {
   const { data } = await supabase
     .from("rooms")
     .select("id, room_code, name, game_key, status, has_password, host_user_id, created_at, app_users!rooms_host_user_id_fkey(username, display_name, avatar_url), room_members(user_id)")
-    .in("status", ["waiting", "playing"])
+    .in("status", ["waiting", "playing", "ended"])
     .order("status", { ascending: false })
     .order("created_at", { ascending: true })
     .limit(24);

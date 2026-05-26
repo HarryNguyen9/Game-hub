@@ -8,7 +8,7 @@ type SyncResponse =
   | { ok: true; snapshot: FlappySnapshot; countdown: number | null }
   | { ok: false; error: string };
 
-export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGameEnd?: () => void, initialSnapshot?: FlappySnapshot | null) {
+export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGameEnd?: () => void, initialSnapshot?: FlappySnapshot | null, roomEnded = false) {
   const [snapshot, setSnapshot] = useState<FlappySnapshot | null>(initialSnapshot ?? null);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [error, setError] = useState("");
@@ -17,7 +17,7 @@ export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGam
   const inputSeq = useRef(0);
   const snapshotRef = useRef<FlappySnapshot | null>(initialSnapshot ?? null);
   const lastFlapAtRef = useRef(0);
-  const hasEndedInitialSnapshot = initialSnapshot?.roomId === roomId && initialSnapshot.status === "ended";
+  const skipLiveSync = roomEnded || (initialSnapshot?.roomId === roomId && initialSnapshot.status === "ended");
 
   const applySyncResponse = useCallback(
     (response: SyncResponse) => {
@@ -35,7 +35,7 @@ export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGam
   );
 
   const syncGame = useCallback(() => {
-    if (snapshotRef.current?.status === "ended") return;
+    if (skipLiveSync || snapshotRef.current?.status === "ended") return;
     socketRef.current?.timeout(1500).emit("game:sync", { roomId }, (error: Error | null, response?: SyncResponse) => {
       if (error) {
         setError("Socket server did not answer game:sync. Reconnect, refresh the room, or try Back to Lobby if you are the host.");
@@ -43,7 +43,7 @@ export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGam
       }
       if (response) applySyncResponse(response);
     });
-  }, [applySyncResponse, roomId]);
+  }, [applySyncResponse, roomId, skipLiveSync]);
 
   useEffect(() => {
     let cancelled = false;
@@ -72,7 +72,7 @@ export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGam
         setConnected(true);
         setError("");
         socket.emit("room:join", { roomId, presence: false });
-        if (hasEndedInitialSnapshot) return;
+        if (skipLiveSync) return;
         socket.timeout(1500).emit("game:sync", { roomId }, (error: Error | null, response?: SyncResponse) => {
           if (error) {
             setError("Socket server did not answer game:sync. Reconnect, refresh the room, or try Back to Lobby if you are the host.");
@@ -120,7 +120,7 @@ export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGam
       activeSocket?.disconnect();
       socketRef.current = null;
     };
-  }, [applySyncResponse, hasEndedInitialSnapshot, onGameEnd, roomId]);
+  }, [applySyncResponse, onGameEnd, roomId, skipLiveSync]);
 
   const flap = useCallback(() => {
     const currentSnapshot = snapshotRef.current;
@@ -143,7 +143,7 @@ export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGam
   }, [roomId]);
 
   useEffect(() => {
-    if (!connected || snapshot || countdown) return;
+    if (roomEnded || !connected || snapshot || countdown) return;
 
     const syncTimer = window.setTimeout(() => {
       syncGame();
@@ -156,7 +156,7 @@ export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGam
       window.clearTimeout(syncTimer);
       window.clearTimeout(errorTimer);
     };
-  }, [connected, countdown, roomId, snapshot, syncGame]);
+  }, [connected, countdown, roomEnded, roomId, snapshot, syncGame]);
 
   return { snapshot, countdown, error, connected, flap, backToLobby, lastFlapAtRef };
 }

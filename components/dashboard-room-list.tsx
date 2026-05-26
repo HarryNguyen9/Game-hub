@@ -12,7 +12,7 @@ type Room = {
   name: string;
   game_key: string | null;
   has_password: boolean;
-  status: "waiting" | "playing";
+  status: "waiting" | "playing" | "ended";
   app_users?: { username: string; display_name: string | null } | { username: string; display_name: string | null }[] | null;
   room_members?: { user_id: string }[];
 };
@@ -100,7 +100,9 @@ export function DashboardRoomList() {
             <div className="flex flex-wrap justify-end gap-2">
               {room.room_code && <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-black text-sky-700">#{room.room_code}</span>}
               {room.has_password && <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600"><Lock size={13} /> Locked</span>}
-              <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-700">{room.status === "playing" ? "In Game" : "Waiting"}</span>
+              <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-700">
+                {room.status === "playing" ? "In Game" : room.status === "ended" ? "Ended" : "Waiting"}
+              </span>
             </div>
           </div>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm font-bold text-slate-500">

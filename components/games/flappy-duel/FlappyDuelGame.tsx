@@ -15,7 +15,8 @@ export function FlappyDuelGame({
   onGameEnd,
   expanded,
   onToggleExpanded,
-  initialSnapshot
+  initialSnapshot,
+  roomStatus
 }: {
   roomId: string;
   currentUserId: string;
@@ -24,6 +25,7 @@ export function FlappyDuelGame({
   expanded: boolean;
   onToggleExpanded: () => void;
   initialSnapshot?: FlappySnapshot | null;
+  roomStatus: "playing" | "ended";
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const previousSnapshotRef = useRef<FlappySnapshot | null>(null);
@@ -32,7 +34,8 @@ export function FlappyDuelGame({
   const predictedSelfYRef = useRef<number | null>(null);
   const lastCrashAtRef = useRef<number | null>(null);
   const lastPointerFlapAtRef = useRef(0);
-  const { snapshot, countdown, error, connected, flap, backToLobby, lastFlapAtRef } = useFlappyDuelSocket(roomId, currentUserId, onGameEnd, initialSnapshot);
+  const roomEnded = roomStatus === "ended";
+  const { snapshot, countdown, error, connected, flap, backToLobby, lastFlapAtRef } = useFlappyDuelSocket(roomId, currentUserId, onGameEnd, initialSnapshot, roomEnded);
   const [returning, setReturning] = useState(false);
   const currentPlayer = snapshot?.players[currentUserId];
   const ended = snapshot?.status === "ended";
@@ -160,7 +163,31 @@ export function FlappyDuelGame({
             </div>
           </div>
         )}
-        {!snapshot && !countdown && <div className="absolute inset-0 grid place-items-center font-black text-slate-600">Waiting for game snapshot...</div>}
+        {!snapshot && !countdown && !roomEnded && <div className="absolute inset-0 grid place-items-center font-black text-slate-600">Waiting for game snapshot...</div>}
+        {!snapshot && roomEnded && (
+          <div className="absolute inset-0 grid place-items-center bg-white/82 p-4">
+            <div className="w-full max-w-sm rounded-[2rem] bg-white p-5 text-center shadow-xl">
+              <div className="mx-auto grid size-12 place-items-center rounded-full bg-amber-100 text-amber-600">
+                <Trophy size={24} />
+              </div>
+              <p className="mt-2 text-2xl font-black">Round ended</p>
+              <p className="mt-1 text-sm font-bold text-slate-500">Waiting for the host to return everyone to the lobby.</p>
+              {isHost && (
+                <Button
+                  className="mt-4 w-full"
+                  disabled={returning}
+                  onClick={() => {
+                    if (returning) return;
+                    setReturning(true);
+                    backToLobby();
+                  }}
+                >
+                  <RotateCcw size={18} /> {returning ? "Returning..." : "Back to Lobby"}
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
         {currentPlayer && !currentPlayer.alive && !ended && (
           <div className="absolute left-4 top-4 max-w-[15rem] rounded-2xl bg-white/92 px-4 py-3 text-sm shadow-lg">
             <p className="font-black text-red-500">You crashed!</p>

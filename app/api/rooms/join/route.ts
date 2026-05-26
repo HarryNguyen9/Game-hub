@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     const query = supabase
       .from("rooms")
       .select("id, status, has_password, password_hash")
-      .in("status", ["waiting", "playing"]);
+      .in("status", ["waiting", "playing", "ended"]);
 
     const { data: room, error: roomError } = await (input.roomId ? query.eq("id", input.roomId) : query.eq("room_code", input.roomCode || "")).maybeSingle();
 
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
       user_id: session.userId,
       role: "player",
       ready: false,
-      participation_status: room.status === "playing" ? "waiting_next_round" : "lobby"
+      participation_status: room.status === "waiting" ? "lobby" : "waiting_next_round"
     });
 
     if (memberError) {
