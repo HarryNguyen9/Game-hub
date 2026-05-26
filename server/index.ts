@@ -6,7 +6,7 @@ import { allowedOrigins, createSocketServer } from "./socket";
 
 nextEnv.loadEnvConfig(process.cwd());
 
-const hostname = process.env.HOSTNAME || "0.0.0.0";
+const hostname = "0.0.0.0";
 const port = Number(process.env.PORT || process.env.SOCKET_PORT || 4000);
 let io: SocketServer | null = null;
 
