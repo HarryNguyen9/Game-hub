@@ -33,9 +33,9 @@ function canMove(state: OAnQuanState, userId: string) {
   return playerPits(player).some((index) => state.board[index].smallStones > 0);
 }
 
-function setTurn(state: OAnQuanState, userId: string | null) {
+function setTurn(state: OAnQuanState, userId: string | null, now = Date.now()) {
   state.currentTurnUserId = userId;
-  const turn = createTurnWindow();
+  const turn = createTurnWindow(now);
   state.turnStartedAt = turn.turnStartedAt;
   state.turnEndsAt = turn.turnEndsAt;
   state.turnDurationSeconds = turn.turnDurationSeconds;
@@ -66,7 +66,7 @@ function collectRemainingAndEnd(state: OAnQuanState) {
   }
 }
 
-function advanceTurn(state: OAnQuanState, fromUserId: string, reason: "move" | "timeout" | "no_moves" = "move") {
+function advanceTurn(state: OAnQuanState, fromUserId: string, reason: "move" | "timeout" | "no_moves" = "move", turnStartAt = Date.now()) {
   if (state.board[0].bigStones === 0 && state.board[6].bigStones === 0) {
     collectRemainingAndEnd(state);
     return;
@@ -75,12 +75,12 @@ function advanceTurn(state: OAnQuanState, fromUserId: string, reason: "move" | "
   const next = otherUserId(state, fromUserId);
   if (!next) return collectRemainingAndEnd(state);
   if (canMove(state, next)) {
-    setTurn(state, next);
+    setTurn(state, next, turnStartAt);
     return;
   }
   if (canMove(state, fromUserId)) {
     state.lastMove = { userId: next, selectedPitIndex: null, direction: null, captured: 0, reason: "no_moves", createdAt: Date.now() };
-    setTurn(state, fromUserId);
+    setTurn(state, fromUserId, turnStartAt);
     return;
   }
   state.lastMove = { userId: next, selectedPitIndex: null, direction: null, captured: 0, reason, createdAt: Date.now() };
@@ -121,6 +121,7 @@ export function createOAnQuanState(sessionId: string, roomId: string, players: P
 export function applyOAnQuanMove(state: OAnQuanState, userId: string, selectedPitIndex: number, direction: OAnQuanDirection) {
   if (state.status !== "playing") return "Game already ended.";
   if (state.currentTurnUserId !== userId) return "It is not your turn.";
+  if (Date.now() < state.turnStartedAt) return "Wait for the stones to finish moving.";
   if (Date.now() > state.turnEndsAt) return "Your turn timed out.";
   if (direction !== "clockwise" && direction !== "counterclockwise") return "Invalid direction.";
   const player = state.players[userId];
@@ -133,11 +134,13 @@ export function applyOAnQuanMove(state: OAnQuanState, userId: string, selectedPi
   selectedPit.smallStones = 0;
   let current = selectedPitIndex;
   let captured = 0;
+  let animationFrames = 1;
 
   while (stones > 0) {
     current = nextIndex(current, direction);
     state.board[current].smallStones += 1;
     stones -= 1;
+    animationFrames += 1;
     if (stones > 0) continue;
 
     const next = nextIndex(current, direction);
@@ -145,6 +148,7 @@ export function applyOAnQuanMove(state: OAnQuanState, userId: string, selectedPi
     if (nextPit.type === "dan" && pitHasStones(nextPit)) {
       stones = nextPit.smallStones;
       nextPit.smallStones = 0;
+      animationFrames += 1;
       continue;
     }
 
@@ -156,6 +160,7 @@ export function applyOAnQuanMove(state: OAnQuanState, userId: string, selectedPi
         captured += pitValue(capturePit);
         capturePit.smallStones = 0;
         capturePit.bigStones = 0;
+        animationFrames += 1;
         emptyIndex = nextIndex(captureIndex, direction);
         captureIndex = nextIndex(emptyIndex, direction);
       }
@@ -163,8 +168,12 @@ export function applyOAnQuanMove(state: OAnQuanState, userId: string, selectedPi
   }
 
   player.score += captured;
-  state.lastMove = { userId, selectedPitIndex, direction, captured, reason: "move", createdAt: Date.now() };
-  advanceTurn(state, userId);
+  const animationDelayMs = Math.min(
+    OAQ_CONFIG.maxMoveAnimationDelayMs,
+    animationFrames * OAQ_CONFIG.moveAnimationFrameMs + OAQ_CONFIG.moveAnimationSettleMs
+  );
+  state.lastMove = { userId, selectedPitIndex, direction, captured, reason: "move", animationDelayMs, createdAt: Date.now() };
+  advanceTurn(state, userId, "move", Date.now() + animationDelayMs);
   state.updatedAt = Date.now();
   return null;
 }

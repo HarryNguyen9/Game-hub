@@ -337,7 +337,7 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
       const { error } = await supabase.from("rooms").delete().eq("id", roomId);
       if (error) return roomError(socket, `Could not close room: ${error.message}`);
       if (shouldShowOpponentLeft) {
-        io.to(channel).emit("room:opponent_left", {
+        socket.to(channel).emit("room:opponent_left", {
           roomId,
           action: "redirect_dashboard",
           message: "Đối thủ đã rời phòng. Nhấn OK để kết thúc game và quay về dashboard."
@@ -358,7 +358,7 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
       if (shouldShowOpponentLeft) {
         await supabase.from("room_members").update({ participation_status: "lobby", ready: false }).eq("room_id", roomId);
         await supabase.from("room_members").update({ ready: true, participation_status: "lobby" }).match({ room_id: roomId, user_id: room.host_user_id });
-        io.to(channel).emit("room:opponent_left", {
+        socket.to(channel).emit("room:opponent_left", {
           roomId,
           action: "return_to_lobby",
           message: "Đối thủ đã rời phòng. Nhấn OK để kết thúc game và quay lại lobby."

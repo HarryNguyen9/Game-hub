@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { RotateCcw, Trophy } from "lucide-react";
 import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
 import { Button } from "@/components/ui/button";
+import { OAQ_CONFIG } from "@/lib/games/o-an-quan/config";
 import type { OAnQuanDirection, OAnQuanMove, OAnQuanPit, OAnQuanSnapshot } from "@/lib/games/o-an-quan/types";
 import { OAnQuanBoard } from "./OAnQuanBoard";
 import { useOAnQuanSocket } from "./useOAnQuanSocket";
@@ -114,15 +115,23 @@ export function OAnQuanGame({
   const now = useNow();
   const currentPlayer = snapshot?.players[currentUserId];
   const currentTurnPlayer = snapshot?.currentTurnUserId ? snapshot.players[snapshot.currentTurnUserId] : null;
-  const isMyTurn = snapshot?.status === "playing" && snapshot.currentTurnUserId === currentUserId;
-  const remainingMs = snapshot ? (now ? Math.max(0, snapshot.turnEndsAt - now) : snapshot.turnDurationSeconds * 1000) : 0;
+  const timelineNow = now || snapshot?.serverTime || 0;
+  const turnActive = snapshot ? timelineNow >= snapshot.turnStartedAt : false;
+  const isMyTurn = snapshot?.status === "playing" && snapshot.currentTurnUserId === currentUserId && turnActive;
+  const resolvingMove = Boolean(snapshot && snapshot.status === "playing" && !turnActive);
+  const remainingMs = snapshot
+    ? resolvingMove
+      ? snapshot.turnDurationSeconds * 1000
+      : now
+        ? Math.max(0, snapshot.turnEndsAt - now)
+        : snapshot.turnDurationSeconds * 1000
+    : 0;
   const remainingSeconds = Math.ceil(remainingMs / 1000);
   const timerPercent = snapshot ? Math.max(0, Math.min(100, (remainingMs / (snapshot.turnDurationSeconds * 1000)) * 100)) : 0;
   const scores = useMemo(() => (snapshot ? Object.values(snapshot.players).sort((a) => (a.side === "top" ? -1 : 1)) : []), [snapshot]);
 
   function submit(direction: OAnQuanDirection) {
-    if (!snapshot || selectedPit === null) return;
-    setIsAnimating(true);
+    if (!snapshot || selectedPit === null || !isMyTurn || isAnimating) return;
     move(snapshot.sessionId, selectedPit, direction);
     setSelectedPit(null);
   }
@@ -142,14 +151,17 @@ export function OAnQuanGame({
     if (!frames.length) {
       previousBoardRef.current = cloneBoard(snapshot.board);
       lastAnimatedMoveRef.current = moveId;
+      setDisplayBoard(cloneBoard(snapshot.board));
+      setIsAnimating(false);
       return;
     }
 
-    let index = 0;
-    let previousFrame = currentBoard;
+    let index = 1;
+    let previousFrame = frames[0];
     lastAnimatedMoveRef.current = moveId;
     previousBoardRef.current = cloneBoard(snapshot.board);
-    const startTimer = window.setTimeout(() => setIsAnimating(true), 0);
+    setIsAnimating(true);
+    setDisplayBoard(frames[0]);
     let captureTimer: number | null = null;
     let clearCaptureTimer: number | null = null;
     if (lastMove?.captured && lastMove.captured > 0) {
@@ -157,25 +169,23 @@ export function OAnQuanGame({
       clearCaptureTimer = window.setTimeout(() => setCapturePopup(null), 1800);
     }
     const timer = window.setInterval(() => {
-      const nextFrame = index < frames.length ? frames[index] : null;
-      if (nextFrame) {
-        const changedPit = nextFrame.find((pit, pitIndex) => pitTotal(pit) > pitTotal(previousFrame[pitIndex]));
-        if (changedPit) {
-          setPopupPitIndex(changedPit.index);
-          setPopupNonce((value) => value + 1);
-        }
-        previousFrame = nextFrame;
+      const nextFrame = frames[index] || frames[frames.length - 1];
+      const changedPit = nextFrame.find((pit, pitIndex) => pitTotal(pit) > pitTotal(previousFrame[pitIndex]));
+      if (changedPit) {
+        setPopupPitIndex(changedPit.index);
+        setPopupNonce((value) => value + 1);
       }
+      previousFrame = nextFrame;
       setDisplayBoard(nextFrame);
-      index += 1;
-      if (index > frames.length) {
+      if (index >= frames.length - 1) {
         setIsAnimating(false);
         setPopupPitIndex(null);
+        setDisplayBoard(cloneBoard(snapshot.board));
         window.clearInterval(timer);
       }
-    }, 280);
+      index += 1;
+    }, OAQ_CONFIG.moveAnimationFrameMs);
     return () => {
-      window.clearTimeout(startTimer);
       if (captureTimer) window.clearTimeout(captureTimer);
       if (clearCaptureTimer) window.clearTimeout(clearCaptureTimer);
       window.clearInterval(timer);
@@ -187,8 +197,9 @@ export function OAnQuanGame({
     const previousTurn = lastTurnRef.current;
     lastTurnRef.current = snapshot.currentTurnUserId;
     if (snapshot.status !== "playing" || snapshot.currentTurnUserId !== currentUserId || previousTurn === currentUserId) return;
-    const showTimer = window.setTimeout(() => setTurnNotice(true), 0);
-    const hideTimer = window.setTimeout(() => setTurnNotice(false), 1700);
+    const delay = Math.max(0, snapshot.turnStartedAt - Date.now());
+    const showTimer = window.setTimeout(() => setTurnNotice(true), delay);
+    const hideTimer = window.setTimeout(() => setTurnNotice(false), delay + 1700);
     return () => {
       window.clearTimeout(showTimer);
       window.clearTimeout(hideTimer);
@@ -201,7 +212,7 @@ export function OAnQuanGame({
       {snapshot && (
         <div className="min-w-0">
           <div className="mb-1 flex items-center justify-between gap-3 text-xs font-black text-slate-500">
-            <span>{isMyTurn ? "Your turn" : `${currentTurnPlayer?.displayName || "Opponent"}'s turn`}</span>
+            <span>{resolvingMove ? "Moving stones" : isMyTurn ? "Your turn" : `${currentTurnPlayer?.displayName || "Opponent"}'s turn`}</span>
             <span className={remainingSeconds <= 5 ? "text-red-500" : "text-slate-600"}>{remainingSeconds}s</span>
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-white">
@@ -229,7 +240,7 @@ export function OAnQuanGame({
       {error && <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</p>}
       <div className="grid gap-4">
         {turnNotice && (
-          <div className="pointer-events-none fixed left-1/2 top-24 z-50 -translate-x-1/2 animate-[oaq-turn_1600ms_ease-out_forwards] rounded-full bg-[#ff7a90] px-5 py-3 text-sm font-black text-white shadow-xl">
+          <div className="pointer-events-none absolute left-1/2 top-3 z-30 -translate-x-1/2 animate-[oaq-turn_1600ms_ease-out_forwards] rounded-full bg-[#ff7a90] px-5 py-3 text-sm font-black text-white shadow-xl">
             Your turn
           </div>
         )}

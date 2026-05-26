@@ -31,9 +31,12 @@ function StoneStack({ pit }: { pit: OAnQuanPit }) {
     <div className="grid w-full justify-items-center gap-1">
       <Pebbles count={pit.bigStones} type="big" />
       <Pebbles count={pit.smallStones} type="small" />
-      <span className="rounded-full bg-white/85 px-2 py-0.5 text-[11px] font-black text-stone-700 shadow-sm">{pit.smallStones + pit.bigStones * 10}</span>
     </div>
   );
+}
+
+function PitCount({ pit }: { pit: OAnQuanPit }) {
+  return <span className="grid h-6 min-w-6 place-items-center rounded-full bg-white/90 px-2 text-[11px] font-black text-stone-700 shadow-sm">{pit.smallStones + pit.bigStones * 10}</span>;
 }
 
 function DanPit({
@@ -41,41 +44,52 @@ function DanPit({
   selectable,
   selected,
   popup,
+  popupNonce,
+  countPosition,
   onSelect
 }: {
   pit: OAnQuanPit;
   selectable: boolean;
   selected: boolean;
   popup?: string | null;
+  popupNonce?: number;
+  countPosition: "top" | "bottom";
   onSelect: () => void;
 }) {
   return (
-    <button
-      type="button"
-      disabled={!selectable}
-      onClick={onSelect}
-      className={`relative grid h-16 min-w-0 place-items-center overflow-hidden rounded-2xl border-2 p-1.5 shadow-sm transition sm:h-20 sm:p-2 ${
-        selected
-          ? "border-rose-400 bg-rose-100"
-          : selectable
-            ? "border-lime-400 bg-lime-100 hover:-translate-y-0.5"
-            : "border-amber-200 bg-amber-50"
-      }`}
-    >
-      {popup && <span className="pointer-events-none absolute left-1/2 top-1 z-10 -translate-x-1/2 animate-[oaq-pop_900ms_ease-out_forwards] rounded-full bg-white px-2 py-0.5 text-[11px] font-black text-rose-600 shadow-sm">{popup}</span>}
-      <StoneStack pit={pit} />
-    </button>
+    <div className={`grid min-w-0 justify-items-center gap-1 ${countPosition === "top" ? "grid-rows-[auto_1fr]" : "grid-rows-[1fr_auto]"}`}>
+      {countPosition === "top" && <PitCount pit={pit} />}
+      <button
+        type="button"
+        disabled={!selectable}
+        onClick={onSelect}
+        className={`relative grid h-16 w-full min-w-0 place-items-center overflow-visible rounded-2xl border-2 p-1.5 shadow-sm transition sm:h-20 sm:p-2 ${
+          selected
+            ? "border-rose-400 bg-rose-100"
+            : selectable
+              ? "border-lime-400 bg-lime-100 hover:-translate-y-0.5"
+              : "border-amber-200 bg-amber-50"
+        }`}
+      >
+        {popup && <span key={popupNonce} className="pointer-events-none absolute left-1/2 top-1 z-10 -translate-x-1/2 animate-[oaq-pop_900ms_ease-out_forwards] rounded-full bg-white px-2 py-0.5 text-[11px] font-black text-rose-600 shadow-sm">{popup}</span>}
+        <StoneStack pit={pit} />
+      </button>
+      {countPosition === "bottom" && <PitCount pit={pit} />}
+    </div>
   );
 }
 
-function QuanPit({ pit, popup }: { pit: OAnQuanPit; popup?: string | null }) {
+function QuanPit({ pit, popup, popupNonce }: { pit: OAnQuanPit; popup?: string | null; popupNonce?: number }) {
   return (
-    <div className="relative grid h-32 min-w-0 place-items-center overflow-hidden rounded-[1.75rem] border-2 border-stone-300 bg-gradient-to-br from-amber-100 to-lime-100 p-2 shadow-inner sm:h-40 sm:rounded-[2rem] sm:p-3">
-      {popup && <span className="pointer-events-none absolute left-1/2 top-2 z-10 -translate-x-1/2 animate-[oaq-pop_900ms_ease-out_forwards] rounded-full bg-white px-2 py-0.5 text-[11px] font-black text-rose-600 shadow-sm">{popup}</span>}
-      <div className="grid min-w-0 justify-items-center gap-1.5 sm:gap-2">
-        <span className="text-[10px] font-black uppercase text-stone-500 sm:text-xs">Quan</span>
-        <StoneStack pit={pit} />
+    <div className="grid min-w-0 justify-items-center gap-1">
+      <div className="relative grid h-32 w-full min-w-0 place-items-center overflow-visible rounded-[1.75rem] border-2 border-stone-300 bg-gradient-to-br from-amber-100 to-lime-100 p-2 shadow-inner sm:h-40 sm:rounded-[2rem] sm:p-3">
+        {popup && <span key={popupNonce} className="pointer-events-none absolute left-1/2 top-2 z-10 -translate-x-1/2 animate-[oaq-pop_900ms_ease-out_forwards] rounded-full bg-white px-2 py-0.5 text-[11px] font-black text-rose-600 shadow-sm">{popup}</span>}
+        <div className="grid min-w-0 justify-items-center gap-1.5 sm:gap-2">
+          <span className="text-[10px] font-black uppercase text-stone-500 sm:text-xs">Quan</span>
+          <StoneStack pit={pit} />
+        </div>
       </div>
+      <PitCount pit={pit} />
     </div>
   );
 }
@@ -107,8 +121,9 @@ export function OAnQuanBoard({
     const pit = board[index];
     const selectable = canMove && myPits.has(index) && pit.smallStones > 0;
     const selected = selectedPit === index;
+    const countPosition = top.includes(index) ? "top" : "bottom";
     return (
-      <DanPit key={index} pit={pit} selectable={selectable} selected={selected} popup={popupPitIndex === index ? "+1" : null} onSelect={() => onSelectPit(index)} />
+      <DanPit key={index} pit={pit} selectable={selectable} selected={selected} popup={popupPitIndex === index ? "+1" : null} popupNonce={popupNonce} countPosition={countPosition} onSelect={() => onSelectPit(index)} />
     );
   }
 
@@ -135,13 +150,13 @@ export function OAnQuanBoard({
           {capturePopup}
         </div>
       )}
-      <div key={`popup-${popupNonce ?? 0}`} className="grid grid-cols-[3.45rem_minmax(0,1fr)_3.45rem] gap-1.5 sm:grid-cols-[6rem_minmax(0,1fr)_6rem] sm:gap-2">
-        <QuanPit pit={board[0]} popup={popupPitIndex === 0 ? "+1" : null} />
+      <div className="grid grid-cols-[3.45rem_minmax(0,1fr)_3.45rem] items-center gap-1.5 sm:grid-cols-[6rem_minmax(0,1fr)_6rem] sm:gap-2">
+        <QuanPit pit={board[0]} popup={popupPitIndex === 0 ? "+1" : null} popupNonce={popupNonce} />
         <div className="grid min-w-0 gap-1.5 sm:gap-2">
           <div className="grid min-w-0 grid-cols-5 gap-1 sm:gap-2">{top.map(danPit)}</div>
           <div className="grid min-w-0 grid-cols-5 gap-1 sm:gap-2">{bottom.map(danPit)}</div>
         </div>
-        <QuanPit pit={board[6]} popup={popupPitIndex === 6 ? "+1" : null} />
+        <QuanPit pit={board[6]} popup={popupPitIndex === 6 ? "+1" : null} popupNonce={popupNonce} />
       </div>
       <div className="mt-3 flex justify-center gap-3">
         <button

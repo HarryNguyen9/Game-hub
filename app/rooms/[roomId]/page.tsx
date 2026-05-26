@@ -25,6 +25,10 @@ function titleLabel(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
+function roomPlayerLimit(gameKey: string | null, fallback: number) {
+  return GAME_CATALOG.find((game) => game.id === gameKey)?.maxPlayers || fallback;
+}
+
 export default async function RoomPage({ params }: PageProps) {
   const user = await getCurrentUserWithProfile();
   const { roomId } = await params;
@@ -97,6 +101,8 @@ export default async function RoomPage({ params }: PageProps) {
   }
   const effectiveGameKey = room.game_key || (initialGameSnapshot ? "flappy-rush" : initialFleetSnapshot ? "fleet-duel" : initialOAnQuanSnapshot ? "o-an-quan" : initialChessSnapshot ? "chess" : null);
   const game = GAME_CATALOG.find((item) => item.id === effectiveGameKey);
+  const activeMemberCount = members.filter((member) => member.participationStatus !== "waiting_next_round").length;
+  const maxPlayerLabel = game ? `${activeMemberCount}/${roomPlayerLimit(effectiveGameKey, room.max_players)}` : `${activeMemberCount}`;
 
   return (
     <AppShell user={user}>
@@ -112,7 +118,7 @@ export default async function RoomPage({ params }: PageProps) {
           <div className="flex flex-wrap gap-2">
             {room.room_code && <div className="rounded-3xl bg-sky-100 px-5 py-3 text-center font-black text-sky-800">Code {room.room_code}</div>}
             <div className="rounded-3xl bg-[#ffcf5a] px-5 py-3 text-center font-black">
-              {members.filter((member) => member.participationStatus !== "waiting_next_round").length}/{room.max_players} players
+              {maxPlayerLabel} players
             </div>
           </div>
         </div>

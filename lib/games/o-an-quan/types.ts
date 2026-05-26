@@ -26,6 +26,7 @@ export type OAnQuanMove = {
   direction: OAnQuanDirection | null;
   captured: number;
   reason?: "move" | "timeout" | "no_moves";
+  animationDelayMs?: number;
   createdAt: number;
 };
 

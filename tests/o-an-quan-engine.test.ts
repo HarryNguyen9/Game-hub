@@ -28,8 +28,11 @@ describe("o an quan engine", () => {
     const state = createOAnQuanState("s1", "r1", players);
     const current = state.currentTurnUserId!;
     const pit = state.players[current].side === "bottom" ? 1 : 7;
+    const beforeMove = Date.now();
     expect(applyOAnQuanMove(state, current, pit, "clockwise")).toBeNull();
     expect(state.currentTurnUserId).not.toBe(current);
+    expect(state.turnStartedAt).toBeGreaterThan(beforeMove);
+    expect(state.lastMove?.animationDelayMs).toBeGreaterThan(0);
   });
 
   it("times out and changes turn", () => {

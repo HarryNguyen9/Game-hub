@@ -179,7 +179,7 @@ export function FleetDuelGame({
     >
       {error && <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</p>}
       {turnNotice && (
-        <div className="pointer-events-none fixed left-1/2 top-24 z-50 -translate-x-1/2 animate-[fleet-turn_1600ms_ease-out_forwards] rounded-full bg-cyan-500 px-5 py-3 text-sm font-black text-white shadow-xl">
+        <div className="pointer-events-none absolute left-1/2 top-24 z-30 -translate-x-1/2 animate-[fleet-turn_1600ms_ease-out_forwards] rounded-full bg-cyan-500 px-5 py-3 text-sm font-black text-white shadow-xl">
           Your turn
         </div>
       )}

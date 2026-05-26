@@ -49,6 +49,15 @@ function titleLabel(value: string) {
     .join(" ");
 }
 
+function roomLimits(gameKey: string | null, minPlayers: number, maxPlayers: number) {
+  const game = GAME_CATALOG.find((item) => item.id === gameKey);
+  return {
+    minPlayers: game?.minPlayers ?? minPlayers,
+    maxPlayers: game?.maxPlayers ?? maxPlayers,
+    hasSelectedGame: Boolean(game)
+  };
+}
+
 function GameOptionVisual({ gameId }: { gameId: string }) {
   if (gameId === "chess") {
     return (
@@ -312,9 +321,13 @@ export function RoomClient({
   const lobbyMembers = members.filter((member) => member.participationStatus === "lobby");
   const activeMembers = members.filter((member) => member.participationStatus !== "waiting_next_round");
   const unreadyPlayers = members.filter((member) => member.role === "player" && member.participationStatus === "lobby" && !member.ready);
-  const hasEnoughPlayers = lobbyMembers.length >= minPlayers;
-  const canStart = isHost && status === "waiting" && Boolean(gameKey) && hasEnoughPlayers && lobbyMembers.length <= maxPlayers && unreadyPlayers.length === 0;
   const selectedGame = GAME_CATALOG.find((game) => game.id === gameKey);
+  const displayLimits = roomLimits(gameKey, minPlayers, maxPlayers);
+  const effectiveMinPlayers = displayLimits.minPlayers;
+  const effectiveMaxPlayers = displayLimits.maxPlayers;
+  const hasEnoughPlayers = lobbyMembers.length >= effectiveMinPlayers;
+  const canStart = isHost && status === "waiting" && Boolean(selectedGame) && hasEnoughPlayers && lobbyMembers.length <= effectiveMaxPlayers && unreadyPlayers.length === 0;
+  const playerCountLabel = displayLimits.hasSelectedGame ? `${activeMembers.length}/${effectiveMaxPlayers}` : `${activeMembers.length}`;
   const isLateJoiner = currentMember?.participationStatus === "waiting_next_round";
   const isFlappyActivePlayer = (status === "playing" || status === "ended") && gameKey === "flappy-rush" && currentMember?.participationStatus === "active_game";
   const isFleetActivePlayer = (status === "playing" || status === "ended") && gameKey === "fleet-duel" && currentMember?.participationStatus === "active_game";
@@ -329,7 +342,7 @@ export function RoomClient({
   const startHint = isHost && status === "waiting" ? (
     <>
       {!gameKey && <p className="text-sm font-bold text-slate-500">Choose a game before starting.</p>}
-      {gameKey && !hasEnoughPlayers && <p className="text-sm font-bold text-slate-500">Need {minPlayers} players to start.</p>}
+      {gameKey && !hasEnoughPlayers && <p className="text-sm font-bold text-slate-500">Need {effectiveMinPlayers} players to start.</p>}
       {gameKey && hasEnoughPlayers && unreadyPlayers.length > 0 && <p className="text-sm font-bold text-slate-500">Waiting for all players to be ready.</p>}
     </>
   ) : null;
@@ -421,7 +434,7 @@ export function RoomClient({
           </p>
         )}
         <div className="mt-4 rounded-[1.5rem] bg-slate-50 p-4">
-          <p className="text-sm font-black text-slate-500">Selected game · Players {activeMembers.length}/{maxPlayers}</p>
+          <p className="text-sm font-black text-slate-500">Selected game · Players {playerCountLabel}</p>
           {isHost && status === "waiting" ? (
             <button
               type="button"
