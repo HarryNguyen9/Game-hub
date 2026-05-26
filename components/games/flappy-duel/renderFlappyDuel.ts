@@ -83,15 +83,15 @@ function drawPig(ctx: CanvasRenderingContext2D, options: { x: number; y: number;
   ctx.strokeStyle = self ? "#102033" : "#475569";
   ctx.lineWidth = self ? 3 : 2.2;
   ctx.beginPath();
-  ctx.moveTo(-size * 0.42, -size * 0.36);
-  ctx.quadraticCurveTo(-size * 0.55, -size * 0.83, -size * 0.1, -size * 0.64);
-  ctx.quadraticCurveTo(-size * 0.18, -size * 0.42, -size * 0.42, -size * 0.36);
+  ctx.moveTo(-size * 0.32, -size * 0.32);
+  ctx.quadraticCurveTo(-size * 0.36, -size * 0.74, -size * 0.03, -size * 0.58);
+  ctx.quadraticCurveTo(-size * 0.08, -size * 0.4, -size * 0.32, -size * 0.32);
   ctx.fill();
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(size * 0.42, -size * 0.36);
-  ctx.quadraticCurveTo(size * 0.55, -size * 0.83, size * 0.1, -size * 0.64);
-  ctx.quadraticCurveTo(size * 0.18, -size * 0.42, size * 0.42, -size * 0.36);
+  ctx.moveTo(size * 0.32, -size * 0.3);
+  ctx.quadraticCurveTo(size * 0.5, -size * 0.64, size * 0.58, -size * 0.2);
+  ctx.quadraticCurveTo(size * 0.42, -size * 0.38, size * 0.32, -size * 0.3);
   ctx.fill();
   ctx.stroke();
 
@@ -99,38 +99,38 @@ function drawPig(ctx: CanvasRenderingContext2D, options: { x: number; y: number;
   ctx.strokeStyle = self ? "#102033" : "#475569";
   ctx.lineWidth = self ? 3.5 : 2.5;
   ctx.beginPath();
-  ctx.ellipse(0, 0, size * 0.62, size * 0.62, 0, 0, Math.PI * 2);
+  ctx.ellipse(-size * 0.04, 0, size * 0.62, size * 0.58, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
   ctx.fillStyle = "rgba(255,255,255,0.38)";
   ctx.beginPath();
-  ctx.ellipse(-size * 0.22, -size * 0.2, size * 0.16, size * 0.1, -0.45, 0, Math.PI * 2);
+  ctx.ellipse(-size * 0.25, -size * 0.17, size * 0.15, size * 0.09, -0.45, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = "#fff";
   ctx.beginPath();
-  ctx.arc(-size * 0.2, -size * 0.12, size * 0.12, 0, Math.PI * 2);
-  ctx.arc(size * 0.2, -size * 0.12, size * 0.12, 0, Math.PI * 2);
+  ctx.arc(size * 0.08, -size * 0.14, size * 0.12, 0, Math.PI * 2);
+  ctx.arc(size * 0.34, -size * 0.12, size * 0.1, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = "#102033";
   ctx.beginPath();
-  ctx.arc(-size * 0.2, -size * 0.11, size * 0.05, 0, Math.PI * 2);
-  ctx.arc(size * 0.2, -size * 0.11, size * 0.05, 0, Math.PI * 2);
+  ctx.arc(size * 0.12, -size * 0.13, size * 0.05, 0, Math.PI * 2);
+  ctx.arc(size * 0.37, -size * 0.11, size * 0.045, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = snoutColor;
   ctx.strokeStyle = self ? "#102033" : "#64748b";
   ctx.lineWidth = self ? 2.8 : 2;
   ctx.beginPath();
-  ctx.ellipse(0, size * 0.13, size * 0.3, size * 0.22, 0, 0, Math.PI * 2);
+  ctx.ellipse(size * 0.33, size * 0.12, size * 0.27, size * 0.2, 0.06, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
   ctx.fillStyle = "#e45c87";
   ctx.beginPath();
-  ctx.arc(-size * 0.1, size * 0.11, size * 0.045, 0, Math.PI * 2);
-  ctx.arc(size * 0.1, size * 0.11, size * 0.045, 0, Math.PI * 2);
+  ctx.arc(size * 0.25, size * 0.11, size * 0.04, 0, Math.PI * 2);
+  ctx.arc(size * 0.4, size * 0.13, size * 0.04, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.strokeStyle = accentColor;
@@ -142,14 +142,13 @@ function drawPig(ctx: CanvasRenderingContext2D, options: { x: number; y: number;
   ctx.stroke();
 
   ctx.beginPath();
-  ctx.moveTo(size * 0.54, size * 0.23);
-  ctx.bezierCurveTo(size * 0.76, size * 0.12, size * 0.78, size * 0.38, size * 0.58, size * 0.34);
+  ctx.moveTo(-size * 0.58, size * 0.08);
+  ctx.bezierCurveTo(-size * 0.84, -size * 0.03, -size * 0.86, size * 0.28, -size * 0.64, size * 0.27);
   ctx.stroke();
 
   ctx.fillStyle = "#ff7aa0";
   ctx.beginPath();
-  ctx.arc(-size * 0.39, size * 0.12, size * 0.08, 0, Math.PI * 2);
-  ctx.arc(size * 0.39, size * 0.12, size * 0.08, 0, Math.PI * 2);
+  ctx.arc(-size * 0.28, size * 0.12, size * 0.065, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.restore();
