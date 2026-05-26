@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { PointerEvent } from "react";
-import { Maximize2, Minimize2, RotateCcw, Trophy } from "lucide-react";
+import { RotateCcw, Trophy } from "lucide-react";
+import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
 import { Button } from "@/components/ui/button";
 import type { FlappySnapshot } from "@/lib/games/flappy-rush/types";
 import { renderFlappyRush } from "./renderFlappyRush";
@@ -39,6 +40,7 @@ export function FlappyRushGame({
   const [returning, setReturning] = useState(false);
   const currentPlayer = snapshot?.players[currentUserId];
   const ended = snapshot?.status === "ended";
+  const leaderboard = snapshot?.leaderboard || [];
 
   useEffect(() => {
     previousSnapshotRef.current = snapshotRef.current;
@@ -107,55 +109,54 @@ export function FlappyRushGame({
     flap();
   }
 
-  const connectionLabel = connected ? "Connected" : "Reconnecting";
-  const leaderboard = snapshot?.leaderboard || [];
+  function returnToLobby() {
+    if (returning) return;
+    setReturning(true);
+    backToLobby();
+  }
+
+  const header = (
+    <div className="grid gap-2 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
+      <span className={`w-fit rounded-full px-3 py-1 text-xs font-black ${connected ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+        {connected ? "Connected" : "Reconnecting"}
+      </span>
+      <div className="flex min-w-0 items-center gap-2 overflow-x-auto py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {leaderboard.map((player) => (
+          <span
+            key={player.userId}
+            className={`flex min-w-0 max-w-[9.5rem] shrink-0 items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-black shadow-sm sm:max-w-[11rem] ${
+              player.alive ? "text-slate-700" : "text-slate-400"
+            }`}
+          >
+            <span className="grid size-5 shrink-0 place-items-center rounded-full bg-rose-100 text-[10px] text-rose-600">{player.displayName.charAt(0).toUpperCase()}</span>
+            <span className="min-w-0 truncate">{player.displayName}</span>
+            <span className="shrink-0">{player.score}</span>
+            <span className={`size-2 shrink-0 rounded-full ${player.alive ? "bg-emerald-400" : "bg-slate-300"}`} />
+          </span>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
-    <div className={expanded ? "fixed inset-0 z-50 flex h-dvh flex-col gap-3 overflow-y-auto bg-white p-3" : "relative mt-4 grid gap-4"}>
-      <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-3xl bg-slate-50 px-4 py-3">
-        <span className={`w-fit rounded-full px-3 py-1 text-xs font-black ${connected ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
-          {connectionLabel}
-        </span>
-        <div className="min-w-0 overflow-hidden">
-          <div className="flex min-w-0 items-center gap-2 overflow-x-auto py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {leaderboard.map((player) => (
-              <span
-                key={player.userId}
-                className={`flex min-w-0 max-w-[9.5rem] shrink-0 items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-black shadow-sm sm:max-w-[11rem] ${
-                  player.alive ? "text-slate-700" : "text-slate-400"
-                }`}
-              >
-                <span className="grid size-5 shrink-0 place-items-center rounded-full bg-rose-100 text-[10px] text-rose-600">{player.displayName.charAt(0).toUpperCase()}</span>
-                <span className="min-w-0 truncate">{player.displayName}</span>
-                <span className="shrink-0">{player.score}</span>
-                <span className={`size-2 shrink-0 rounded-full ${player.alive ? "bg-emerald-400" : "bg-slate-300"}`} />
-              </span>
-            ))}
-          </div>
-        </div>
-        <Button
-          type="button"
-          variant="secondary"
-          className="grid size-11 shrink-0 place-items-center rounded-2xl bg-white/92 p-0 shadow-sm"
-          onClick={onToggleExpanded}
-          aria-label={expanded ? "Exit full screen" : "Open full screen"}
-          title={expanded ? "Small" : "Full"}
-        >
-          {expanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-        </Button>
-      </div>
+    <GameFullscreenShell
+      expanded={expanded}
+      onToggleExpanded={onToggleExpanded}
+      header={header}
+      footer={<p className="text-center text-sm font-semibold text-slate-500">Tap / click / Space to flap. Server owns score, death, and pipes.</p>}
+    >
       {error && <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</p>}
       <div
         className={
           expanded
-            ? "relative grid min-h-[68dvh] flex-1 place-items-center overflow-hidden rounded-[1.5rem] bg-sky-100 shadow-inner max-[700px]:min-h-[74dvh] max-[700px]:landscape:min-h-[66dvh]"
+            ? "relative grid min-h-[min(74dvh,calc(100dvw*0.58))] flex-1 place-items-center overflow-hidden rounded-[1.5rem] bg-sky-100 shadow-inner"
             : "relative grid min-h-[24rem] place-items-center overflow-hidden rounded-[1.5rem] bg-sky-100 shadow-inner sm:min-h-[28rem] lg:min-h-0 lg:aspect-[900/520]"
         }
       >
         <canvas
           ref={canvasRef}
           onPointerDown={handlePointerDown}
-          className={expanded ? "block h-auto max-h-full w-full select-none touch-none object-contain" : "absolute inset-0 block h-full w-full select-none touch-none object-contain"}
+          className="absolute inset-0 block h-full w-full select-none touch-none object-contain"
           aria-label="Flappy Rush game canvas"
         />
         {countdown && (
@@ -176,15 +177,7 @@ export function FlappyRushGame({
               <p className="mt-2 text-2xl font-black">Round ended</p>
               <p className="mt-1 text-sm font-bold text-slate-500">Waiting for the host to return everyone to the lobby.</p>
               {isHost && (
-                <Button
-                  className="mt-4 w-full"
-                  disabled={returning}
-                  onClick={() => {
-                    if (returning) return;
-                    setReturning(true);
-                    backToLobby();
-                  }}
-                >
+                <Button className="mt-4 w-full" disabled={returning} onClick={returnToLobby}>
                   <RotateCcw size={18} /> {returning ? "Returning..." : "Back to Lobby"}
                 </Button>
               )}
@@ -204,9 +197,7 @@ export function FlappyRushGame({
                 <Trophy size={24} />
               </div>
               <p className="mt-2 text-2xl font-black">Round ended</p>
-              <p className="mt-1 text-sm font-bold text-slate-500">
-                Winner: {snapshot.leaderboard[0]?.displayName || "Nobody"}
-              </p>
+              <p className="mt-1 text-sm font-bold text-slate-500">Winner: {snapshot.leaderboard[0]?.displayName || "Nobody"}</p>
               <div className="mt-4 grid gap-2 text-left">
                 {snapshot.leaderboard.map((player, index) => (
                   <div key={player.userId} className={`flex items-center justify-between rounded-2xl px-4 py-2 text-sm font-black ${index === 0 ? "bg-amber-50 text-amber-700" : "bg-slate-50"}`}>
@@ -217,25 +208,17 @@ export function FlappyRushGame({
                   </div>
                 ))}
               </div>
-              {isHost && (
-                <Button
-                  className="mt-4 w-full"
-                  disabled={returning}
-                  onClick={() => {
-                    if (returning) return;
-                    setReturning(true);
-                    backToLobby();
-                  }}
-                >
+              {isHost ? (
+                <Button className="mt-4 w-full" disabled={returning} onClick={returnToLobby}>
                   <RotateCcw size={18} /> {returning ? "Returning..." : "Back to Lobby"}
                 </Button>
+              ) : (
+                <p className="mt-4 text-sm font-bold text-slate-500">Waiting for host to return to lobby.</p>
               )}
-              {!isHost && <p className="mt-4 text-sm font-bold text-slate-500">Waiting for host to return to lobby.</p>}
             </div>
           </div>
         )}
       </div>
-      <p className="text-center text-sm font-semibold text-slate-500">Tap / click / Space to flap. Server owns score, death, and pipes.</p>
-    </div>
+    </GameFullscreenShell>
   );
 }

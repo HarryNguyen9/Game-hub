@@ -18,6 +18,7 @@ export type FlappyPipe = {
   id: string;
   x: number;
   gapY: number;
+  gapSize: number;
   passedBy: string[];
 };
 

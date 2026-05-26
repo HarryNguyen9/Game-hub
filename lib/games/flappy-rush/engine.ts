@@ -8,18 +8,19 @@ type PlayerInput = {
   displayName: string;
 };
 
-function gapFor(index: number) {
-  const min = 120;
-  const max = FLAPPY_CONFIG.worldHeight - 120;
-  const wave = Math.sin(index * 1.8) * 95 + Math.cos(index * 0.7) * 45;
-  return Math.max(min, Math.min(max, FLAPPY_CONFIG.worldHeight / 2 + wave));
+function randomBetween(min: number, max: number) {
+  return min + Math.random() * (max - min);
 }
 
 function createPipe(index: number, x: number): FlappyPipe {
+  const gapSize = Math.round(randomBetween(132, 178));
+  const halfGap = gapSize / 2;
+  const padding = 92;
   return {
     id: `pipe-${index}`,
     x,
-    gapY: gapFor(index),
+    gapY: Math.round(randomBetween(padding + halfGap, FLAPPY_CONFIG.worldHeight - padding - halfGap)),
+    gapSize,
     passedBy: []
   };
 }

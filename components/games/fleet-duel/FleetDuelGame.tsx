@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { RotateCcw, Shuffle, Trash2, Ship, CheckCircle2 } from "lucide-react";
+import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
 import { Button } from "@/components/ui/button";
 import { FLEET_CONFIG } from "@/lib/games/fleet-duel/config";
 import type { FleetCell, FleetShip, FleetSnapshot } from "@/lib/games/fleet-duel/types";
@@ -55,6 +56,8 @@ export function FleetDuelGame({
   currentUserId,
   isHost,
   onGameEnd,
+  expanded,
+  onToggleExpanded,
   initialSnapshot,
   roomStatus
 }: {
@@ -62,6 +65,8 @@ export function FleetDuelGame({
   currentUserId: string;
   isHost: boolean;
   onGameEnd?: () => void;
+  expanded: boolean;
+  onToggleExpanded: () => void;
   initialSnapshot?: FleetSnapshot | null;
   roomStatus: "playing" | "ended";
 }) {
@@ -101,20 +106,23 @@ export function FleetDuelGame({
   const ownShips = localShips.length ? localShips : snapshot.you.ships.map((ship) => ({ ...ship, cells: ship.cells || [], hits: ship.hits }));
 
   return (
-    <div className="mt-4 grid gap-4">
-      <div className="rounded-3xl bg-cyan-50 p-4">
+    <GameFullscreenShell
+      expanded={expanded}
+      onToggleExpanded={onToggleExpanded}
+      header={
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
+          <div className="min-w-0">
             <p className="text-sm font-black text-cyan-700">{connected ? "Fleet server connected" : "Reconnecting"}</p>
             <h3 className="text-2xl font-black">Fleet Duel</h3>
             <p className="text-sm font-bold text-slate-500">
               {snapshot.status === "setup" ? "Place your fleet." : snapshot.status === "battle" ? (canFire ? "Your turn." : "Opponent's turn.") : "Battle ended."}
             </p>
           </div>
-          <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-cyan-700">{snapshot.status.toUpperCase()}</span>
+          <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-cyan-700 shadow-sm">{snapshot.status.toUpperCase()}</span>
         </div>
-        {error && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</p>}
-      </div>
+      }
+    >
+      {error && <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</p>}
 
       {snapshot.status === "setup" && (
         <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
@@ -190,6 +198,6 @@ export function FleetDuelGame({
           )}
         </div>
       )}
-    </div>
+    </GameFullscreenShell>
   );
 }

@@ -181,8 +181,9 @@ export function renderFlappyRush(ctx: CanvasRenderingContext2D, options: RenderO
   for (const pipe of snapshot.pipes) {
     const previousPipe = previousSnapshot?.pipes.find((candidate) => candidate.id === pipe.id);
     const x = previousPipe ? lerp(previousPipe.x, pipe.x, interpolation) : pipe.x;
-    const gapTop = pipe.gapY - pipeGap / 2;
-    const gapBottom = pipe.gapY + pipeGap / 2;
+    const gapSize = pipe.gapSize || pipeGap;
+    const gapTop = pipe.gapY - gapSize / 2;
+    const gapBottom = pipe.gapY + gapSize / 2;
     drawPipe(ctx, x, -8, pipeWidth, gapTop + 8, true);
     drawPipe(ctx, x, gapBottom, pipeWidth, worldHeight - gapBottom + 10, false);
   }

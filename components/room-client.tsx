@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { io, type Socket } from "socket.io-client";
-import { LogOut, Maximize2, Minimize2, Play, RotateCcw } from "lucide-react";
+import { Check, Gamepad2, LogOut, Maximize2, Minimize2, Play, RotateCcw, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { FlappyRushGame } from "@/components/games/flappy-rush/FlappyRushGame";
@@ -37,6 +37,48 @@ function titleLabel(value: string) {
     .filter(Boolean)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
+}
+
+function GameOptionVisual({ gameId }: { gameId: string }) {
+  if (gameId === "fleet-duel") {
+    return (
+      <div className="relative h-24 overflow-hidden rounded-[1.25rem] bg-gradient-to-b from-cyan-200 via-sky-100 to-blue-200 shadow-inner">
+        <div className="absolute inset-x-0 bottom-0 h-10 bg-cyan-300/50" />
+        <div className="absolute left-4 top-3 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-cyan-700">2 players</div>
+        <div className="absolute right-4 top-3 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-blue-700">Turn-based</div>
+        <div className="absolute left-[24%] top-[50%] h-7 w-16 rounded-b-xl rounded-t-md bg-slate-700 shadow-md">
+          <div className="absolute -top-4 left-5 h-4 w-7 rounded-t-lg bg-slate-500" />
+          <div className="absolute -right-4 top-2 h-0 w-0 border-y-[8px] border-l-[16px] border-y-transparent border-l-slate-700" />
+          <div className="absolute bottom-1 left-2 h-1 w-10 rounded-full bg-cyan-200" />
+        </div>
+        <div className="absolute right-[22%] top-[52%] h-6 w-14 rounded-b-xl rounded-t-md bg-rose-400 opacity-75 shadow-md">
+          <div className="absolute -top-3 left-4 h-3 w-6 rounded-t-lg bg-rose-300" />
+          <div className="absolute -left-3 top-2 h-0 w-0 border-y-[7px] border-r-[14px] border-y-transparent border-r-rose-400" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative h-24 overflow-hidden rounded-[1.25rem] bg-gradient-to-b from-sky-200 via-emerald-50 to-amber-100 shadow-inner">
+      <div className="absolute left-6 top-5 h-4 w-16 rounded-full bg-white/55" />
+      <div className="absolute right-8 top-6 h-4 w-14 rounded-full bg-white/55" />
+      <div className="absolute bottom-0 left-0 h-2 w-full bg-sky-300" />
+      <div className="absolute right-8 top-0 h-9 w-9 rounded-b-lg border-2 border-emerald-500 bg-emerald-300" />
+      <div className="absolute bottom-2 right-8 h-10 w-9 rounded-t-lg border-2 border-emerald-500 bg-emerald-300" />
+      <div className="absolute left-4 top-3 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-sky-700">1-4 players</div>
+      <div className="absolute right-4 top-3 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-rose-500">Realtime</div>
+      <div className="absolute left-[30%] top-[48%] h-10 w-11 -rotate-3 rounded-[50%] border-2 border-slate-800 bg-pink-300 shadow-md">
+        <div className="absolute -top-2 left-1.5 h-4 w-4 rotate-[-18deg] rounded-tl-full rounded-tr-full bg-pink-400" />
+        <div className="absolute -top-1 right-1 h-4 w-3 rotate-[28deg] rounded-tl-full rounded-tr-full bg-pink-400" />
+        <div className="absolute left-5 top-2 h-2.5 w-2.5 rounded-full bg-white" />
+        <div className="absolute right-1.5 top-2.5 h-2 w-2 rounded-full bg-white" />
+        <div className="absolute left-[1.45rem] top-[0.65rem] h-1.5 w-1.5 rounded-full bg-slate-900" />
+        <div className="absolute right-[0.55rem] top-[0.72rem] h-1.5 w-1.5 rounded-full bg-slate-900" />
+        <div className="absolute bottom-2 right-0 h-4 w-6 rounded-full border border-slate-700 bg-pink-200" />
+      </div>
+    </div>
+  );
 }
 
 export function RoomClient({
@@ -75,6 +117,7 @@ export function RoomClient({
   const [endedFleetSnapshot, setEndedFleetSnapshot] = useState<FleetSnapshot | null>(initialFleetSnapshot);
   const [minPlayers, setMinPlayers] = useState(initialMinPlayers);
   const [maxPlayers, setMaxPlayers] = useState(initialMaxPlayers);
+  const [gamePickerOpen, setGamePickerOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -175,6 +218,7 @@ export function RoomClient({
     setMinPlayers(payload.minPlayers || minPlayers);
     setMaxPlayers(payload.maxPlayers || maxPlayers);
     setPendingAction(null);
+    setGamePickerOpen(false);
     router.refresh();
   }
 
@@ -236,6 +280,51 @@ export function RoomClient({
           </span>
           <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-black text-amber-700">{titleLabel(status)}</span>
         </div>
+        {gamePickerOpen && (
+          <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Choose game">
+            <div className="max-h-[90dvh] w-full max-w-3xl overflow-y-auto rounded-[2rem] bg-white p-5 shadow-2xl">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-black uppercase tracking-wide text-[#ff7a90]">Choose game</p>
+                  <h2 className="text-2xl font-black text-slate-900">Pick the room game</h2>
+                </div>
+                <Button type="button" variant="secondary" className="grid size-10 place-items-center rounded-2xl p-0" onClick={() => setGamePickerOpen(false)} aria-label="Close game picker">
+                  <X size={18} />
+                </Button>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {GAME_CATALOG.map((game) => {
+                  const selected = game.id === gameKey;
+                  return (
+                    <button
+                      key={game.id}
+                      type="button"
+                      disabled={Boolean(pendingAction)}
+                      onClick={() => chooseGame(game.id)}
+                      className={`rounded-[1.75rem] p-3 text-left shadow-sm ring-1 transition hover:-translate-y-0.5 hover:shadow-md ${
+                        selected ? "bg-rose-50 ring-rose-200" : "bg-white ring-slate-100"
+                      }`}
+                    >
+                      <GameOptionVisual gameId={game.id} />
+                      <div className="mt-3 flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-black text-slate-900">{game.name}</p>
+                          <p className="mt-1 text-sm font-semibold text-slate-500">{game.description}</p>
+                          <p className="mt-2 text-xs font-black text-slate-400">
+                            {game.minPlayers}-{game.maxPlayers} players
+                          </p>
+                        </div>
+                        <span className={`grid size-8 shrink-0 place-items-center rounded-full ${selected ? "bg-[#ff7a90] text-white" : "bg-slate-100 text-slate-400"}`}>
+                          {selected ? <Check size={16} /> : <Gamepad2 size={16} />}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
         {message && <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{message}</p>}
         {isLateJoiner && (
           <p className="mt-4 rounded-2xl bg-sky-50 px-4 py-3 text-sm font-bold text-sky-700">
@@ -245,21 +334,18 @@ export function RoomClient({
         <div className="mt-4 rounded-[1.5rem] bg-slate-50 p-4">
           <p className="text-sm font-black text-slate-500">Selected game · Players {activeMembers.length}/{maxPlayers}</p>
           {isHost && status === "waiting" ? (
-            <select
-              value={gameKey || ""}
+            <button
+              type="button"
               disabled={Boolean(pendingAction)}
-              onChange={(event) => chooseGame(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold outline-none focus:border-rose-300"
+              onClick={() => setGamePickerOpen(true)}
+              className="mt-2 flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left font-bold outline-none transition hover:border-rose-300 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <option value="" disabled>
-                Choose a game
-              </option>
-              {GAME_CATALOG.map((game) => (
-                <option key={game.id} value={game.id}>
-                  {game.name}
-                </option>
-              ))}
-            </select>
+              <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-sky-50 text-xl">{selectedGame?.icon || "🎮"}</span>
+              <span className="min-w-0">
+                <span className="block truncate text-slate-900">{selectedGame?.name || "Choose a game"}</span>
+                <span className="block truncate text-xs text-slate-500">{selectedGame?.description || "Open game catalog"}</span>
+              </span>
+            </button>
           ) : (
             <p className="mt-1 text-xl font-black text-slate-900">{selectedGame?.name || "No game selected yet"}</p>
           )}
@@ -281,6 +367,8 @@ export function RoomClient({
             currentUserId={currentUserId}
             isHost={isHost}
             onGameEnd={markGameEnded}
+            expanded={gameExpanded}
+            onToggleExpanded={() => setGameExpanded((value) => !value)}
             initialSnapshot={endedFleetSnapshot}
             roomStatus={status === "ended" ? "ended" : "playing"}
           />
@@ -361,3 +449,5 @@ export function RoomClient({
     </div>
   );
 }
+
+

@@ -6,7 +6,7 @@ export function serializeFlappyState(state: FlappyState): FlappySnapshot {
   return {
     ...state,
     players: Object.fromEntries(Object.entries(state.players).map(([userId, player]) => [userId, { ...player }])),
-    pipes: state.pipes.map((pipe) => ({ ...pipe, passedBy: [...pipe.passedBy] })),
+    pipes: state.pipes.map((pipe) => ({ ...pipe, gapSize: pipe.gapSize || FLAPPY_CONFIG.pipeGap, passedBy: [...pipe.passedBy] })),
     serverTime: Date.now(),
     config: {
       worldWidth: FLAPPY_CONFIG.worldWidth,

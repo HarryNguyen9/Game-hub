@@ -16,7 +16,8 @@ export function hitPipe(player: FlappyPlayerState, pipe: FlappyPipe) {
 
   if (birdRight < pipeLeft || birdLeft > pipeRight) return false;
 
-  const gapTop = pipe.gapY - FLAPPY_CONFIG.pipeGap / 2;
-  const gapBottom = pipe.gapY + FLAPPY_CONFIG.pipeGap / 2;
+  const gapSize = pipe.gapSize || FLAPPY_CONFIG.pipeGap;
+  const gapTop = pipe.gapY - gapSize / 2;
+  const gapBottom = pipe.gapY + gapSize / 2;
   return player.y - half < gapTop || player.y + half > gapBottom;
 }
