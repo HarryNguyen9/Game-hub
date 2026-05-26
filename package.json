@@ -10,9 +10,9 @@
     "dev": "concurrently \"npm:dev:web\" \"npm:socket:dev\"",
     "dev:web": "next dev",
     "socket:dev": "tsx server/index.ts",
-    "socket:start": "tsx server/index.ts",
     "build": "next build",
     "start": "next start",
+    "socket:start": "tsx server/index.ts",
     "lint": "eslint .",
     "test": "vitest run",
     "seed:admin": "tsx scripts/seed-admin.ts"
