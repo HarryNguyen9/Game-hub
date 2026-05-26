@@ -2,7 +2,12 @@ import { createClient } from "@supabase/supabase-js";
 import type { Server, Socket } from "socket.io";
 import type { AuthedSocket } from "./auth";
 import { GAME_CATALOG } from "../lib/constants";
-import { emitCurrentFlappyDuelSnapshot, startFlappyDuel, stopFlappyDuel } from "./socket/flappy-duel-handlers";
+import { emitCurrentFlappyDuelSnapshot, hasFlappyDuelRuntime, startFlappyDuel, stopFlappyDuel } from "./socket/flappy-duel-handlers";
+
+const DISCONNECT_GRACE_MS = 7000;
+const presenceDisconnectTimers = new Map<string, NodeJS.Timeout>();
+const startLocks = new Set<string>();
+const backToLobbyLocks = new Set<string>();
 
 function serviceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -82,6 +87,18 @@ function roomError(socket: Socket, message: string) {
   socket.emit("room:error", { message });
 }
 
+function presenceKey(roomId: string, userId: string) {
+  return `${roomId}:${userId}`;
+}
+
+function clearPresenceDisconnect(roomId: string, userId: string) {
+  const key = presenceKey(roomId, userId);
+  const timer = presenceDisconnectTimers.get(key);
+  if (!timer) return;
+  clearTimeout(timer);
+  presenceDisconnectTimers.delete(key);
+}
+
 export function registerRoomHandlers(io: Server, socket: Socket) {
   const authedSocket = socket as AuthedSocket;
   const user = authedSocket.data.user;
@@ -106,6 +123,18 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
     await emitRoom(io, roomId);
   }
 
+  function scheduleLobbyDisconnect(roomId: string) {
+    clearPresenceDisconnect(roomId, user.userId);
+    const key = presenceKey(roomId, user.userId);
+    const timer = setTimeout(() => {
+      presenceDisconnectTimers.delete(key);
+      void syncLobbyPresence(roomId, false).catch((error) => {
+        console.error("[room:disconnect] Could not sync lobby presence", { error, roomId, userId: user.userId });
+      });
+    }, DISCONNECT_GRACE_MS);
+    presenceDisconnectTimers.set(key, timer);
+  }
+
   socket.on("room:join", async ({ roomId, presence = true }: { roomId?: string; presence?: boolean }) => {
     if (!roomId) return roomError(socket, "Room id is required.");
 
@@ -115,12 +144,14 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
     const channel = `room:${roomId}`;
     socket.join(channel);
     if (presence) {
+      clearPresenceDisconnect(roomId, user.userId);
       authedSocket.data.rooms = new Set([...(authedSocket.data.rooms || []), roomId]);
       await syncLobbyPresence(roomId, true);
     }
     const snapshot = await roomSnapshot(roomId);
     socket.emit("room:joined", snapshot);
     await emitRoom(io, roomId);
+    console.log("[room:join]", { roomId, userId: user.userId, presence, status: snapshot.status });
     if (snapshot.room?.status === "playing" && snapshot.room.game_key === "flappy-duel" && member.participation_status === "active_game") {
       emitCurrentFlappyDuelSnapshot(socket, roomId);
     }
@@ -151,76 +182,94 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
 
     await supabase.from("room_members").update({ ready: !member.ready }).match({ room_id: roomId, user_id: user.userId });
     await emitRoom(io, roomId);
+    console.log("[room:toggle_ready]", { roomId, userId: user.userId, ready: !member.ready });
   });
 
   socket.on("room:start_game", async ({ roomId }: { roomId?: string }) => {
     if (!roomId) return roomError(socket, "Room id is required.");
+    if (startLocks.has(roomId)) return roomError(socket, "Game is already starting.");
+    startLocks.add(roomId);
     const supabase = serviceClient();
-    const { data: room } = await supabase.from("rooms").select("host_user_id, status, game_key").eq("id", roomId).single();
-    if (!room || room.host_user_id !== user.userId) return roomError(socket, "Only the host can start.");
-    if (room.status !== "waiting") return roomError(socket, "Room is not waiting.");
-    if (!room.game_key) return roomError(socket, "Choose a game before starting.");
-
-    const { data: members } = await supabase.from("room_members").select("role, ready, participation_status").eq("room_id", roomId);
-    const unready = (members || []).filter((member) => member.role === "player" && member.participation_status === "lobby" && !member.ready);
-    if (unready.length > 0) return roomError(socket, "Waiting for all players to be ready.");
-
-    const { data: activePlayers, error: activePlayersError } = await supabase
-      .from("room_members")
-      .select("user_id, app_users(username, display_name)")
-      .eq("room_id", roomId)
-      .eq("participation_status", "lobby");
-
-    if (activePlayersError) return roomError(socket, `Could not load active players: ${activePlayersError.message}`);
-    if (!activePlayers?.length) return roomError(socket, "Cannot start without active players.");
-
-    const { data: session, error: sessionError } = await supabase
-      .from("game_sessions")
-      .insert({ room_id: roomId, game_key: room.game_key, status: "playing", started_at: new Date().toISOString() })
-      .select("id")
-      .single();
-
-    if (sessionError || !session) return roomError(socket, sessionError?.message || "Could not create game session.");
-
     try {
-      if (room.game_key === "flappy-duel") {
-        await startFlappyDuel(io, roomId, session.id, activePlayers);
+      const { data: room } = await supabase.from("rooms").select("host_user_id, status, game_key").eq("id", roomId).single();
+      const member = await ensureMember(roomId, user.userId);
+      if (!room || !member || room.host_user_id !== user.userId || member.role !== "host") return roomError(socket, "Only the host can start.");
+      if (room.status !== "waiting") return roomError(socket, "Room is not waiting.");
+      if (!room.game_key) return roomError(socket, "Choose a game before starting.");
+      if (room.game_key === "flappy-duel" && hasFlappyDuelRuntime(roomId)) return roomError(socket, "A game is already running for this room.");
+
+      const { data: members } = await supabase.from("room_members").select("role, ready, participation_status").eq("room_id", roomId);
+      const unready = (members || []).filter((member) => member.role === "player" && member.participation_status === "lobby" && !member.ready);
+      if (unready.length > 0) return roomError(socket, "Waiting for all players to be ready.");
+
+      const { data: activePlayers, error: activePlayersError } = await supabase
+        .from("room_members")
+        .select("user_id, app_users(username, display_name)")
+        .eq("room_id", roomId)
+        .eq("participation_status", "lobby");
+
+      if (activePlayersError) return roomError(socket, `Could not load active players: ${activePlayersError.message}`);
+      if (!activePlayers?.length) return roomError(socket, "Cannot start without active players.");
+
+      const { data: session, error: sessionError } = await supabase
+        .from("game_sessions")
+        .insert({ room_id: roomId, game_key: room.game_key, status: "playing", started_at: new Date().toISOString() })
+        .select("id")
+        .single();
+
+      if (sessionError || !session) return roomError(socket, sessionError?.message || "Could not create game session.");
+
+      try {
+        if (room.game_key === "flappy-duel") {
+          await startFlappyDuel(io, roomId, session.id, activePlayers);
+        }
+      } catch (error) {
+        console.error("[room:start_game] Could not start game runtime", { error, roomId, gameKey: room.game_key });
+        await supabase.from("game_sessions").update({ status: "ended", ended_at: new Date().toISOString() }).eq("id", session.id);
+        return roomError(socket, error instanceof Error ? `Could not start game runtime: ${error.message}` : "Could not start game runtime.");
       }
-    } catch (error) {
-      console.error("[room:start_game] Could not start game runtime", { error, roomId, gameKey: room.game_key });
-      await supabase.from("game_sessions").update({ status: "ended", ended_at: new Date().toISOString() }).eq("id", session.id);
-      return roomError(socket, error instanceof Error ? `Could not start game runtime: ${error.message}` : "Could not start game runtime.");
-    }
 
-    const { error: roomUpdateError } = await supabase.from("rooms").update({ status: "playing" }).eq("id", roomId);
-    if (roomUpdateError) {
-      await stopFlappyDuel(roomId);
-      await supabase.from("game_sessions").update({ status: "ended", ended_at: new Date().toISOString() }).eq("id", session.id);
-      return roomError(socket, `Could not update room status: ${roomUpdateError.message}`);
-    }
-    await supabase.from("room_members").update({ participation_status: "active_game" }).eq("room_id", roomId).eq("participation_status", "lobby");
-    await supabase.from("room_members").update({ ready: true }).eq("room_id", roomId).eq("role", "host");
+      const { error: roomUpdateError } = await supabase.from("rooms").update({ status: "playing" }).eq("id", roomId);
+      if (roomUpdateError) {
+        await stopFlappyDuel(roomId);
+        await supabase.from("game_sessions").update({ status: "ended", ended_at: new Date().toISOString() }).eq("id", session.id);
+        return roomError(socket, `Could not update room status: ${roomUpdateError.message}`);
+      }
+      await supabase.from("room_members").update({ participation_status: "active_game" }).eq("room_id", roomId).eq("participation_status", "lobby");
+      await supabase.from("room_members").update({ ready: true }).eq("room_id", roomId).eq("role", "host");
 
-    const snapshot = await roomSnapshot(roomId);
-    await emitRoom(io, roomId);
+      const snapshot = await roomSnapshot(roomId);
+      await emitRoom(io, roomId);
+      console.log("[room:start_game]", { roomId, sessionId: session.id, gameKey: room.game_key, activePlayers: activePlayers.length });
 
-    if (room.game_key !== "flappy-duel") {
-      io.to(`room:${roomId}`).emit("game:start", snapshot);
+      if (room.game_key !== "flappy-duel") {
+        io.to(`room:${roomId}`).emit("game:start", snapshot);
+      }
+    } finally {
+      startLocks.delete(roomId);
     }
   });
 
   socket.on("room:back_to_lobby", async ({ roomId }: { roomId?: string }) => {
     if (!roomId) return roomError(socket, "Room id is required.");
+    if (backToLobbyLocks.has(roomId)) return roomError(socket, "Room is already returning to lobby.");
+    backToLobbyLocks.add(roomId);
     const supabase = serviceClient();
-    const { data: room } = await supabase.from("rooms").select("host_user_id").eq("id", roomId).single();
-    if (!room || room.host_user_id !== user.userId) return roomError(socket, "Only the host can go back to lobby.");
+    try {
+      const { data: room } = await supabase.from("rooms").select("host_user_id").eq("id", roomId).single();
+      const member = await ensureMember(roomId, user.userId);
+      if (!room || !member || room.host_user_id !== user.userId || member.role !== "host") return roomError(socket, "Only the host can go back to lobby.");
 
-    await stopFlappyDuel(roomId);
-    await supabase.from("rooms").update({ status: "waiting" }).eq("id", roomId);
-    await supabase.from("room_members").update({ participation_status: "lobby", ready: false }).eq("room_id", roomId);
-    await supabase.from("room_members").update({ ready: true, participation_status: "lobby" }).match({ room_id: roomId, user_id: room.host_user_id });
-    await supabase.from("game_sessions").update({ status: "ended", ended_at: new Date().toISOString() }).eq("room_id", roomId).eq("status", "playing");
-    await emitRoom(io, roomId);
+      await stopFlappyDuel(roomId);
+      await supabase.from("rooms").update({ status: "waiting" }).eq("id", roomId);
+      await supabase.from("room_members").update({ participation_status: "lobby", ready: false }).eq("room_id", roomId);
+      await supabase.from("room_members").update({ ready: true, participation_status: "lobby" }).match({ room_id: roomId, user_id: room.host_user_id });
+      await supabase.from("game_sessions").update({ status: "ended", ended_at: new Date().toISOString() }).eq("room_id", roomId).eq("status", "playing");
+      await emitRoom(io, roomId);
+      console.log("[room:back_to_lobby]", { roomId, userId: user.userId });
+    } finally {
+      backToLobbyLocks.delete(roomId);
+    }
   });
 
   socket.on("room:leave", async ({ roomId }: { roomId?: string }) => {
@@ -235,10 +284,12 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
       if (error) return roomError(socket, `Could not close room: ${error.message}`);
       io.to(channel).emit("room:closed", { roomId, message: "Host left. Room closed." });
       await broadcastOpenRooms(io);
+      console.log("[room:leave] Host closed room", { roomId, userId: user.userId });
     } else {
       const { error } = await supabase.from("room_members").delete().match({ room_id: roomId, user_id: user.userId });
       if (error) return roomError(socket, `Could not leave room: ${error.message}`);
       await emitRoom(io, roomId);
+      console.log("[room:leave] Player left room", { roomId, userId: user.userId });
     }
 
     socket.leave(channel);
@@ -246,8 +297,9 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
 
   socket.on("disconnect", () => {
     const roomIds = [...(authedSocket.data.rooms || [])];
+    console.log("[socket:disconnect]", { userId: user.userId, rooms: roomIds });
     for (const roomId of roomIds) {
-      void syncLobbyPresence(roomId, false);
+      scheduleLobbyDisconnect(roomId);
     }
   });
 }

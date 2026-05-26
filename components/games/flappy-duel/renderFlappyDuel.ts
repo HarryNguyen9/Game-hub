@@ -1,73 +1,177 @@
 import type { FlappySnapshot } from "@/lib/games/flappy-duel/types";
 
-export function renderFlappyDuel(ctx: CanvasRenderingContext2D, snapshot: FlappySnapshot, currentUserId: string) {
+type RenderOptions = {
+  currentUserId: string;
+  previousSnapshot: FlappySnapshot | null;
+  currentSnapshot: FlappySnapshot;
+  interpolation: number;
+  predictedSelfY: number | null;
+  lastFlapAt: number;
+  lastCrashAt: number | null;
+};
+
+const birdColors = ["#ff6f91", "#6c9cff", "#ffcf5a", "#64d6a4", "#b88cff", "#ff9f6e"];
+
+function lerp(a: number, b: number, t: number) {
+  return a + (b - a) * t;
+}
+
+function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
+  const r = Math.min(radius, Math.abs(width) / 2, Math.abs(height) / 2);
+  ctx.beginPath();
+  ctx.roundRect(x, y, width, height, r);
+}
+
+function playerColor(userId: string, index: number) {
+  let hash = 0;
+  for (let i = 0; i < userId.length; i += 1) hash = (hash * 31 + userId.charCodeAt(i)) % 997;
+  return birdColors[(hash + index) % birdColors.length];
+}
+
+function drawCloud(ctx: CanvasRenderingContext2D, x: number, y: number, scale = 1) {
+  ctx.save();
+  ctx.fillStyle = "rgba(255,255,255,0.48)";
+  ctx.beginPath();
+  ctx.ellipse(x, y, 44 * scale, 16 * scale, 0, 0, Math.PI * 2);
+  ctx.ellipse(x - 28 * scale, y + 2 * scale, 30 * scale, 13 * scale, 0, 0, Math.PI * 2);
+  ctx.ellipse(x + 28 * scale, y + 3 * scale, 32 * scale, 14 * scale, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawPipe(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, top: boolean) {
+  if (height <= 0) return;
+  const capHeight = 26;
+  const bodyGradient = ctx.createLinearGradient(x, 0, x + width, 0);
+  bodyGradient.addColorStop(0, "#93e98d");
+  bodyGradient.addColorStop(0.55, "#72d96b");
+  bodyGradient.addColorStop(1, "#4fbf5b");
+  ctx.fillStyle = bodyGradient;
+  ctx.strokeStyle = "#37a653";
+  ctx.lineWidth = 4;
+  roundedRect(ctx, x, y, width, height, 14);
+  ctx.fill();
+  ctx.stroke();
+
+  const capY = top ? y + height - capHeight : y;
+  roundedRect(ctx, x - 9, capY, width + 18, capHeight, 12);
+  ctx.fillStyle = "#a8f3a1";
+  ctx.fill();
+  ctx.stroke();
+}
+
+function drawBird(ctx: CanvasRenderingContext2D, options: { x: number; y: number; size: number; color: string; velocity: number; alive: boolean; self: boolean; flapPulse: number }) {
+  const { x, y, size, color, velocity, alive, self, flapPulse } = options;
+  const squash = self ? flapPulse * 0.12 : 0;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(Math.max(-0.55, Math.min(0.75, velocity / 13)));
+  ctx.scale(1 + squash, 1 - squash);
+  ctx.globalAlpha = alive ? 1 : 0.72;
+
+  ctx.fillStyle = alive ? color : "#a8b3c4";
+  ctx.strokeStyle = self ? "#102033" : "#475569";
+  ctx.lineWidth = self ? 3.5 : 2.5;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, size * 0.72, size * 0.54, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(255,255,255,0.7)";
+  ctx.beginPath();
+  ctx.ellipse(-size * 0.22, size * 0.05, size * 0.28, size * 0.22, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.arc(size * 0.24, -size * 0.14, size * 0.17, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#102033";
+  ctx.beginPath();
+  ctx.arc(size * 0.3, -size * 0.13, size * 0.07, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "#ffd166";
+  ctx.beginPath();
+  ctx.moveTo(size * 0.62, 0);
+  ctx.lineTo(size * 1.02, -size * 0.18);
+  ctx.lineTo(size * 1.02, size * 0.18);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+export function renderFlappyDuel(ctx: CanvasRenderingContext2D, options: RenderOptions) {
+  const { previousSnapshot, currentSnapshot: snapshot, currentUserId, interpolation, predictedSelfY, lastFlapAt, lastCrashAt } = options;
   const { worldWidth, worldHeight, birdSize, pipeWidth, pipeGap } = snapshot.config;
+  const now = performance.now();
+  const crashShake = lastCrashAt ? Math.max(0, 1 - (now - lastCrashAt) / 260) : 0;
+  const shakeX = crashShake ? Math.sin(now * 0.08) * 5 * crashShake : 0;
+  const shakeY = crashShake ? Math.cos(now * 0.1) * 3 * crashShake : 0;
+
+  ctx.save();
   ctx.clearRect(0, 0, worldWidth, worldHeight);
+  ctx.translate(shakeX, shakeY);
 
   const sky = ctx.createLinearGradient(0, 0, 0, worldHeight);
-  sky.addColorStop(0, "#c7f0ff");
-  sky.addColorStop(1, "#fff4c7");
+  sky.addColorStop(0, "#bdefff");
+  sky.addColorStop(0.52, "#eafff4");
+  sky.addColorStop(1, "#fff2bf");
   ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, worldWidth, worldHeight);
+  ctx.fillRect(-10, -10, worldWidth + 20, worldHeight + 20);
 
-  ctx.fillStyle = "rgba(255,255,255,0.45)";
-  for (let i = 0; i < 5; i += 1) {
-    ctx.beginPath();
-    ctx.ellipse(120 + i * 190, 70 + (i % 2) * 40, 52, 18, 0, 0, Math.PI * 2);
-    ctx.fill();
-  }
+  drawCloud(ctx, 110, 84, 0.92);
+  drawCloud(ctx, 345, 118, 0.74);
+  drawCloud(ctx, 595, 76, 0.88);
+  drawCloud(ctx, 790, 122, 0.7);
 
   for (const pipe of snapshot.pipes) {
+    const previousPipe = previousSnapshot?.pipes.find((candidate) => candidate.id === pipe.id);
+    const x = previousPipe ? lerp(previousPipe.x, pipe.x, interpolation) : pipe.x;
     const gapTop = pipe.gapY - pipeGap / 2;
     const gapBottom = pipe.gapY + pipeGap / 2;
-    ctx.fillStyle = "#70d66b";
-    ctx.strokeStyle = "#36a852";
-    ctx.lineWidth = 4;
-    ctx.fillRect(pipe.x, 0, pipeWidth, gapTop);
-    ctx.strokeRect(pipe.x, 0, pipeWidth, gapTop);
-    ctx.fillRect(pipe.x, gapBottom, pipeWidth, worldHeight - gapBottom);
-    ctx.strokeRect(pipe.x, gapBottom, pipeWidth, worldHeight - gapBottom);
+    drawPipe(ctx, x, -8, pipeWidth, gapTop + 8, true);
+    drawPipe(ctx, x, gapBottom, pipeWidth, worldHeight - gapBottom + 10, false);
   }
 
   const birdX = worldWidth * 0.25;
-  for (const player of Object.values(snapshot.players)) {
+  const players = Object.values(snapshot.players);
+  players.forEach((player, index) => {
+    const previousPlayer = previousSnapshot?.players[player.userId];
     const isSelf = player.userId === currentUserId;
+    const interpolatedY = previousPlayer ? lerp(previousPlayer.y, player.y, interpolation) : player.y;
+    const y = isSelf && predictedSelfY !== null ? lerp(interpolatedY, predictedSelfY, 0.35) : interpolatedY;
+    const flapPulse = isSelf ? Math.max(0, 1 - (now - lastFlapAt) / 170) : 0;
+
     ctx.save();
-    ctx.globalAlpha = isSelf ? 1 : 0.35;
-    ctx.translate(birdX, player.y);
-    ctx.rotate(Math.max(-0.5, Math.min(0.8, player.velocity / 12)));
-    ctx.fillStyle = player.alive ? (isSelf ? "#ff6f91" : "#64748b") : "#94a3b8";
-    ctx.strokeStyle = "#1f2937";
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, birdSize * 0.65, birdSize * 0.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#fff";
-    ctx.beginPath();
-    ctx.arc(birdSize * 0.22, -birdSize * 0.12, 5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#111827";
-    ctx.beginPath();
-    ctx.arc(birdSize * 0.28, -birdSize * 0.12, 2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#ffcf5a";
-    ctx.beginPath();
-    ctx.moveTo(birdSize * 0.6, 0);
-    ctx.lineTo(birdSize * 0.95, -5);
-    ctx.lineTo(birdSize * 0.95, 5);
-    ctx.closePath();
-    ctx.fill();
+    ctx.globalAlpha = isSelf ? 1 : 0.38;
+    drawBird(ctx, {
+      x: birdX,
+      y,
+      size: birdSize,
+      color: playerColor(player.userId, index),
+      velocity: player.velocity,
+      alive: player.alive,
+      self: isSelf,
+      flapPulse
+    });
     ctx.restore();
 
-    ctx.globalAlpha = isSelf ? 1 : 0.5;
-    ctx.fillStyle = "#0f172a";
-    ctx.font = "700 14px sans-serif";
+    ctx.save();
+    ctx.globalAlpha = isSelf ? 0.95 : 0.62;
+    ctx.font = "800 14px system-ui, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(player.displayName, birdX, player.y - birdSize);
-    ctx.globalAlpha = 1;
-  }
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "rgba(255,255,255,0.85)";
+    ctx.fillStyle = player.alive ? "#102033" : "#64748b";
+    ctx.strokeText(player.displayName, birdX, y - birdSize - 9);
+    ctx.fillText(player.displayName, birdX, y - birdSize - 9);
+    ctx.restore();
+  });
 
-  ctx.fillStyle = "#7dd3fc";
-  ctx.fillRect(0, worldHeight - 18, worldWidth, 18);
+  ctx.fillStyle = "#76d7ff";
+  ctx.fillRect(-10, worldHeight - 18, worldWidth + 20, 18);
+  ctx.fillStyle = "rgba(255,255,255,0.38)";
+  ctx.fillRect(-10, worldHeight - 18, worldWidth + 20, 4);
+  ctx.restore();
 }

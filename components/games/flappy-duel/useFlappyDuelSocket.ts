@@ -15,6 +15,8 @@ export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGam
   const [connected, setConnected] = useState(false);
   const socketRef = useRef<Socket | null>(null);
   const inputSeq = useRef(0);
+  const snapshotRef = useRef<FlappySnapshot | null>(null);
+  const lastFlapAtRef = useRef(0);
 
   const applySyncResponse = useCallback(
     (response: SyncResponse) => {
@@ -25,6 +27,7 @@ export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGam
       if (response.snapshot.roomId !== roomId) return;
       setError("");
       setCountdown(response.countdown);
+      snapshotRef.current = response.snapshot;
       setSnapshot(response.snapshot);
     },
     [roomId]
@@ -33,7 +36,7 @@ export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGam
   const syncGame = useCallback(() => {
     socketRef.current?.timeout(1500).emit("game:sync", { roomId }, (error: Error | null, response?: SyncResponse) => {
       if (error) {
-        setError("Socket server did not answer game:sync. Stop old socket processes, restart npm run socket:dev, then start a fresh room.");
+        setError("Socket server did not answer game:sync. Reconnect, refresh the room, or try Back to Lobby if you are the host.");
         return;
       }
       if (response) applySyncResponse(response);
@@ -69,7 +72,7 @@ export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGam
         socket.emit("room:join", { roomId, presence: false });
         socket.timeout(1500).emit("game:sync", { roomId }, (error: Error | null, response?: SyncResponse) => {
           if (error) {
-            setError("Socket server did not answer game:sync. Stop old socket processes, restart npm run socket:dev, then start a fresh room.");
+            setError("Socket server did not answer game:sync. Reconnect, refresh the room, or try Back to Lobby if you are the host.");
             return;
           }
           if (response) applySyncResponse(response);
@@ -87,18 +90,21 @@ export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGam
       socket.on("game:start", (nextSnapshot: FlappySnapshot) => {
         if (nextSnapshot.roomId !== roomId) return;
         setCountdown(null);
+        snapshotRef.current = nextSnapshot;
         setSnapshot(nextSnapshot);
       });
       socket.on("game:snapshot", (nextSnapshot: FlappySnapshot) => {
         if (nextSnapshot.roomId !== roomId) return;
         setError("");
         setCountdown(null);
+        snapshotRef.current = nextSnapshot;
         setSnapshot(nextSnapshot);
       });
       socket.on("game:end", (nextSnapshot: FlappySnapshot) => {
         if (nextSnapshot.roomId !== roomId) return;
         setError("");
         setCountdown(null);
+        snapshotRef.current = nextSnapshot;
         setSnapshot(nextSnapshot);
         onGameEnd?.();
       });
@@ -114,17 +120,20 @@ export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGam
   }, [applySyncResponse, onGameEnd, roomId]);
 
   const flap = useCallback(() => {
-    const player = snapshot?.players[currentUserId];
-    if (!snapshot || snapshot.status !== "playing" || !player?.alive) return;
+    const currentSnapshot = snapshotRef.current;
+    const player = currentSnapshot?.players[currentUserId];
+    const now = performance.now();
+    if (!currentSnapshot || currentSnapshot.status !== "playing" || !player?.alive || now - lastFlapAtRef.current < 65) return;
+    lastFlapAtRef.current = now;
     inputSeq.current += 1;
     socketRef.current?.emit("game:input", {
       roomId,
-      sessionId: snapshot.sessionId,
+      sessionId: currentSnapshot.sessionId,
       input: "flap",
       inputId: `${currentUserId}-${inputSeq.current}`,
       clientTime: Date.now()
     });
-  }, [currentUserId, roomId, snapshot]);
+  }, [currentUserId, roomId]);
 
   const backToLobby = useCallback(() => {
     socketRef.current?.emit("room:back_to_lobby", { roomId });
@@ -137,7 +146,7 @@ export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGam
       syncGame();
     }, 1200);
     const errorTimer = window.setTimeout(() => {
-      setError("Still waiting for the game snapshot. Try Back to Lobby, restart the socket server, then start a fresh round.");
+      setError("Still waiting for the game snapshot. Refresh the room or try Back to Lobby if you are the host.");
     }, 5000);
 
     return () => {
@@ -146,5 +155,5 @@ export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGam
     };
   }, [connected, countdown, roomId, snapshot, syncGame]);
 
-  return { snapshot, countdown, error, connected, flap, backToLobby };
+  return { snapshot, countdown, error, connected, flap, backToLobby, lastFlapAtRef };
 }

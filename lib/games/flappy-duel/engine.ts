@@ -35,7 +35,8 @@ export function createFlappyState(sessionId: string, roomId: string, players: Pl
       alive: true,
       ready: true,
       deathTick: null,
-      lastInputId: null
+      lastInputId: null,
+      recentInputIds: []
     } satisfies FlappyPlayerState
   ]);
 
@@ -54,9 +55,10 @@ export function createFlappyState(sessionId: string, roomId: string, players: Pl
 export function applyFlap(state: FlappyState, userId: string, inputId: string) {
   if (state.status !== "playing") return false;
   const player = state.players[userId];
-  if (!player || !player.alive || player.lastInputId === inputId) return false;
+  if (!player || !player.alive || player.lastInputId === inputId || player.recentInputIds.includes(inputId)) return false;
   player.velocity = FLAPPY_CONFIG.flapVelocity;
   player.lastInputId = inputId;
+  player.recentInputIds = [...player.recentInputIds.slice(-20), inputId];
   return true;
 }
 

@@ -19,6 +19,7 @@ type ActivePlayerRow = {
 };
 
 const runtimes = new Map<string, Runtime>();
+const lastInputAt = new Map<string, number>();
 
 type SyncResponse =
   | { ok: true; snapshot: ReturnType<typeof serializeFlappyState>; countdown: number | null }
@@ -42,6 +43,10 @@ function clearRuntime(roomId: string) {
   if (runtime.snapshotTimer) clearInterval(runtime.snapshotTimer);
   if (runtime.countdownTimer) clearInterval(runtime.countdownTimer);
   runtimes.delete(roomId);
+  for (const key of lastInputAt.keys()) {
+    if (key.startsWith(`${roomId}:`)) lastInputAt.delete(key);
+  }
+  console.log("[flappy-duel] Runtime cleaned up", { roomId });
 }
 
 async function finishGame(io: Server, runtime: Runtime) {
@@ -62,6 +67,7 @@ async function finishGame(io: Server, runtime: Runtime) {
     .eq("id", state.sessionId);
 
   io.to(roomChannel(state.roomId)).emit("game:end", snapshot);
+  console.log("[flappy-duel] Game ended", { roomId: state.roomId, sessionId: state.sessionId });
 }
 
 function emitSnapshot(io: Server, state: FlappyState) {
@@ -100,6 +106,10 @@ export function emitCurrentFlappyDuelSnapshot(socket: Socket, roomId: string) {
   return true;
 }
 
+export function hasFlappyDuelRuntime(roomId: string) {
+  return runtimes.has(roomId);
+}
+
 function startLoop(io: Server, runtime: Runtime) {
   runtime.state.status = "playing";
   io.to(roomChannel(runtime.state.roomId)).emit("game:start", serializeFlappyState(runtime.state));
@@ -124,7 +134,9 @@ function startLoop(io: Server, runtime: Runtime) {
 }
 
 export async function startFlappyDuel(io: Server, roomId: string, sessionId: string, activePlayers: ActivePlayerRow[]) {
-  clearRuntime(roomId);
+  if (runtimes.has(roomId)) {
+    throw new Error("Flappy Duel runtime is already running for this room.");
+  }
 
   const players = activePlayers.map((member) => {
     const appUser = Array.isArray(member.app_users) ? member.app_users[0] : member.app_users;
@@ -178,11 +190,30 @@ export function registerFlappyDuelHandlers(_io: Server, socket: Socket) {
 
   socket.on(
     "game:sync",
-    ({ roomId }: { roomId?: string }, reply?: (response: SyncResponse) => void) => {
+    async ({ roomId }: { roomId?: string }, reply?: (response: SyncResponse) => void) => {
       if (!roomId) {
         const response = { ok: false, error: "Room id is required." } as const;
         reply?.(response);
         return gameError(socket, response.error);
+      }
+
+      const supabase = serviceClient();
+      const { data: member } = await supabase
+        .from("room_members")
+        .select("participation_status")
+        .match({ room_id: roomId, user_id: user.userId })
+        .maybeSingle();
+
+      if (!member) {
+        const response = { ok: false, error: "Join this room before syncing the game." } as const;
+        reply?.(response);
+        return gameError(socket, response.error);
+      }
+
+      if (member.participation_status !== "active_game") {
+        const response = { ok: false, error: "You are waiting for the next round." } as const;
+        reply?.(response);
+        return;
       }
 
       const response = currentFlappyDuelSnapshot(roomId);
@@ -202,18 +233,24 @@ export function registerFlappyDuelHandlers(_io: Server, socket: Socket) {
       roomId,
       sessionId,
       input,
-      inputId
+      inputId,
+      ...extra
     }: {
       roomId?: string;
       sessionId?: string;
       input?: "flap";
       inputId?: string;
       clientTime?: number;
+      y?: unknown;
+      velocity?: unknown;
+      score?: unknown;
     }) => {
       if (!roomId || !sessionId || input !== "flap" || !inputId) return gameError(socket, "Invalid game input.");
+      if ("y" in extra || "velocity" in extra || "score" in extra) return gameError(socket, "Invalid game input payload.");
 
       const runtime = runtimes.get(roomId);
       if (!runtime || runtime.state.sessionId !== sessionId) return gameError(socket, "Game session is not active.");
+      if (runtime.state.status !== "playing") return gameError(socket, "Game is not accepting input right now.");
 
       const supabase = serviceClient();
       const { data: member } = await supabase
@@ -223,6 +260,11 @@ export function registerFlappyDuelHandlers(_io: Server, socket: Socket) {
         .maybeSingle();
 
       if (member?.participation_status !== "active_game") return gameError(socket, "You are waiting for the next round.");
+      const rateKey = `${roomId}:${user.userId}`;
+      const now = Date.now();
+      const last = lastInputAt.get(rateKey) || 0;
+      if (now - last < 40) return;
+      lastInputAt.set(rateKey, now);
       applyFlap(runtime.state, user.userId, inputId);
     }
   );

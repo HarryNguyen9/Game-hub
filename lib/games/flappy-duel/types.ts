@@ -11,6 +11,7 @@ export type FlappyPlayerState = {
   ready: boolean;
   deathTick: number | null;
   lastInputId: string | null;
+  recentInputIds: string[];
 };
 
 export type FlappyPipe = {

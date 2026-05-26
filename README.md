@@ -225,6 +225,33 @@ Open two or three browser sessions with different accounts:
 1. Account A creates a room, chooses `Flappy Duel`, and shares the 4-digit room code.
 2. Account B joins by code, clicks Ready, then A clicks Start Game.
 3. Both players should see a `3..2..1` countdown and a canvas game.
-4. Tap, click, or press Space to flap. The client only sends `game:input` with `input: "flap"`; physics, pipes, score, death, and game end are calculated on the Socket.IO server.
+4. Tap on mobile, click the canvas, or press Space on desktop to flap. Space does not scroll the page during play. The client only sends `game:input` with `input: "flap"`; physics, pipes, score, death, and game end are calculated on the Socket.IO server.
 5. Open Account C after the game starts. C should enter `waiting_next_round` and see the waiting message instead of controlling the current game.
 6. When all active birds crash, the leaderboard appears. The host can click Back to Lobby, which moves all members back to the lobby and resets player ready state.
+
+The Flappy Duel client renders canvas frames with `requestAnimationFrame` and interpolates between server snapshots for smoother motion. A tiny local visual-only flap prediction makes your own bird feel responsive, but official position, score, death, pipes, and winner always come from the server snapshot.
+
+## Realtime Stability Checklist
+
+Use two or three browser sessions with different accounts:
+
+- Refresh during lobby: user reconnects to the same room and sees current members/ready state.
+- Refresh during playing: active players receive the current Flappy Duel snapshot again.
+- Player disconnect while playing: the game loop continues and reconnect restores spectating/playing state.
+- Host refresh while playing: room does not close during a quick reconnect.
+- Host leave while playing: room closes, members are redirected, and the Flappy loop is cleaned up.
+- Late join while playing: user enters `waiting_next_round` and cannot control the active game.
+- Spam Ready/Unready: only the current player's ready state changes and the server does not crash.
+- Spam Start Game: only one game session/runtime starts for a room.
+- Spam Back to Lobby: action is idempotent and returns everyone to lobby once.
+- Invalid input after death: server ignores/rejects input; client never sends y, velocity, or score.
+- Token refresh/reconnect: reload the room after login and verify a new socket token connects.
+
+## Flappy Duel Gameplay QA
+
+- Mobile browser: tap feels immediate, page does not scroll/select text while tapping the canvas.
+- Desktop browser: Space and click flap once per press/click; holding Space does not spam key-repeat inputs.
+- Two players: your own bird is vivid, other birds render as visible ghost birds with name labels.
+- Spectating after death: “You crashed!” appears without hiding the whole game.
+- Leaderboard: winner is highlighted, non-host sees waiting-for-host text, host can Back to Lobby.
+- Fullscreen: game keeps aspect ratio, does not stretch birds/pipes, and controls remain reachable.
