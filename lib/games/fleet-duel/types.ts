@@ -1,5 +1,5 @@
 export type FleetGameStatus = "setup" | "battle" | "ended";
-export type FleetShotResult = "miss" | "hit" | "sunk";
+export type FleetShotResult = "miss" | "hit" | "sunk" | "rock";
 
 export type FleetCell = {
   x: number;
@@ -12,6 +12,13 @@ export type FleetShip = {
   cells: FleetCell[];
   hits: FleetCell[];
   sunk: boolean;
+};
+
+export type FleetShipDefinition = {
+  id: string;
+  label: string;
+  size: number;
+  shape: FleetCell[];
 };
 
 export type FleetShot = FleetCell & {
@@ -38,6 +45,7 @@ export type FleetState = {
   status: FleetGameStatus;
   boardSize: number;
   boardTheme: FleetBoardTheme;
+  shipDefinitions: FleetShipDefinition[];
   blockedCells: FleetCell[];
   currentTurnUserId: string | null;
   turnStartedAt: number;
@@ -73,6 +81,7 @@ export type FleetSnapshot = {
   status: FleetGameStatus;
   boardSize: number;
   boardTheme: FleetBoardTheme;
+  shipDefinitions: FleetShipDefinition[];
   blockedCells: FleetCell[];
   currentTurnUserId: string | null;
   turnStartedAt: number;

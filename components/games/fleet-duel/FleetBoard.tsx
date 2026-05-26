@@ -62,7 +62,8 @@ export function FleetBoard({
         const cellKey = key(cell);
         const ship = shipCells.get(cellKey);
         const shot = shotCells.get(cellKey);
-        const rock = blocked.has(cellKey);
+        const revealedRock = shot?.result === "rock";
+        const rock = mode === "own" ? blocked.has(cellKey) || revealedRock : revealedRock;
         const hit = hitCells.has(cellKey) || shot?.result === "hit" || shot?.result === "sunk";
         const miss = shot?.result === "miss";
         const cellState = rock ? "rock" : hit ? "hit" : miss ? "miss" : ship ? "ship" : "water";
@@ -74,27 +75,34 @@ export function FleetBoard({
             disabled={disabled}
             onClick={() => onCellClick?.(cell)}
             className={`group relative grid aspect-square place-items-center overflow-hidden rounded-xl border text-xs font-black shadow-sm transition ${
-              mode === "enemy" && !disabled && !rock ? "cursor-crosshair hover:-translate-y-0.5 hover:scale-[1.03] hover:border-cyan-500 hover:bg-cyan-100" : ""
+              mode === "enemy" && !disabled && !revealedRock ? "cursor-crosshair hover:-translate-y-0.5 hover:scale-[1.03] hover:border-cyan-500 hover:bg-cyan-100" : ""
             } ${
               cellState === "water"
                 ? "border-cyan-300/90 bg-cyan-50/90 text-cyan-700"
                 : cellState === "ship"
                   ? "border-slate-500 bg-slate-700 text-white"
                   : cellState === "hit"
-                    ? "border-rose-300 bg-rose-100 text-rose-600"
+                    ? "border-red-400 bg-gradient-to-br from-red-100 via-rose-100 to-orange-100 text-red-600 ring-2 ring-red-200"
                     : cellState === "rock"
-                      ? "border-stone-400 bg-gradient-to-br from-stone-300 to-stone-500 text-stone-800"
-                      : "border-blue-100 bg-white/90 text-sky-500"
+                      ? "border-stone-500 bg-gradient-to-br from-stone-300 via-stone-400 to-stone-600 text-stone-900 ring-2 ring-stone-300"
+                      : "border-sky-300 bg-gradient-to-br from-white via-sky-100 to-cyan-100 text-sky-600 ring-1 ring-sky-200"
             } ${disabled ? "cursor-default" : ""}`}
             aria-label={`${mode} cell ${cell.x + 1},${cell.y + 1}`}
           >
-            <span className="absolute inset-x-1 top-1 h-1 rounded-full bg-white/35" />
+            <span className="absolute inset-x-1 top-1 h-1 rounded-full bg-white/45" />
             {rock ? (
-              <span className="relative size-3 rounded-full bg-stone-700 shadow-[0_2px_0_rgba(255,255,255,0.35)]" />
+              <span className="relative grid size-5 place-items-center">
+                <span className="absolute size-4 rounded-[45%] bg-stone-700 shadow-[inset_0_2px_0_rgba(255,255,255,0.25),0_2px_0_rgba(0,0,0,0.18)]" />
+                <span className="absolute left-1 top-1 size-1 rounded-full bg-white/40" />
+              </span>
             ) : hit ? (
-              <span className="relative text-base leading-none">x</span>
+              <span className="relative grid size-6 place-items-center rounded-full bg-red-500 text-[10px] font-black uppercase leading-none text-white shadow-sm">
+                Hit
+              </span>
             ) : miss ? (
-              <span className="relative size-2 rounded-full bg-sky-400/75" />
+              <span className="relative grid size-5 place-items-center rounded-full border-2 border-sky-500 bg-white/80">
+                <span className="size-1.5 rounded-full bg-sky-500" />
+              </span>
             ) : ship && mode === "own" ? (
               <span
                 className={`relative h-2.5 w-3/5 rounded-full shadow-[inset_0_-2px_0_rgba(255,255,255,0.28)] ${

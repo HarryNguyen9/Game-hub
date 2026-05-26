@@ -4,8 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { RotateCcw, Shuffle, Trash2, Ship, CheckCircle2 } from "lucide-react";
 import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
 import { Button } from "@/components/ui/button";
-import { FLEET_CONFIG } from "@/lib/games/fleet-duel/config";
-import type { FleetCell, FleetShip, FleetSnapshot } from "@/lib/games/fleet-duel/types";
+import type { FleetCell, FleetShip, FleetShipDefinition, FleetSnapshot } from "@/lib/games/fleet-duel/types";
 import { FleetBoard } from "./FleetBoard";
 import { useFleetDuelSocket } from "./useFleetDuelSocket";
 
@@ -13,31 +12,46 @@ function key(cell: FleetCell) {
   return `${cell.x}:${cell.y}`;
 }
 
-function makeShip(id: string, size: number, start: FleetCell, vertical: boolean): FleetShip {
+function normalizeShape(cells: FleetCell[]) {
+  const minX = Math.min(...cells.map((cell) => cell.x));
+  const minY = Math.min(...cells.map((cell) => cell.y));
+  return cells.map((cell) => ({ x: cell.x - minX, y: cell.y - minY }));
+}
+
+function rotateShape(cells: FleetCell[], turns: number) {
+  let rotated = cells.map((cell) => ({ ...cell }));
+  for (let turn = 0; turn < turns; turn += 1) {
+    rotated = rotated.map((cell) => ({ x: cell.y, y: -cell.x }));
+  }
+  return normalizeShape(rotated);
+}
+
+function makeShip(definition: FleetShipDefinition, start: FleetCell, rotation: number): FleetShip {
+  const shape = rotateShape(definition.shape, rotation);
   return {
-    id,
-    size,
-    cells: Array.from({ length: size }).map((_, index) => ({
-      x: start.x + (vertical ? 0 : index),
-      y: start.y + (vertical ? index : 0)
+    id: definition.id,
+    size: definition.size,
+    cells: shape.map((cell) => ({
+      x: start.x + cell.x,
+      y: start.y + cell.y
     })),
     hits: [],
     sunk: false
   };
 }
 
-function randomFleetWithBlocked(blockedCells: FleetCell[]) {
+function randomFleetWithBlocked(blockedCells: FleetCell[], definitions: FleetShipDefinition[], boardSize: number) {
   const ships: FleetShip[] = [];
   const occupied = new Set<string>();
   const blocked = new Set(blockedCells.map(key));
-  for (const config of FLEET_CONFIG.ships) {
+  for (const definition of definitions) {
     for (let attempt = 0; attempt < 200; attempt += 1) {
-      const vertical = Math.random() > 0.5;
-      const start = {
-        x: Math.floor(Math.random() * (vertical ? FLEET_CONFIG.boardSize : FLEET_CONFIG.boardSize - config.size + 1)),
-        y: Math.floor(Math.random() * (vertical ? FLEET_CONFIG.boardSize - config.size + 1 : FLEET_CONFIG.boardSize))
-      };
-      const ship = makeShip(config.id, config.size, start, vertical);
+      const rotation = Math.floor(Math.random() * 4);
+      const shape = rotateShape(definition.shape, rotation);
+      const width = Math.max(...shape.map((cell) => cell.x)) + 1;
+      const height = Math.max(...shape.map((cell) => cell.y)) + 1;
+      const start = { x: Math.floor(Math.random() * (boardSize - width + 1)), y: Math.floor(Math.random() * (boardSize - height + 1)) };
+      const ship = makeShip(definition, start, rotation);
       if (ship.cells.every((cell) => !occupied.has(key(cell)) && !blocked.has(key(cell)))) {
         ships.push(ship);
         ship.cells.forEach((cell) => occupied.add(key(cell)));
@@ -48,8 +62,8 @@ function randomFleetWithBlocked(blockedCells: FleetCell[]) {
   return ships;
 }
 
-function nextUnplaced(ships: FleetShip[]) {
-  return FLEET_CONFIG.ships.find((ship) => !ships.some((placed) => placed.id === ship.id)) || null;
+function nextUnplaced(ships: FleetShip[], definitions: FleetShipDefinition[]) {
+  return definitions.find((ship) => !ships.some((placed) => placed.id === ship.id)) || null;
 }
 
 function useNow(step = 250) {
@@ -82,9 +96,9 @@ export function FleetDuelGame({
 }) {
   const { snapshot, error, connected, placeShips, confirmReady, fire, backToLobby } = useFleetDuelSocket(roomId, currentUserId, onGameEnd, initialSnapshot, roomStatus === "ended");
   const [localShips, setLocalShips] = useState<FleetShip[]>([]);
-  const [vertical, setVertical] = useState(false);
+  const [rotation, setRotation] = useState(0);
   const [returning, setReturning] = useState(false);
-  const selectedShip = nextUnplaced(localShips);
+  const selectedShip = nextUnplaced(localShips, snapshot?.shipDefinitions || []);
   const now = useNow();
   const enemyShotsOnMe = useMemo(() => snapshot?.opponent?.shots.filter((shot) => shot.targetUserId === currentUserId) || [], [currentUserId, snapshot]);
   const myShots = snapshot?.you.shots || [];
@@ -96,8 +110,8 @@ export function FleetDuelGame({
 
   function placeLocal(cell: FleetCell) {
     if (!snapshot || snapshot.status !== "setup" || snapshot.you.readyToBattle || !selectedShip) return;
-    const ship = makeShip(selectedShip.id, selectedShip.size, cell, vertical);
-    if (ship.cells.some((candidate) => candidate.x < 0 || candidate.y < 0 || candidate.x >= FLEET_CONFIG.boardSize || candidate.y >= FLEET_CONFIG.boardSize)) return;
+    const ship = makeShip(selectedShip, cell, rotation);
+    if (ship.cells.some((candidate) => candidate.x < 0 || candidate.y < 0 || candidate.x >= snapshot.boardSize || candidate.y >= snapshot.boardSize)) return;
     const occupied = new Set(localShips.flatMap((placed) => placed.cells.map(key)));
     const blocked = new Set(snapshot.blockedCells.map(key));
     if (ship.cells.some((candidate) => occupied.has(key(candidate)) || blocked.has(key(candidate)))) return;
@@ -156,16 +170,16 @@ export function FleetDuelGame({
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div>
                 <p className="font-black">Your board</p>
-                <p className="text-sm font-bold text-slate-500">{selectedShip ? `Place ${selectedShip.id} (${selectedShip.size})` : "Fleet placed"}</p>
+                <p className="text-sm font-bold text-slate-500">{selectedShip ? `Place ${selectedShip.label} (${selectedShip.size})` : "Fleet placed"}</p>
               </div>
-              <Button type="button" variant="secondary" onClick={() => setVertical((value) => !value)}>
-                <RotateCcw size={16} /> {vertical ? "Vertical" : "Horizontal"}
+              <Button type="button" variant="secondary" onClick={() => setRotation((value) => (value + 1) % 4)}>
+                <RotateCcw size={16} /> Rotate
               </Button>
             </div>
             <FleetBoard boardSize={snapshot.boardSize} ships={ownShips} shots={enemyShotsOnMe} blockedCells={snapshot.blockedCells} theme={snapshot.boardTheme} mode="own" disabled={snapshot.you.readyToBattle} onCellClick={placeLocal} />
           </div>
           <div className="grid content-start gap-3 rounded-3xl border border-cyan-100/70 bg-gradient-to-br from-white via-cyan-50/70 to-sky-50 p-4 shadow-sm">
-            <Button type="button" variant="secondary" onClick={() => sendShips(randomFleetWithBlocked(snapshot.blockedCells))} disabled={snapshot.you.readyToBattle}>
+            <Button type="button" variant="secondary" onClick={() => sendShips(randomFleetWithBlocked(snapshot.blockedCells, snapshot.shipDefinitions, snapshot.boardSize))} disabled={snapshot.you.readyToBattle}>
               <Shuffle size={16} /> Random Placement
             </Button>
             <Button type="button" variant="secondary" onClick={() => setLocalShips([])} disabled={snapshot.you.readyToBattle}>
@@ -173,7 +187,7 @@ export function FleetDuelGame({
             </Button>
             <Button
               type="button"
-              disabled={ownShips.length !== FLEET_CONFIG.ships.length || snapshot.you.readyToBattle}
+              disabled={ownShips.length !== snapshot.shipDefinitions.length || snapshot.you.readyToBattle}
               onClick={() => {
                 if (!snapshot) return;
                 placeShips(snapshot.sessionId, ownShips);

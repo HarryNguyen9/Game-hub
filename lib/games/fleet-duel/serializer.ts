@@ -21,6 +21,20 @@ function publicPlayer(player: FleetPlayerState, viewerUserId: string): FleetPubl
   };
 }
 
+function visibleBlockedCells(state: FleetState, viewerUserId: string) {
+  if (state.status === "setup") return state.blockedCells.map((cell) => ({ ...cell }));
+  const visible = new Map<string, { x: number; y: number }>();
+  for (const player of Object.values(state.players)) {
+    for (const shot of player.shots) {
+      if (shot.result !== "rock") continue;
+      const isViewerShot = player.userId === viewerUserId;
+      const isShotAtViewer = shot.targetUserId === viewerUserId;
+      if (isViewerShot || isShotAtViewer) visible.set(`${shot.x}:${shot.y}`, { x: shot.x, y: shot.y });
+    }
+  }
+  return [...visible.values()];
+}
+
 export function serializeFleetStateForUser(state: FleetState, viewerUserId: string): FleetSnapshot {
   const you = state.players[viewerUserId];
   const opponent = Object.values(state.players).find((player) => player.userId !== viewerUserId) || null;
@@ -31,7 +45,11 @@ export function serializeFleetStateForUser(state: FleetState, viewerUserId: stri
     status: state.status,
     boardSize: state.boardSize,
     boardTheme: state.boardTheme,
-    blockedCells: state.blockedCells.map((cell) => ({ ...cell })),
+    shipDefinitions: state.shipDefinitions.map((ship) => ({
+      ...ship,
+      shape: ship.shape.map((cell) => ({ ...cell }))
+    })),
+    blockedCells: visibleBlockedCells(state, viewerUserId),
     currentTurnUserId: state.currentTurnUserId,
     turnStartedAt: state.turnStartedAt,
     turnEndsAt: state.turnEndsAt,
