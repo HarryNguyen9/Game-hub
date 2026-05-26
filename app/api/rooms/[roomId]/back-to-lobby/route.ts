@@ -8,12 +8,15 @@ export async function POST(_request: Request, { params }: Params) {
   const session = await requireUser();
   const { roomId } = await params;
   const supabase = createServiceClient();
-  const { data: room } = await supabase.from("rooms").select("host_user_id, status").eq("id", roomId).single();
+  const { data: room } = await supabase.from("rooms").select("host_user_id, status, max_players").eq("id", roomId).single();
   if (!room) return fail("Room not found.", 404);
   if (room.host_user_id !== session.userId) return fail("Only the host can go back to lobby.", 403);
 
   await supabase.from("rooms").update({ status: "waiting" }).eq("id", roomId);
-  await supabase.from("room_members").update({ participation_status: "lobby", ready: false }).eq("room_id", roomId);
+  const { data: orderedMembers } = await supabase.from("room_members").select("user_id").eq("room_id", roomId).order("joined_at", { ascending: true });
+  const lobbyIds = (orderedMembers || []).slice(0, room.max_players).map((row) => row.user_id);
+  await supabase.from("room_members").update({ participation_status: "waiting_next_round", ready: false }).eq("room_id", roomId);
+  if (lobbyIds.length) await supabase.from("room_members").update({ participation_status: "lobby", ready: false }).eq("room_id", roomId).in("user_id", lobbyIds);
   await supabase.from("room_members").update({ participation_status: "lobby", ready: true }).match({ room_id: roomId, user_id: room.host_user_id });
   await supabase
     .from("game_sessions")

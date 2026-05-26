@@ -209,8 +209,25 @@ RLS is enabled in `supabase/schema.sql`. Direct browser writes to sensitive tabl
 - `game:snapshot`
 - `game:player_dead`
 - `game:end`
+- `fleet:sync`
+- `fleet:place_ships`
+- `fleet:confirm_ready`
+- `fleet:fire`
+- `fleet:snapshot`
+- `fleet:setup_updated`
+- `fleet:battle_started`
+- `fleet:shot_result`
+- `fleet:turn_changed`
+- `fleet:end`
 
 The Socket.IO server runs as a separate long-running Node process in `server/index.ts`. The web app gets a short-lived socket token from `/api/socket-token`; the socket server verifies that token with `SESSION_SECRET`.
+
+## Game Registry And Room Limits
+
+Game metadata lives in `lib/constants.ts`. Each game declares `minPlayers` and `maxPlayers`; the room stores those values when the host chooses a game. Server routes and Socket.IO start/join handlers validate the stored limits, so clients cannot force a larger room size.
+
+- `Flappy Duel`: 1-4 active players.
+- `Fleet Duel`: exactly 2 active players.
 
 ## Testing Flappy Duel Locally
 
@@ -255,3 +272,16 @@ Use two or three browser sessions with different accounts:
 - Spectating after death: “You crashed!” appears without hiding the whole game.
 - Leaderboard: winner is highlighted, non-host sees waiting-for-host text, host can Back to Lobby.
 - Fullscreen: game keeps aspect ratio, does not stretch birds/pipes, and controls remain reachable.
+
+## Fleet Duel Gameplay QA
+
+- Account A creates a room, chooses `Fleet Duel`, and sees `1/2` players.
+- A cannot start until Account B joins and readies.
+- Account C cannot join the waiting lobby once Fleet Duel is `2/2`; the API returns `Room is full.`
+- A starts the game and both players enter setup.
+- Use Random Placement or manually place all ships, then Confirm Fleet on both accounts.
+- During battle, only the player whose turn is shown can fire.
+- Enemy ship cells are hidden until hit or sunk; clients only receive their own ships plus public shot results.
+- Hit/miss/sunk updates appear realtime.
+- A late joiner during battle enters `waiting_next_round` and cannot send Fleet input.
+- When one fleet is sunk, the winner card appears and the host can Back to Lobby.

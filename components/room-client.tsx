@@ -7,8 +7,10 @@ import { LogOut, Maximize2, Minimize2, Play, RotateCcw } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { FlappyDuelGame } from "@/components/games/flappy-duel/FlappyDuelGame";
+import { FleetDuelGame } from "@/components/games/fleet-duel/FleetDuelGame";
 import { GAME_CATALOG } from "@/lib/constants";
 import type { FlappySnapshot } from "@/lib/games/flappy-duel/types";
+import type { FleetSnapshot } from "@/lib/games/fleet-duel/types";
 
 type RoomStatus = "waiting" | "playing" | "ended" | "closed";
 type Member = {
@@ -24,7 +26,7 @@ type Member = {
 type Snapshot = {
   roomId: string;
   status: RoomStatus;
-  room?: { game_key: string | null } | null;
+  room?: { game_key: string | null; min_players?: number; max_players?: number } | null;
   members: Member[];
 };
 
@@ -44,7 +46,10 @@ export function RoomClient({
   isHost,
   currentUserId,
   initialGameKey,
-  initialGameSnapshot
+  initialGameSnapshot,
+  initialFleetSnapshot,
+  initialMinPlayers,
+  initialMaxPlayers
 }: {
   roomId: string;
   initialMembers: Member[];
@@ -53,6 +58,9 @@ export function RoomClient({
   currentUserId: string;
   initialGameKey: string | null;
   initialGameSnapshot: FlappySnapshot | null;
+  initialFleetSnapshot: FleetSnapshot | null;
+  initialMinPlayers: number;
+  initialMaxPlayers: number;
 }) {
   const router = useRouter();
   const [members, setMembers] = useState(initialMembers);
@@ -64,6 +72,9 @@ export function RoomClient({
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [gameExpanded, setGameExpanded] = useState(false);
   const [endedGameSnapshot, setEndedGameSnapshot] = useState<FlappySnapshot | null>(initialGameSnapshot);
+  const [endedFleetSnapshot, setEndedFleetSnapshot] = useState<FleetSnapshot | null>(initialFleetSnapshot);
+  const [minPlayers, setMinPlayers] = useState(initialMinPlayers);
+  const [maxPlayers, setMaxPlayers] = useState(initialMaxPlayers);
 
   useEffect(() => {
     let cancelled = false;
@@ -104,7 +115,12 @@ export function RoomClient({
         setMembers(snapshot.members);
         setStatus(snapshot.status);
         setGameKey(snapshot.room?.game_key || null);
-        if (snapshot.status !== "ended") setEndedGameSnapshot(null);
+        setMinPlayers(snapshot.room?.min_players || 1);
+        setMaxPlayers(snapshot.room?.max_players || 12);
+        if (snapshot.status !== "ended") {
+          setEndedGameSnapshot(null);
+          setEndedFleetSnapshot(null);
+        }
         setPendingAction(null);
       };
       nextSocket.on("room:members_updated", applySnapshot);
@@ -156,6 +172,8 @@ export function RoomClient({
       return;
     }
     setGameKey(payload.gameKey);
+    setMinPlayers(payload.minPlayers || minPlayers);
+    setMaxPlayers(payload.maxPlayers || maxPlayers);
     setPendingAction(null);
     router.refresh();
   }
@@ -172,11 +190,15 @@ export function RoomClient({
   }, []);
 
   const currentMember = members.find((member) => member.userId === currentUserId);
+  const lobbyMembers = members.filter((member) => member.participationStatus === "lobby");
+  const activeMembers = members.filter((member) => member.participationStatus !== "waiting_next_round");
   const unreadyPlayers = members.filter((member) => member.role === "player" && member.participationStatus === "lobby" && !member.ready);
-  const canStart = isHost && status === "waiting" && Boolean(gameKey) && unreadyPlayers.length === 0;
+  const hasEnoughPlayers = lobbyMembers.length >= minPlayers;
+  const canStart = isHost && status === "waiting" && Boolean(gameKey) && hasEnoughPlayers && lobbyMembers.length <= maxPlayers && unreadyPlayers.length === 0;
   const selectedGame = GAME_CATALOG.find((game) => game.id === gameKey);
   const isLateJoiner = currentMember?.participationStatus === "waiting_next_round";
   const isFlappyActivePlayer = (status === "playing" || status === "ended") && gameKey === "flappy-duel" && currentMember?.participationStatus === "active_game";
+  const isFleetActivePlayer = (status === "playing" || status === "ended") && gameKey === "fleet-duel" && currentMember?.participationStatus === "active_game";
   const isFlappyLobby = status === "waiting" && gameKey === "flappy-duel";
   const startButton = isHost && status === "waiting" ? (
     <Button disabled={!canStart || Boolean(pendingAction)} onClick={() => emitAction("start", "room:start_game")}>
@@ -186,7 +208,8 @@ export function RoomClient({
   const startHint = isHost && status === "waiting" ? (
     <>
       {!gameKey && <p className="text-sm font-bold text-slate-500">Choose a game before starting.</p>}
-      {!canStart && <p className="text-sm font-bold text-slate-500">Waiting for all players to be ready.</p>}
+      {gameKey && !hasEnoughPlayers && <p className="text-sm font-bold text-slate-500">Need {minPlayers} players to start.</p>}
+      {gameKey && hasEnoughPlayers && unreadyPlayers.length > 0 && <p className="text-sm font-bold text-slate-500">Waiting for all players to be ready.</p>}
     </>
   ) : null;
   const readyButton = !isHost && status === "waiting" && currentMember?.participationStatus === "lobby" ? (
@@ -220,7 +243,7 @@ export function RoomClient({
           </p>
         )}
         <div className="mt-4 rounded-[1.5rem] bg-slate-50 p-4">
-          <p className="text-sm font-black text-slate-500">Selected game</p>
+          <p className="text-sm font-black text-slate-500">Selected game · Players {activeMembers.length}/{maxPlayers}</p>
           {isHost && status === "waiting" ? (
             <select
               value={gameKey || ""}
@@ -250,6 +273,15 @@ export function RoomClient({
             expanded={gameExpanded}
             onToggleExpanded={() => setGameExpanded((value) => !value)}
             initialSnapshot={endedGameSnapshot}
+            roomStatus={status === "ended" ? "ended" : "playing"}
+          />
+        ) : isFleetActivePlayer ? (
+          <FleetDuelGame
+            roomId={roomId}
+            currentUserId={currentUserId}
+            isHost={isHost}
+            onGameEnd={markGameEnded}
+            initialSnapshot={endedFleetSnapshot}
             roomStatus={status === "ended" ? "ended" : "playing"}
           />
         ) : isFlappyLobby ? (

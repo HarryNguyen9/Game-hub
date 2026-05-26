@@ -70,6 +70,7 @@ create table if not exists public.rooms (
   status public.room_status not null default 'waiting',
   has_password boolean not null default false,
   password_hash text,
+  min_players integer not null default 1,
   max_players integer not null default 12,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -80,7 +81,12 @@ add column if not exists room_code text,
 add column if not exists game_key text,
 add column if not exists has_password boolean not null default false,
 add column if not exists password_hash text,
+add column if not exists min_players integer not null default 1,
 add column if not exists max_players integer not null default 12;
+
+update public.rooms
+set min_players = case when game_key = 'fleet-duel' then 2 else coalesce(min_players, 1) end,
+    max_players = case when game_key = 'fleet-duel' then 2 when game_key = 'flappy-duel' then 4 else coalesce(max_players, 12) end;
 
 do $$
 begin
@@ -107,7 +113,7 @@ begin
     select id
     from public.rooms
     where room_code is null
-      and status in ('waiting', 'playing')
+      and status in ('waiting', 'playing', 'ended')
     order by created_at, id
   loop
     for candidate in 0..9999 loop
@@ -116,7 +122,7 @@ begin
         select 1
         from public.rooms
         where room_code = candidate_code
-          and status in ('waiting', 'playing')
+          and status in ('waiting', 'playing', 'ended')
       ) then
         update public.rooms set room_code = candidate_code where id = room_record.id;
         exit;
@@ -179,7 +185,8 @@ create table if not exists public.game_sessions (
 create index if not exists idx_app_users_display_name on public.app_users using gin (to_tsvector('simple', display_name));
 create index if not exists idx_rooms_status on public.rooms(status);
 create index if not exists idx_rooms_open on public.rooms(status, created_at desc);
-create unique index if not exists idx_rooms_open_room_code_unique on public.rooms(room_code) where room_code is not null and status in ('waiting', 'playing');
+drop index if exists idx_rooms_open_room_code_unique;
+create unique index if not exists idx_rooms_open_room_code_unique on public.rooms(room_code) where room_code is not null and status in ('waiting', 'playing', 'ended');
 create index if not exists idx_room_members_user_id on public.room_members(user_id);
 
 create or replace function public.touch_updated_at()
@@ -219,7 +226,7 @@ alter table public.game_sessions enable row level security;
 drop policy if exists "No direct app user access" on public.app_users;
 create policy "No direct app user access" on public.app_users for all to anon, authenticated using (false) with check (false);
 drop policy if exists "Public rooms are readable" on public.rooms;
-create policy "Public rooms are readable" on public.rooms for select to anon, authenticated using (status in ('waiting', 'playing'));
+create policy "Public rooms are readable" on public.rooms for select to anon, authenticated using (status in ('waiting', 'playing', 'ended'));
 drop policy if exists "No direct room writes" on public.rooms;
 create policy "No direct room writes" on public.rooms for all to anon, authenticated using (false) with check (false);
 drop policy if exists "No direct member writes" on public.room_members;

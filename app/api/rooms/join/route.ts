@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     const supabase = createServiceClient();
     const query = supabase
       .from("rooms")
-      .select("id, status, has_password, password_hash")
+      .select("id, status, has_password, password_hash, max_players")
       .in("status", ["waiting", "playing", "ended"]);
 
     const { data: room, error: roomError } = await (input.roomId ? query.eq("id", input.roomId) : query.eq("room_code", input.roomCode || "")).maybeSingle();
@@ -51,6 +51,16 @@ export async function POST(request: Request) {
 
     if (existingMember) {
       return ok({ roomId: room.id });
+    }
+
+    if (room.status === "waiting") {
+      const { count, error: countError } = await supabase
+        .from("room_members")
+        .select("user_id", { count: "exact", head: true })
+        .eq("room_id", room.id)
+        .eq("participation_status", "lobby");
+      if (countError) return fail(`Could not check room capacity: ${countError.message}`, 500);
+      if ((count || 0) >= room.max_players) return fail("Room is full.", 409);
     }
 
     const { error: memberError } = await supabase.from("room_members").insert({

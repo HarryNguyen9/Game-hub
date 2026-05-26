@@ -5,9 +5,29 @@ export const GAME_CATALOG = [
   {
     id: "flappy-duel",
     name: "Flappy Duel",
-    description: "Server-authoritative flaps, shared pipes, last pig flying wins.",
+    displayName: "Flappy Duel",
+    shortLabel: "Flappy",
+    description: "Real-time flying race with ghost pigs.",
+    minPlayers: 1,
+    maxPlayers: 4,
+    icon: "🐷",
     accent: "from-sky-200 to-lime-200"
+  },
+  {
+    id: "fleet-duel",
+    name: "Fleet Duel",
+    displayName: "Fleet Duel",
+    shortLabel: "Fleet",
+    description: "Place your fleet and sink your rival's ships.",
+    minPlayers: 2,
+    maxPlayers: 2,
+    icon: "🚢",
+    accent: "from-cyan-200 to-blue-200"
   }
 ] as const;
 
 export type GameId = (typeof GAME_CATALOG)[number]["id"];
+
+export function getGameConfig(gameKey: string | null | undefined) {
+  return GAME_CATALOG.find((game) => game.id === gameKey) || null;
+}

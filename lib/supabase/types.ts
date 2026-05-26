@@ -43,6 +43,7 @@ export type Database = {
           status: "waiting" | "playing" | "ended" | "closed";
           has_password: boolean;
           password_hash: string | null;
+          min_players: number;
           max_players: number;
           created_at: string;
           updated_at: string;
@@ -56,6 +57,7 @@ export type Database = {
           status?: "waiting" | "playing" | "ended" | "closed";
           has_password?: boolean;
           password_hash?: string | null;
+          min_players?: number;
           max_players?: number;
           created_at?: string;
           updated_at?: string;
@@ -67,6 +69,7 @@ export type Database = {
           status?: "waiting" | "playing" | "ended" | "closed";
           has_password?: boolean;
           password_hash?: string | null;
+          min_players?: number;
           max_players?: number;
           updated_at?: string;
         };

@@ -5,6 +5,8 @@ import { getCurrentUserWithProfile } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/server";
 import { GAME_CATALOG } from "@/lib/constants";
 import type { FlappySnapshot } from "@/lib/games/flappy-duel/types";
+import type { FleetSnapshot, FleetState } from "@/lib/games/fleet-duel/types";
+import { serializeFleetStateForUser } from "@/lib/games/fleet-duel/serializer";
 
 type PageProps = { params: Promise<{ roomId: string }> };
 type AppUserRecord = { username: string; display_name: string | null; avatar_url: string | null } | null;
@@ -27,7 +29,7 @@ export default async function RoomPage({ params }: PageProps) {
   const supabase = createServiceClient();
   const { data: room } = await supabase
     .from("rooms")
-    .select("id, room_code, name, game_key, status, has_password, host_user_id")
+    .select("id, room_code, name, game_key, status, has_password, host_user_id, min_players, max_players")
     .eq("id", roomId)
     .single();
 
@@ -54,6 +56,7 @@ export default async function RoomPage({ params }: PageProps) {
       };
     }) || [];
   let initialGameSnapshot: FlappySnapshot | null = null;
+  let initialFleetSnapshot: FleetSnapshot | null = null;
 
   if (room.status === "ended") {
     const { data: session } = await supabase
@@ -66,12 +69,18 @@ export default async function RoomPage({ params }: PageProps) {
       .limit(1)
       .maybeSingle();
 
-    const snapshot = (session?.state as FlappySnapshot | null) ?? null;
-    if (session?.game_key === "flappy-duel" && snapshot?.roomId === roomId && snapshot.status === "ended") {
-      initialGameSnapshot = snapshot;
+    if (session?.game_key === "flappy-duel") {
+      const snapshot = (session.state as FlappySnapshot | null) ?? null;
+      if (snapshot?.roomId === roomId && snapshot.status === "ended") initialGameSnapshot = snapshot;
+    }
+    if (session?.game_key === "fleet-duel") {
+      const state = session.state as FleetState | null;
+      if (state?.roomId === roomId && state.status === "ended" && state.players[user.id]) {
+        initialFleetSnapshot = serializeFleetStateForUser(state, user.id);
+      }
     }
   }
-  const effectiveGameKey = room.game_key || (initialGameSnapshot ? "flappy-duel" : null);
+  const effectiveGameKey = room.game_key || (initialGameSnapshot ? "flappy-duel" : initialFleetSnapshot ? "fleet-duel" : null);
   const game = GAME_CATALOG.find((item) => item.id === effectiveGameKey);
 
   return (
@@ -87,7 +96,9 @@ export default async function RoomPage({ params }: PageProps) {
           </div>
           <div className="flex flex-wrap gap-2">
             {room.room_code && <div className="rounded-3xl bg-sky-100 px-5 py-3 text-center font-black text-sky-800">Code {room.room_code}</div>}
-            <div className="rounded-3xl bg-[#ffcf5a] px-5 py-3 text-center font-black">{members.length} players</div>
+            <div className="rounded-3xl bg-[#ffcf5a] px-5 py-3 text-center font-black">
+              {members.filter((member) => member.participationStatus !== "waiting_next_round").length}/{room.max_players} players
+            </div>
           </div>
         </div>
       </header>
@@ -99,6 +110,9 @@ export default async function RoomPage({ params }: PageProps) {
         currentUserId={user.id}
         initialGameKey={effectiveGameKey}
         initialGameSnapshot={initialGameSnapshot}
+        initialFleetSnapshot={initialFleetSnapshot}
+        initialMinPlayers={room.min_players}
+        initialMaxPlayers={room.max_players}
       />
     </AppShell>
   );

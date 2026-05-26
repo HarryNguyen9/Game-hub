@@ -45,6 +45,31 @@ function FlappyDuelPreview() {
   );
 }
 
+function FleetDuelPreview() {
+  return (
+    <div className="relative mb-4 h-28 overflow-hidden rounded-[1.5rem] bg-gradient-to-b from-cyan-200 via-sky-100 to-blue-200 shadow-inner">
+      <div className="absolute inset-x-0 bottom-0 h-12 bg-cyan-300/50" />
+      <div className="absolute left-5 top-5 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-cyan-700">2 Players</div>
+      <div className="absolute right-5 top-5 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-blue-700">Turn-based</div>
+      <div className="absolute left-8 top-16 h-1.5 w-20 rounded-full bg-white/60" />
+      <div className="absolute right-8 top-20 h-1.5 w-24 rounded-full bg-white/50" />
+      <div className="absolute left-[24%] top-[48%]">
+        <div className="relative h-7 w-16 rounded-b-xl rounded-t-md bg-slate-700 shadow-md">
+          <div className="absolute -top-4 left-5 h-4 w-7 rounded-t-lg bg-slate-500" />
+          <div className="absolute -right-4 top-2 h-0 w-0 border-y-[8px] border-l-[16px] border-y-transparent border-l-slate-700" />
+          <div className="absolute bottom-1 left-2 h-1 w-10 rounded-full bg-cyan-200" />
+        </div>
+      </div>
+      <div className="absolute right-[22%] top-[50%] opacity-70">
+        <div className="relative h-6 w-14 rounded-b-xl rounded-t-md bg-rose-400 shadow-md">
+          <div className="absolute -top-3 left-4 h-3 w-6 rounded-t-lg bg-rose-300" />
+          <div className="absolute -left-3 top-2 h-0 w-0 border-y-[7px] border-r-[14px] border-y-transparent border-r-rose-400" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default async function DashboardPage() {
   const user = await getCurrentUserWithProfile();
   const activeRoom = await getActiveRoomForUser(user.id);
@@ -73,9 +98,10 @@ export default async function DashboardPage() {
       <section className="grid gap-4 md:grid-cols-4">
         {GAME_CATALOG.map((game) => (
           <article key={game.id} className="rounded-[1.75rem] bg-white/86 p-4 shadow-sm ring-1 ring-white">
-            {game.id === "flappy-duel" ? <FlappyDuelPreview /> : <div className={`mb-4 h-24 rounded-[1.5rem] bg-gradient-to-br ${game.accent}`} />}
+            {game.id === "flappy-duel" ? <FlappyDuelPreview /> : <FleetDuelPreview />}
             <h2 className="font-black">{game.name}</h2>
             <p className="mt-1 text-sm font-medium text-slate-500">{game.description}</p>
+            <p className="mt-2 text-xs font-black text-slate-400">{game.minPlayers}-{game.maxPlayers} players</p>
           </article>
         ))}
       </section>

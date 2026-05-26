@@ -1,4 +1,5 @@
 import { requireUser } from "@/lib/auth";
+import { getGameConfig } from "@/lib/constants";
 import { fail, ok } from "@/lib/http";
 import { createServiceClient } from "@/lib/supabase/server";
 
@@ -14,8 +15,13 @@ export async function POST(_request: Request, { params }: Params) {
   if (room.host_user_id !== session.userId) return fail("Only the host can start the game.", 403);
   if (room.status !== "waiting") return fail("Room is not waiting.", 409);
   if (!room.game_key) return fail("Choose a game before starting.", 409);
+  const game = getGameConfig(room.game_key);
+  if (!game) return fail("Unknown game.", 422);
 
   const { data: members } = await supabase.from("room_members").select("role, ready, participation_status").eq("room_id", roomId);
+  const lobbyMembers = (members || []).filter((member) => member.participation_status === "lobby");
+  if (lobbyMembers.length < game.minPlayers) return fail(`Need ${game.minPlayers} players to start.`, 409);
+  if (lobbyMembers.length > game.maxPlayers) return fail("Room has too many active players.", 409);
   const unready = (members || []).filter((member) => member.role === "player" && member.participation_status === "lobby" && !member.ready);
   if (unready.length > 0) return fail("Waiting for all players to be ready.", 409);
 

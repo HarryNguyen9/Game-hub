@@ -3,6 +3,8 @@ import type { Server as HttpServer } from "node:http";
 import { registerRoomHandlers } from "./room-handlers";
 import { authenticateSocket } from "./auth";
 import { registerFlappyDuelHandlers } from "./socket/flappy-duel-handlers";
+import { registerFleetDuelHandlers } from "./socket/fleet-duel-handlers";
+import type { AuthedSocket } from "./auth";
 
 export function allowedOrigins() {
   const origins = process.env.APP_ORIGIN?.split(",").map(normalizeOrigin).filter(Boolean);
@@ -58,8 +60,11 @@ export function createSocketServer(httpServer: HttpServer) {
 
   io.use(authenticateSocket);
   io.on("connection", (socket) => {
+    const user = (socket as AuthedSocket).data.user;
+    if (user?.userId) socket.join(`user:${user.userId}`);
     registerRoomHandlers(io, socket);
     registerFlappyDuelHandlers(io, socket);
+    registerFleetDuelHandlers(io, socket);
   });
 
   return io;

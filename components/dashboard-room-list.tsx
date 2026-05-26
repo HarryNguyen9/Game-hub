@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { io, type Socket } from "socket.io-client";
 import { Lock, UsersRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getGameConfig } from "@/lib/constants";
 
 type Room = {
   id: string;
@@ -13,8 +14,10 @@ type Room = {
   game_key: string | null;
   has_password: boolean;
   status: "waiting" | "playing" | "ended";
+  min_players?: number;
+  max_players?: number;
   app_users?: { username: string; display_name: string | null } | { username: string; display_name: string | null }[] | null;
-  room_members?: { user_id: string }[];
+  room_members?: { user_id: string; participation_status?: "lobby" | "active_game" | "waiting_next_round" }[];
 };
 
 export function DashboardRoomList() {
@@ -89,10 +92,17 @@ export function DashboardRoomList() {
     <div className="grid gap-3">
       {rooms.map((room) => (
         <article key={room.id} className="rounded-3xl bg-white/88 p-4 shadow-sm ring-1 ring-white transition hover:-translate-y-0.5">
+          {(() => {
+            const game = getGameConfig(room.game_key);
+            const playerCount = room.room_members?.filter((member) => member.participation_status !== "waiting_next_round").length || 0;
+            const full = room.status === "waiting" && Boolean(room.max_players) && playerCount >= (room.max_players || 0);
+            return (
+              <>
           <div className="flex items-start justify-between gap-4">
-            <div>
+            <div className="min-w-0">
+              <span className="mb-2 inline-flex size-9 items-center justify-center rounded-2xl bg-sky-50 text-xl">{game?.icon || "🎮"}</span>
               <p className="font-black">{room.name}</p>
-              <p className="text-sm font-semibold text-slate-500">{room.game_key ? room.game_key.replaceAll("-", " ") : "No game selected"}</p>
+              <p className="text-sm font-semibold text-slate-500">{game?.name || "No game selected"}</p>
               <p className="text-xs font-bold text-slate-400">
                 Host {Array.isArray(room.app_users) ? room.app_users[0]?.display_name || room.app_users[0]?.username : room.app_users?.display_name || room.app_users?.username}
               </p>
@@ -100,17 +110,21 @@ export function DashboardRoomList() {
             <div className="flex flex-wrap justify-end gap-2">
               {room.room_code && <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-black text-sky-700">#{room.room_code}</span>}
               {room.has_password && <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600"><Lock size={13} /> Locked</span>}
+              {full && <span className="rounded-full bg-rose-100 px-3 py-1 text-xs font-black text-rose-700">Full</span>}
               <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-700">
                 {room.status === "playing" ? "In Game" : room.status === "ended" ? "Ended" : "Waiting"}
               </span>
             </div>
           </div>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm font-bold text-slate-500">
-            <span className="inline-flex items-center gap-2"><UsersRound size={16} /> {room.room_members?.length || 0} players</span>
-            <Button className="min-h-9 px-4 py-1" variant="secondary" disabled={loadingRoomId === room.id} onClick={() => (room.has_password ? (setPassword(""), setError(""), setJoiningRoom(room)) : join(room))}>
+            <span className="inline-flex items-center gap-2"><UsersRound size={16} /> {playerCount}/{room.max_players || "?"} players</span>
+            <Button className="min-h-9 px-4 py-1" variant="secondary" disabled={loadingRoomId === room.id || full} onClick={() => (room.has_password ? (setPassword(""), setError(""), setJoiningRoom(room)) : join(room))}>
               {loadingRoomId === room.id ? "Joining..." : "Join"}
             </Button>
           </div>
+              </>
+            );
+          })()}
         </article>
       ))}
       {joiningRoom && (

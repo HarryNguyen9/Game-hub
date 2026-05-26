@@ -33,7 +33,7 @@ export async function GET() {
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("rooms")
-    .select("id, room_code, name, game_key, status, has_password, host_user_id, created_at, app_users!rooms_host_user_id_fkey(username, display_name, avatar_url), room_members(user_id)")
+    .select("id, room_code, name, game_key, status, has_password, host_user_id, min_players, max_players, created_at, app_users!rooms_host_user_id_fkey(username, display_name, avatar_url), room_members(user_id, participation_status)")
     .in("status", ["waiting", "playing", "ended"])
     .order("status", { ascending: false })
     .order("created_at", { ascending: true })
@@ -59,6 +59,8 @@ export async function POST(request: Request) {
         game_key: "",
         has_password: input.hasPassword,
         password_hash: passwordHash,
+        min_players: 1,
+        max_players: 12,
         status: "waiting"
       })
       .select("id, room_code")

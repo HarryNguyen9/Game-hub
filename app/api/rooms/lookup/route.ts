@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   const supabase = createServiceClient();
   const { data: room, error } = await supabase
     .from("rooms")
-    .select("id, room_code, name, game_key, status, has_password, room_members(user_id)")
+    .select("id, room_code, name, game_key, status, has_password, max_players, room_members(user_id, participation_status)")
     .eq("room_code", parsed.data)
     .in("status", ["waiting", "playing", "ended"])
     .maybeSingle();
@@ -33,6 +33,7 @@ export async function GET(request: Request) {
       gameKey: room.game_key,
       status: room.status,
       hasPassword: room.has_password,
+      maxPlayers: room.max_players,
       playerCount: room.room_members?.length || 0
     }
   });
