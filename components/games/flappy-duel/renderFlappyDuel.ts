@@ -10,7 +10,7 @@ type RenderOptions = {
   lastCrashAt: number | null;
 };
 
-const birdColors = ["#ff6f91", "#6c9cff", "#ffcf5a", "#64d6a4", "#b88cff", "#ff9f6e"];
+const pigAccentColors = ["#ff6f91", "#6c9cff", "#ffcf5a", "#64d6a4", "#b88cff", "#ff9f6e"];
 
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
@@ -25,7 +25,7 @@ function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, width:
 function playerColor(userId: string, index: number) {
   let hash = 0;
   for (let i = 0; i < userId.length; i += 1) hash = (hash * 31 + userId.charCodeAt(i)) % 997;
-  return birdColors[(hash + index) % birdColors.length];
+  return pigAccentColors[(hash + index) % pigAccentColors.length];
 }
 
 function drawCloud(ctx: CanvasRenderingContext2D, x: number, y: number, scale = 1) {
@@ -60,44 +60,98 @@ function drawPipe(ctx: CanvasRenderingContext2D, x: number, y: number, width: nu
   ctx.stroke();
 }
 
-function drawBird(ctx: CanvasRenderingContext2D, options: { x: number; y: number; size: number; color: string; velocity: number; alive: boolean; self: boolean; flapPulse: number }) {
+function drawPig(ctx: CanvasRenderingContext2D, options: { x: number; y: number; size: number; color: string; velocity: number; alive: boolean; self: boolean; flapPulse: number }) {
   const { x, y, size, color, velocity, alive, self, flapPulse } = options;
   const squash = self ? flapPulse * 0.12 : 0;
   ctx.save();
   ctx.translate(x, y);
-  ctx.rotate(Math.max(-0.55, Math.min(0.75, velocity / 13)));
+  ctx.rotate(Math.max(-0.42, Math.min(0.55, velocity / 17)));
   ctx.scale(1 + squash, 1 - squash);
   ctx.globalAlpha = alive ? 1 : 0.72;
 
-  ctx.fillStyle = alive ? color : "#a8b3c4";
-  ctx.strokeStyle = self ? "#102033" : "#475569";
-  ctx.lineWidth = self ? 3.5 : 2.5;
+  const bodyColor = alive ? "#ff9fbd" : "#a8b3c4";
+  const snoutColor = alive ? "#ffc2d2" : "#cbd5e1";
+  const earColor = alive ? "#ff82aa" : "#94a3b8";
+  const accentColor = alive ? color : "#94a3b8";
+
+  ctx.fillStyle = "rgba(16,32,51,0.12)";
   ctx.beginPath();
-  ctx.ellipse(0, 0, size * 0.72, size * 0.54, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, size * 0.55, size * 0.62, size * 0.16, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = earColor;
+  ctx.strokeStyle = self ? "#102033" : "#475569";
+  ctx.lineWidth = self ? 3 : 2.2;
+  ctx.beginPath();
+  ctx.moveTo(-size * 0.45, -size * 0.34);
+  ctx.quadraticCurveTo(-size * 0.62, -size * 0.88, -size * 0.18, -size * 0.62);
+  ctx.quadraticCurveTo(-size * 0.23, -size * 0.42, -size * 0.45, -size * 0.34);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(size * 0.45, -size * 0.34);
+  ctx.quadraticCurveTo(size * 0.62, -size * 0.88, size * 0.18, -size * 0.62);
+  ctx.quadraticCurveTo(size * 0.23, -size * 0.42, size * 0.45, -size * 0.34);
   ctx.fill();
   ctx.stroke();
 
-  ctx.fillStyle = "rgba(255,255,255,0.7)";
+  ctx.fillStyle = bodyColor;
+  ctx.strokeStyle = self ? "#102033" : "#475569";
+  ctx.lineWidth = self ? 3.5 : 2.5;
   ctx.beginPath();
-  ctx.ellipse(-size * 0.22, size * 0.05, size * 0.28, size * 0.22, -0.3, 0, Math.PI * 2);
+  ctx.ellipse(0, 0, size * 0.64, size * 0.6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(255,255,255,0.38)";
+  ctx.beginPath();
+  ctx.ellipse(-size * 0.22, -size * 0.18, size * 0.18, size * 0.12, -0.45, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = "#fff";
   ctx.beginPath();
-  ctx.arc(size * 0.24, -size * 0.14, size * 0.17, 0, Math.PI * 2);
+  ctx.arc(-size * 0.22, -size * 0.12, size * 0.13, 0, Math.PI * 2);
+  ctx.arc(size * 0.22, -size * 0.12, size * 0.13, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = "#102033";
   ctx.beginPath();
-  ctx.arc(size * 0.3, -size * 0.13, size * 0.07, 0, Math.PI * 2);
+  ctx.arc(-size * 0.18, -size * 0.11, size * 0.055, 0, Math.PI * 2);
+  ctx.arc(size * 0.18, -size * 0.11, size * 0.055, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = "#ffd166";
+  ctx.fillStyle = snoutColor;
+  ctx.strokeStyle = self ? "#102033" : "#64748b";
+  ctx.lineWidth = self ? 2.8 : 2;
   ctx.beginPath();
-  ctx.moveTo(size * 0.62, 0);
-  ctx.lineTo(size * 1.02, -size * 0.18);
-  ctx.lineTo(size * 1.02, size * 0.18);
-  ctx.closePath();
+  ctx.ellipse(0, size * 0.12, size * 0.29, size * 0.21, 0, 0, Math.PI * 2);
   ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = "#e45c87";
+  ctx.beginPath();
+  ctx.arc(-size * 0.1, size * 0.11, size * 0.045, 0, Math.PI * 2);
+  ctx.arc(size * 0.1, size * 0.11, size * 0.045, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = accentColor;
+  ctx.lineWidth = Math.max(2, size * 0.08);
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(-size * 0.58, size * 0.04);
+  ctx.lineTo(-size * 0.82, -size * 0.06 - flapPulse * size * 0.16);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(size * 0.56, size * 0.16);
+  ctx.bezierCurveTo(size * 0.8, size * 0.02, size * 0.83, size * 0.32, size * 0.62, size * 0.3);
+  ctx.stroke();
+
+  ctx.fillStyle = "#ff7aa0";
+  ctx.beginPath();
+  ctx.arc(-size * 0.39, size * 0.12, size * 0.08, 0, Math.PI * 2);
+  ctx.arc(size * 0.39, size * 0.12, size * 0.08, 0, Math.PI * 2);
+  ctx.fill();
+
   ctx.restore();
 }
 
@@ -145,7 +199,7 @@ export function renderFlappyDuel(ctx: CanvasRenderingContext2D, options: RenderO
 
     ctx.save();
     ctx.globalAlpha = isSelf ? 1 : 0.38;
-    drawBird(ctx, {
+    drawPig(ctx, {
       x: birdX,
       y,
       size: birdSize,

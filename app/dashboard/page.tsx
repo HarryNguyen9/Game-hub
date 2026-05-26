@@ -6,6 +6,34 @@ import { getActiveRoomForUser } from "@/lib/active-room";
 import { getCurrentUserWithProfile } from "@/lib/auth";
 import { GAME_CATALOG } from "@/lib/constants";
 
+function FlappyDuelPreview() {
+  return (
+    <div className="relative mb-4 h-28 overflow-hidden rounded-[1.5rem] bg-gradient-to-b from-sky-200 via-emerald-50 to-amber-100 shadow-inner">
+      <div className="absolute left-7 top-5 h-4 w-16 rounded-full bg-white/55" />
+      <div className="absolute left-28 top-9 h-3 w-12 rounded-full bg-white/45" />
+      <div className="absolute right-9 top-6 h-4 w-14 rounded-full bg-white/55" />
+      <div className="absolute bottom-0 left-0 h-2 w-full bg-sky-300" />
+      <div className="absolute right-10 top-0 h-9 w-9 rounded-b-lg border-2 border-emerald-500 bg-emerald-300" />
+      <div className="absolute bottom-2 right-10 h-10 w-9 rounded-t-lg border-2 border-emerald-500 bg-emerald-300" />
+      <div className="absolute left-[28%] top-[48%]">
+        <div className="relative h-9 w-11 -rotate-6 rounded-[50%] border-2 border-slate-800 bg-rose-400 shadow-md">
+          <div className="absolute -left-2 top-3 h-4 w-5 rounded-full bg-white/55" />
+          <div className="absolute right-2 top-2 h-3 w-3 rounded-full bg-white" />
+          <div className="absolute right-1 top-2.5 h-1.5 w-1.5 rounded-full bg-slate-900" />
+          <div className="absolute -right-4 top-4 h-0 w-0 border-y-[5px] border-l-[14px] border-y-transparent border-l-amber-300" />
+        </div>
+      </div>
+      <div className="absolute left-[45%] top-[58%] opacity-40">
+        <div className="relative h-7 w-9 rotate-6 rounded-[50%] border-2 border-slate-600 bg-slate-400">
+          <div className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-white" />
+          <div className="absolute -right-3 top-3 h-0 w-0 border-y-[4px] border-l-[11px] border-y-transparent border-l-amber-300" />
+        </div>
+      </div>
+      <div className="absolute left-5 top-4 rounded-full bg-white/70 px-2 py-1 text-[10px] font-black uppercase text-rose-500">Live duel</div>
+    </div>
+  );
+}
+
 export default async function DashboardPage() {
   const user = await getCurrentUserWithProfile();
   const activeRoom = await getActiveRoomForUser(user.id);
@@ -34,7 +62,7 @@ export default async function DashboardPage() {
       <section className="grid gap-4 md:grid-cols-4">
         {GAME_CATALOG.map((game) => (
           <article key={game.id} className="rounded-[1.75rem] bg-white/86 p-4 shadow-sm ring-1 ring-white">
-            <div className={`mb-4 h-24 rounded-[1.5rem] bg-gradient-to-br ${game.accent}`} />
+            {game.id === "flappy-duel" ? <FlappyDuelPreview /> : <div className={`mb-4 h-24 rounded-[1.5rem] bg-gradient-to-br ${game.accent}`} />}
             <h2 className="font-black">{game.name}</h2>
             <p className="mt-1 text-sm font-medium text-slate-500">{game.description}</p>
           </article>

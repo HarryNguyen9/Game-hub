@@ -4,6 +4,7 @@ import { RoomClient } from "@/components/room-client";
 import { getCurrentUserWithProfile } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/server";
 import { GAME_CATALOG } from "@/lib/constants";
+import type { FlappySnapshot } from "@/lib/games/flappy-duel/types";
 
 type PageProps = { params: Promise<{ roomId: string }> };
 type AppUserRecord = { username: string; display_name: string | null; avatar_url: string | null } | null;
@@ -41,7 +42,6 @@ export default async function RoomPage({ params }: PageProps) {
   const currentMember = memberRows?.find((member) => member.user_id === user.id);
   if (!currentMember && room.host_user_id !== user.id) redirect("/dashboard");
 
-  const game = GAME_CATALOG.find((item) => item.id === room.game_key);
   const members =
     memberRows?.map((member) => {
       const appUser = Array.isArray(member.app_users) ? member.app_users[0] : member.app_users;
@@ -53,6 +53,26 @@ export default async function RoomPage({ params }: PageProps) {
         ...profileFrom(appUser)
       };
     }) || [];
+  let initialGameSnapshot: FlappySnapshot | null = null;
+
+  if (room.status === "ended") {
+    const { data: session } = await supabase
+      .from("game_sessions")
+      .select("game_key, state")
+      .eq("room_id", roomId)
+      .eq("status", "ended")
+      .order("ended_at", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const snapshot = (session?.state as FlappySnapshot | null) ?? null;
+    if (session?.game_key === "flappy-duel" && snapshot?.roomId === roomId && snapshot.status === "ended") {
+      initialGameSnapshot = snapshot;
+    }
+  }
+  const effectiveGameKey = room.game_key || (initialGameSnapshot ? "flappy-duel" : null);
+  const game = GAME_CATALOG.find((item) => item.id === effectiveGameKey);
 
   return (
     <AppShell user={user}>
@@ -77,7 +97,8 @@ export default async function RoomPage({ params }: PageProps) {
         initialStatus={room.status}
         isHost={room.host_user_id === user.id}
         currentUserId={user.id}
-        initialGameKey={room.game_key}
+        initialGameKey={effectiveGameKey}
+        initialGameSnapshot={initialGameSnapshot}
       />
     </AppShell>
   );

@@ -8,15 +8,16 @@ type SyncResponse =
   | { ok: true; snapshot: FlappySnapshot; countdown: number | null }
   | { ok: false; error: string };
 
-export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGameEnd?: () => void) {
-  const [snapshot, setSnapshot] = useState<FlappySnapshot | null>(null);
+export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGameEnd?: () => void, initialSnapshot?: FlappySnapshot | null) {
+  const [snapshot, setSnapshot] = useState<FlappySnapshot | null>(initialSnapshot ?? null);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [connected, setConnected] = useState(false);
   const socketRef = useRef<Socket | null>(null);
   const inputSeq = useRef(0);
-  const snapshotRef = useRef<FlappySnapshot | null>(null);
+  const snapshotRef = useRef<FlappySnapshot | null>(initialSnapshot ?? null);
   const lastFlapAtRef = useRef(0);
+  const hasEndedInitialSnapshot = initialSnapshot?.roomId === roomId && initialSnapshot.status === "ended";
 
   const applySyncResponse = useCallback(
     (response: SyncResponse) => {
@@ -34,6 +35,7 @@ export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGam
   );
 
   const syncGame = useCallback(() => {
+    if (snapshotRef.current?.status === "ended") return;
     socketRef.current?.timeout(1500).emit("game:sync", { roomId }, (error: Error | null, response?: SyncResponse) => {
       if (error) {
         setError("Socket server did not answer game:sync. Reconnect, refresh the room, or try Back to Lobby if you are the host.");
@@ -70,6 +72,7 @@ export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGam
         setConnected(true);
         setError("");
         socket.emit("room:join", { roomId, presence: false });
+        if (hasEndedInitialSnapshot) return;
         socket.timeout(1500).emit("game:sync", { roomId }, (error: Error | null, response?: SyncResponse) => {
           if (error) {
             setError("Socket server did not answer game:sync. Reconnect, refresh the room, or try Back to Lobby if you are the host.");
@@ -117,7 +120,7 @@ export function useFlappyDuelSocket(roomId: string, currentUserId: string, onGam
       activeSocket?.disconnect();
       socketRef.current = null;
     };
-  }, [applySyncResponse, onGameEnd, roomId]);
+  }, [applySyncResponse, hasEndedInitialSnapshot, onGameEnd, roomId]);
 
   const flap = useCallback(() => {
     const currentSnapshot = snapshotRef.current;

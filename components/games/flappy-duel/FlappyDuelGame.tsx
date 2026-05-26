@@ -14,7 +14,8 @@ export function FlappyDuelGame({
   isHost,
   onGameEnd,
   expanded,
-  onToggleExpanded
+  onToggleExpanded,
+  initialSnapshot
 }: {
   roomId: string;
   currentUserId: string;
@@ -22,6 +23,7 @@ export function FlappyDuelGame({
   onGameEnd?: () => void;
   expanded: boolean;
   onToggleExpanded: () => void;
+  initialSnapshot?: FlappySnapshot | null;
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const previousSnapshotRef = useRef<FlappySnapshot | null>(null);
@@ -30,7 +32,7 @@ export function FlappyDuelGame({
   const predictedSelfYRef = useRef<number | null>(null);
   const lastCrashAtRef = useRef<number | null>(null);
   const lastPointerFlapAtRef = useRef(0);
-  const { snapshot, countdown, error, connected, flap, backToLobby, lastFlapAtRef } = useFlappyDuelSocket(roomId, currentUserId, onGameEnd);
+  const { snapshot, countdown, error, connected, flap, backToLobby, lastFlapAtRef } = useFlappyDuelSocket(roomId, currentUserId, onGameEnd, initialSnapshot);
   const [returning, setReturning] = useState(false);
   const currentPlayer = snapshot?.players[currentUserId];
   const ended = snapshot?.status === "ended";
@@ -137,11 +139,17 @@ export function FlappyDuelGame({
         </div>
       </div>
       {error && <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</p>}
-      <div className={expanded ? "relative grid min-h-[68dvh] flex-1 place-items-center overflow-hidden rounded-[1.5rem] bg-sky-100 shadow-inner max-[700px]:min-h-[74dvh] max-[700px]:landscape:min-h-[66dvh]" : "relative overflow-hidden rounded-[1.5rem] bg-sky-100 shadow-inner"}>
+      <div
+        className={
+          expanded
+            ? "relative grid min-h-[68dvh] flex-1 place-items-center overflow-hidden rounded-[1.5rem] bg-sky-100 shadow-inner max-[700px]:min-h-[74dvh] max-[700px]:landscape:min-h-[66dvh]"
+            : "relative grid min-h-[24rem] place-items-center overflow-hidden rounded-[1.5rem] bg-sky-100 shadow-inner sm:min-h-[28rem] lg:min-h-0 lg:aspect-[900/520]"
+        }
+      >
         <canvas
           ref={canvasRef}
           onPointerDown={handlePointerDown}
-          className={expanded ? "block h-auto max-h-full w-full select-none touch-none object-contain" : "block aspect-[900/520] w-full select-none touch-none"}
+          className={expanded ? "block h-auto max-h-full w-full select-none touch-none object-contain" : "absolute inset-0 block h-full w-full select-none touch-none object-contain"}
           aria-label="Flappy Duel game canvas"
         />
         {countdown && (

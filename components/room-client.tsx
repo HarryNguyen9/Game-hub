@@ -8,6 +8,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { FlappyDuelGame } from "@/components/games/flappy-duel/FlappyDuelGame";
 import { GAME_CATALOG } from "@/lib/constants";
+import type { FlappySnapshot } from "@/lib/games/flappy-duel/types";
 
 type RoomStatus = "waiting" | "playing" | "ended" | "closed";
 type Member = {
@@ -42,7 +43,8 @@ export function RoomClient({
   initialStatus,
   isHost,
   currentUserId,
-  initialGameKey
+  initialGameKey,
+  initialGameSnapshot
 }: {
   roomId: string;
   initialMembers: Member[];
@@ -50,6 +52,7 @@ export function RoomClient({
   isHost: boolean;
   currentUserId: string;
   initialGameKey: string | null;
+  initialGameSnapshot: FlappySnapshot | null;
 }) {
   const router = useRouter();
   const [members, setMembers] = useState(initialMembers);
@@ -60,6 +63,7 @@ export function RoomClient({
   const [socket, setSocket] = useState<Socket | null>(null);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [gameExpanded, setGameExpanded] = useState(false);
+  const [endedGameSnapshot, setEndedGameSnapshot] = useState<FlappySnapshot | null>(initialGameSnapshot);
 
   useEffect(() => {
     let cancelled = false;
@@ -100,6 +104,7 @@ export function RoomClient({
         setMembers(snapshot.members);
         setStatus(snapshot.status);
         setGameKey(snapshot.room?.game_key || null);
+        if (snapshot.status !== "ended") setEndedGameSnapshot(null);
         setPendingAction(null);
       };
       nextSocket.on("room:members_updated", applySnapshot);
@@ -244,6 +249,7 @@ export function RoomClient({
             onGameEnd={markGameEnded}
             expanded={gameExpanded}
             onToggleExpanded={() => setGameExpanded((value) => !value)}
+            initialSnapshot={endedGameSnapshot}
           />
         ) : isFlappyLobby ? (
           <div className={gameExpanded ? "fixed inset-0 z-50 flex h-dvh flex-col gap-3 overflow-y-auto bg-white p-3" : "relative mt-4 grid gap-4"}>
