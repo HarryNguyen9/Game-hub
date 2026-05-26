@@ -91,6 +91,42 @@ npm run socket:dev
 
 Open `http://localhost:3000`.
 
+## Deploy On Render
+
+Deploy this project as two Render services.
+
+### Web Service
+
+- Build Command: `npm install && npm run build`
+- Start Command: `npm start`
+
+Set the web service env vars:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+SESSION_SECRET=
+NEXT_PUBLIC_APP_URL=https://your-web-service.onrender.com
+NEXT_PUBLIC_SOCKET_URL=https://your-socket-service.onrender.com
+```
+
+### Socket Service
+
+- Build Command: `npm install`
+- Start Command: `npm run socket:start`
+
+Set the socket service env vars:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+SESSION_SECRET=
+APP_ORIGIN=https://your-web-service.onrender.com
+```
+
+Render provides `PORT` automatically for the socket service. `SOCKET_PORT` is only needed for local or custom hosting.
+
 ## Routes
 
 - `/login`

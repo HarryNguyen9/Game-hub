@@ -6,7 +6,7 @@ import { createSocketServer } from "./socket";
 
 nextEnv.loadEnvConfig(process.cwd());
 
-const port = Number(process.env.SOCKET_PORT || 4000);
+const port = Number(process.env.PORT || process.env.SOCKET_PORT || 4000);
 let io: SocketServer | null = null;
 
 const httpServer = createServer(async (request, response) => {
