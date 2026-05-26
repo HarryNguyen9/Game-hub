@@ -78,7 +78,7 @@ function OAnQuanPreview() {
   return (
     <div className="relative mb-4 h-28 overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-amber-100 via-lime-100 to-emerald-100 shadow-inner">
       <div className="absolute left-5 top-4 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-amber-700">2 Players</div>
-      <div className="absolute right-5 top-4 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-emerald-700">30s Turns</div>
+      <div className="absolute right-5 top-4 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-emerald-700">Turn-based</div>
       <div className="absolute inset-x-6 bottom-5 grid grid-cols-[2.4rem_1fr_2.4rem] gap-1">
         <div className="h-14 rounded-full border-2 border-stone-300 bg-amber-200" />
         <div className="grid gap-1">
@@ -87,6 +87,22 @@ function OAnQuanPreview() {
         </div>
         <div className="h-14 rounded-full border-2 border-stone-300 bg-amber-200" />
       </div>
+    </div>
+  );
+}
+
+function ChessPreview() {
+  return (
+    <div className="relative mb-4 h-28 overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-indigo-100 via-white to-amber-100 shadow-inner">
+      <div className="absolute left-5 top-4 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-indigo-700">2 Players</div>
+      <div className="absolute right-5 top-4 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-amber-700">Turn-based</div>
+      <div className="absolute inset-x-8 bottom-5 grid grid-cols-6 overflow-hidden rounded-xl border-2 border-white/80 shadow-sm">
+        {Array.from({ length: 18 }).map((_, index) => (
+          <span key={index} className={`h-5 ${index % 2 === Math.floor(index / 6) % 2 ? "bg-[#7fc8a9]" : "bg-[#fff4c7]"}`} />
+        ))}
+      </div>
+      <div className="absolute left-[40%] top-[42%] text-4xl drop-shadow-sm">♟️</div>
+      <div className="absolute right-[34%] top-[52%] text-3xl opacity-70 drop-shadow-sm">♔</div>
     </div>
   );
 }
@@ -126,9 +142,10 @@ export default async function DashboardPage() {
       <section className="grid gap-4 md:grid-cols-4">
         {GAME_CATALOG.map((game) => (
           <article key={game.id} className="rounded-[1.75rem] bg-white/86 p-4 shadow-sm ring-1 ring-white">
-            {game.id === "flappy-rush" ? <FlappyRushPreview /> : game.id === "fleet-duel" ? <FleetDuelPreview /> : <OAnQuanPreview />}
+            {game.id === "flappy-rush" ? <FlappyRushPreview /> : game.id === "fleet-duel" ? <FleetDuelPreview /> : game.id === "o-an-quan" ? <OAnQuanPreview /> : <ChessPreview />}
             <h2 className="font-black">{game.name}</h2>
             <p className="mt-1 text-sm font-medium text-slate-500">{game.description}</p>
+            {"turnDurationLabel" in game && <p className="mt-1 text-xs font-bold text-slate-400">{game.turnDurationLabel}</p>}
             <p className="mt-2 text-xs font-black text-slate-400">{game.minPlayers}-{game.maxPlayers} players</p>
           </article>
         ))}

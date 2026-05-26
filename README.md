@@ -225,6 +225,14 @@ RLS is enabled in `supabase/schema.sql`. Direct browser writes to sensitive tabl
 - `oaq:move_result`
 - `oaq:turn_timeout`
 - `oaq:end`
+- `chess:sync`
+- `chess:move`
+- `chess:resign`
+- `chess:snapshot`
+- `chess:move_result`
+- `chess:turn_changed`
+- `chess:turn_timeout`
+- `chess:end`
 
 The Socket.IO server runs as a separate long-running Node process in `server/index.ts`. The web app gets a short-lived socket token from `/api/socket-token`; the socket server verifies that token with `SESSION_SECRET`.
 
@@ -234,9 +242,12 @@ Game metadata lives in `lib/constants.ts`. Each game declares `minPlayers` and `
 
 - `Flappy Rush`: 1-4 active players.
 - `Fleet Duel`: exactly 2 active players.
+- `Chess`: exactly 2 active players.
 - `Ô Ăn Quan`: exactly 2 active players.
 
 Turn-based games use a server-owned 30 second turn timer. The client only renders the countdown from server timestamps; if a player does not move in time, the socket server skips their turn and broadcasts the next snapshot. This applies to `Fleet Duel`, `Ô Ăn Quan`, and future turn-based games.
+
+For timeout behavior, `Fleet Duel` and `Ô Ăn Quan` skip the player on timeout. `Chess` ends immediately and the timed-out player loses. Turn-based clients also show a short `Your turn` popup when the server switches the turn to the current user.
 
 ## Testing Flappy Rush Locally
 
@@ -316,3 +327,16 @@ Manual test:
 5. The non-current player cannot move.
 6. Let one turn expire; the server emits a timeout and switches turn.
 7. Finish or force an end state, then verify final score/winner and Back to Lobby.
+
+## Chess Gameplay QA
+
+- Account A creates a room, chooses `Chess`, and sees `1/2` players.
+- Account B joins and readies, then A starts.
+- The server randomly assigns White/Black; White moves first.
+- The player whose turn it is sees the countdown and `Your turn` popup.
+- Tap a piece, then tap its destination. The client sends only `from`, `to`, and optional promotion; `chess.js` on the socket server validates the move.
+- Invalid moves are rejected without changing the board.
+- Valid moves update the FEN, move history, check/draw/checkmate state, and reset the 30 second timer.
+- Promotion defaults to Queen in this MVP.
+- If a player times out, they lose by timeout and the game ends.
+- The host can Back to Lobby after checkmate, draw, resignation, or timeout.

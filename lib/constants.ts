@@ -10,6 +10,7 @@ export const GAME_CATALOG = [
     description: "Real-time flying race with ghost pigs.",
     minPlayers: 1,
     maxPlayers: 4,
+    gameType: "realtime",
     icon: "🐷",
     accent: "from-sky-200 to-lime-200"
   },
@@ -21,7 +22,10 @@ export const GAME_CATALOG = [
     description: "Place your fleet and sink your rival's ships.",
     minPlayers: 2,
     maxPlayers: 2,
+    gameType: "turn-based",
+    turnDurationSeconds: 30,
     icon: "🚢",
+    turnDurationLabel: "30s / turn",
     accent: "from-cyan-200 to-blue-200"
   },
   {
@@ -32,8 +36,25 @@ export const GAME_CATALOG = [
     description: "Vietnamese traditional strategy game.",
     minPlayers: 2,
     maxPlayers: 2,
+    gameType: "turn-based",
+    turnDurationSeconds: 30,
     icon: "🪨",
+    turnDurationLabel: "30s / turn",
     accent: "from-amber-200 to-lime-200"
+  },
+  {
+    id: "chess",
+    name: "Chess",
+    displayName: "Chess",
+    shortLabel: "Chess",
+    description: "Classic chess duel with a 30s turn timer.",
+    minPlayers: 2,
+    maxPlayers: 2,
+    gameType: "turn-based",
+    turnDurationSeconds: 30,
+    icon: "♟️",
+    turnDurationLabel: "30s / turn",
+    accent: "from-indigo-100 to-amber-100"
   }
 ] as const;
 

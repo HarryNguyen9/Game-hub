@@ -10,10 +10,12 @@ import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
 import { FlappyRushGame } from "@/components/games/flappy-rush/FlappyRushGame";
 import { FleetDuelGame } from "@/components/games/fleet-duel/FleetDuelGame";
 import { OAnQuanGame } from "@/components/games/o-an-quan/OAnQuanGame";
+import { ChessGame } from "@/components/games/chess/ChessGame";
 import { GAME_CATALOG } from "@/lib/constants";
 import type { FlappySnapshot } from "@/lib/games/flappy-rush/types";
 import type { FleetSnapshot } from "@/lib/games/fleet-duel/types";
 import type { OAnQuanSnapshot } from "@/lib/games/o-an-quan/types";
+import type { ChessSnapshot } from "@/lib/games/chess/types";
 
 type RoomStatus = "waiting" | "playing" | "ended" | "closed";
 type Member = {
@@ -48,6 +50,20 @@ function titleLabel(value: string) {
 }
 
 function GameOptionVisual({ gameId }: { gameId: string }) {
+  if (gameId === "chess") {
+    return (
+      <div className="relative h-24 overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-indigo-100 via-white to-amber-100 shadow-inner">
+        <div className="absolute left-4 top-3 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-indigo-700">2 players</div>
+        <div className="absolute right-4 top-3 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-amber-700">Turn-based</div>
+        <div className="absolute inset-x-8 bottom-5 grid grid-cols-6 overflow-hidden rounded-xl border-2 border-white/80 shadow-sm">
+          {Array.from({ length: 18 }).map((_, index) => (
+            <span key={index} className={`h-5 ${index % 2 === Math.floor(index / 6) % 2 ? "bg-[#7fc8a9]" : "bg-[#fff4c7]"}`} />
+          ))}
+        </div>
+        <div className="absolute left-1/2 top-[48%] -translate-x-1/2 text-4xl drop-shadow-sm">♟️</div>
+      </div>
+    );
+  }
   if (gameId === "o-an-quan") {
     return (
       <div className="relative h-24 overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-amber-100 via-lime-100 to-emerald-100 shadow-inner">
@@ -115,6 +131,7 @@ export function RoomClient({
   initialGameSnapshot,
   initialFleetSnapshot,
   initialOAnQuanSnapshot,
+  initialChessSnapshot,
   initialMinPlayers,
   initialMaxPlayers
 }: {
@@ -127,6 +144,7 @@ export function RoomClient({
   initialGameSnapshot: FlappySnapshot | null;
   initialFleetSnapshot: FleetSnapshot | null;
   initialOAnQuanSnapshot: OAnQuanSnapshot | null;
+  initialChessSnapshot: ChessSnapshot | null;
   initialMinPlayers: number;
   initialMaxPlayers: number;
 }) {
@@ -142,6 +160,7 @@ export function RoomClient({
   const [endedGameSnapshot, setEndedGameSnapshot] = useState<FlappySnapshot | null>(initialGameSnapshot);
   const [endedFleetSnapshot, setEndedFleetSnapshot] = useState<FleetSnapshot | null>(initialFleetSnapshot);
   const [endedOAnQuanSnapshot, setEndedOAnQuanSnapshot] = useState<OAnQuanSnapshot | null>(initialOAnQuanSnapshot);
+  const [endedChessSnapshot, setEndedChessSnapshot] = useState<ChessSnapshot | null>(initialChessSnapshot);
   const [minPlayers, setMinPlayers] = useState(initialMinPlayers);
   const [maxPlayers, setMaxPlayers] = useState(initialMaxPlayers);
   const [gamePickerOpen, setGamePickerOpen] = useState(false);
@@ -201,6 +220,7 @@ export function RoomClient({
           setEndedGameSnapshot(null);
           setEndedFleetSnapshot(null);
           setEndedOAnQuanSnapshot(null);
+          setEndedChessSnapshot(null);
         }
         setPendingAction(null);
       };
@@ -299,6 +319,7 @@ export function RoomClient({
   const isFlappyActivePlayer = (status === "playing" || status === "ended") && gameKey === "flappy-rush" && currentMember?.participationStatus === "active_game";
   const isFleetActivePlayer = (status === "playing" || status === "ended") && gameKey === "fleet-duel" && currentMember?.participationStatus === "active_game";
   const isOAnQuanActivePlayer = (status === "playing" || status === "ended") && gameKey === "o-an-quan" && currentMember?.participationStatus === "active_game";
+  const isChessActivePlayer = (status === "playing" || status === "ended") && gameKey === "chess" && currentMember?.participationStatus === "active_game";
   const isGameLobby = status === "waiting" && Boolean(gameKey);
   const startButton = isHost && status === "waiting" ? (
     <Button disabled={!canStart || Boolean(pendingAction)} onClick={() => emitAction("start", "room:start_game")}>
@@ -366,6 +387,7 @@ export function RoomClient({
                         <div>
                           <p className="font-black text-slate-900">{game.name}</p>
                           <p className="mt-1 text-sm font-semibold text-slate-500">{game.description}</p>
+                          {"turnDurationLabel" in game && <p className="mt-1 text-xs font-bold text-slate-400">{game.turnDurationLabel}</p>}
                           <p className="mt-2 text-xs font-black text-slate-400">
                             {game.minPlayers}-{game.maxPlayers} players
                           </p>
@@ -448,6 +470,17 @@ export function RoomClient({
             expanded={gameExpanded}
             onToggleExpanded={() => setGameExpanded((value) => !value)}
             initialSnapshot={endedOAnQuanSnapshot}
+            roomStatus={status === "ended" ? "ended" : "playing"}
+          />
+        ) : isChessActivePlayer ? (
+          <ChessGame
+            roomId={roomId}
+            currentUserId={currentUserId}
+            isHost={isHost}
+            onGameEnd={markGameEnded}
+            expanded={gameExpanded}
+            onToggleExpanded={() => setGameExpanded((value) => !value)}
+            initialSnapshot={endedChessSnapshot}
             roomStatus={status === "ended" ? "ended" : "playing"}
           />
         ) : isGameLobby ? (
