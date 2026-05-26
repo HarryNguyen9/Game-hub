@@ -2,7 +2,7 @@ import { createServer } from "node:http";
 import nextEnv from "@next/env";
 import type { Server as SocketServer } from "socket.io";
 import { broadcastOpenRooms } from "./room-handlers";
-import { createSocketServer } from "./socket";
+import { allowedOrigins, createSocketServer } from "./socket";
 
 nextEnv.loadEnvConfig(process.cwd());
 
@@ -12,6 +12,28 @@ let io: SocketServer | null = null;
 
 const httpServer = createServer(async (request, response) => {
   const url = new URL(request.url || "/", `http://${request.headers.host || `localhost:${port}`}`);
+
+  if (request.method === "GET" && url.pathname === "/health") {
+    response.writeHead(200, { "Content-Type": "application/json" });
+    response.end(
+      JSON.stringify({
+        ok: true,
+        service: "game-hub-socket",
+        allowedOrigins: allowedOrigins(),
+        env: {
+          APP_ORIGIN: Boolean(process.env.APP_ORIGIN),
+          NEXT_PUBLIC_SUPABASE_URL: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+          SUPABASE_SERVICE_ROLE_KEY: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+          SESSION_SECRET: Boolean(process.env.SESSION_SECRET),
+          NODE_ENV: process.env.NODE_ENV || null,
+          PORT: Boolean(process.env.PORT),
+          SOCKET_PORT: Boolean(process.env.SOCKET_PORT)
+        }
+      })
+    );
+    return;
+  }
 
   if (request.method === "POST" && url.pathname === "/internal/open-rooms-updated") {
     if (!io) {
