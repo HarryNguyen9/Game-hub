@@ -2,6 +2,7 @@ import { Gamepad2, Home, LogOut, Shield, UserRound } from "lucide-react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { getActiveRoomForUser } from "@/lib/active-room";
+import { MobileBackButton } from "@/components/mobile-back-button";
 
 export type ShellUser = {
   id: string;
@@ -50,7 +51,8 @@ export async function AppShell({ user, children }: { user: ShellUser; children: 
         </form>
       </aside>
       <main className="mx-auto max-w-6xl px-4 py-5 md:ml-64 md:px-8 md:py-8">{children}</main>
-      <nav className="fixed bottom-3 left-3 right-3 z-20 grid grid-cols-4 rounded-3xl bg-white/90 p-2 shadow-2xl shadow-slate-200 backdrop-blur md:hidden">
+      <nav className="fixed bottom-3 left-3 right-3 z-20 grid grid-cols-5 rounded-3xl bg-white/90 p-2 shadow-2xl shadow-slate-200 backdrop-blur md:hidden">
+        <MobileBackButton />
         <Link className="grid place-items-center gap-1 rounded-2xl p-2 text-xs font-bold" href="/dashboard">
           <Home size={20} /> Home
         </Link>

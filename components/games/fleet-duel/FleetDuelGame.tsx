@@ -26,9 +26,10 @@ function makeShip(id: string, size: number, start: FleetCell, vertical: boolean)
   };
 }
 
-function randomFleet() {
+function randomFleetWithBlocked(blockedCells: FleetCell[]) {
   const ships: FleetShip[] = [];
   const occupied = new Set<string>();
+  const blocked = new Set(blockedCells.map(key));
   for (const config of FLEET_CONFIG.ships) {
     for (let attempt = 0; attempt < 200; attempt += 1) {
       const vertical = Math.random() > 0.5;
@@ -37,7 +38,7 @@ function randomFleet() {
         y: Math.floor(Math.random() * (vertical ? FLEET_CONFIG.boardSize - config.size + 1 : FLEET_CONFIG.boardSize))
       };
       const ship = makeShip(config.id, config.size, start, vertical);
-      if (ship.cells.every((cell) => !occupied.has(key(cell)))) {
+      if (ship.cells.every((cell) => !occupied.has(key(cell)) && !blocked.has(key(cell)))) {
         ships.push(ship);
         ship.cells.forEach((cell) => occupied.add(key(cell)));
         break;
@@ -85,7 +86,8 @@ export function FleetDuelGame({
     const ship = makeShip(selectedShip.id, selectedShip.size, cell, vertical);
     if (ship.cells.some((candidate) => candidate.x < 0 || candidate.y < 0 || candidate.x >= FLEET_CONFIG.boardSize || candidate.y >= FLEET_CONFIG.boardSize)) return;
     const occupied = new Set(localShips.flatMap((placed) => placed.cells.map(key)));
-    if (ship.cells.some((candidate) => occupied.has(key(candidate)))) return;
+    const blocked = new Set(snapshot.blockedCells.map(key));
+    if (ship.cells.some((candidate) => occupied.has(key(candidate)) || blocked.has(key(candidate)))) return;
     setLocalShips((value) => [...value, ship]);
   }
 
@@ -136,10 +138,10 @@ export function FleetDuelGame({
                 <RotateCcw size={16} /> {vertical ? "Vertical" : "Horizontal"}
               </Button>
             </div>
-            <FleetBoard boardSize={snapshot.boardSize} ships={ownShips} shots={enemyShotsOnMe} mode="own" disabled={snapshot.you.readyToBattle} onCellClick={placeLocal} />
+            <FleetBoard boardSize={snapshot.boardSize} ships={ownShips} shots={enemyShotsOnMe} blockedCells={snapshot.blockedCells} theme={snapshot.boardTheme} mode="own" disabled={snapshot.you.readyToBattle} onCellClick={placeLocal} />
           </div>
           <div className="grid content-start gap-3 rounded-3xl border border-cyan-100/70 bg-gradient-to-br from-white via-cyan-50/70 to-sky-50 p-4 shadow-sm">
-            <Button type="button" variant="secondary" onClick={() => sendShips(randomFleet())} disabled={snapshot.you.readyToBattle}>
+            <Button type="button" variant="secondary" onClick={() => sendShips(randomFleetWithBlocked(snapshot.blockedCells))} disabled={snapshot.you.readyToBattle}>
               <Shuffle size={16} /> Random Placement
             </Button>
             <Button type="button" variant="secondary" onClick={() => setLocalShips([])} disabled={snapshot.you.readyToBattle}>
@@ -167,11 +169,11 @@ export function FleetDuelGame({
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-3xl border border-cyan-100/70 bg-gradient-to-br from-white via-cyan-50/80 to-sky-50 p-4 shadow-sm">
             <p className="mb-3 font-black">Enemy waters</p>
-            <FleetBoard boardSize={snapshot.boardSize} ships={snapshot.opponent.ships} shots={myShots} mode="enemy" disabled={!canFire} onCellClick={(cell) => fire(snapshot.sessionId, cell)} />
+            <FleetBoard boardSize={snapshot.boardSize} ships={snapshot.opponent.ships} shots={myShots} blockedCells={snapshot.blockedCells} theme={snapshot.boardTheme} mode="enemy" disabled={!canFire} onCellClick={(cell) => fire(snapshot.sessionId, cell)} />
           </div>
           <div className="rounded-3xl border border-cyan-100/70 bg-gradient-to-br from-white via-cyan-50/80 to-sky-50 p-4 shadow-sm">
             <p className="mb-3 font-black">Your fleet</p>
-            <FleetBoard boardSize={snapshot.boardSize} ships={snapshot.you.ships} shots={enemyShotsOnMe} mode="own" disabled />
+            <FleetBoard boardSize={snapshot.boardSize} ships={snapshot.you.ships} shots={enemyShotsOnMe} blockedCells={snapshot.blockedCells} theme={snapshot.boardTheme} mode="own" disabled />
           </div>
         </div>
       )}

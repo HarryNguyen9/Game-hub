@@ -18,9 +18,15 @@ function fleet(offsetY = 0) {
   ]);
 }
 
+function createTestState() {
+  const state = createFleetState("s1", "r1", players);
+  state.blockedCells = [];
+  return state;
+}
+
 describe("fleet duel engine", () => {
   it("validates placement and starts battle when both players confirm", () => {
-    const state = createFleetState("s1", "r1", players);
+    const state = createTestState();
     expect(placeFleet(state, "a", fleet())).toBeNull();
     expect(confirmFleet(state, "a")).toBeNull();
     expect(state.status).toBe("setup");
@@ -31,7 +37,7 @@ describe("fleet duel engine", () => {
   });
 
   it("does not expose opponent ship cells before they are sunk", () => {
-    const state = createFleetState("s1", "r1", players);
+    const state = createTestState();
     placeFleet(state, "a", fleet());
     placeFleet(state, "b", fleet());
     const snapshot = serializeFleetStateForUser(state, "a");
@@ -40,7 +46,7 @@ describe("fleet duel engine", () => {
   });
 
   it("rejects out of turn shots", () => {
-    const state = createFleetState("s1", "r1", players);
+    const state = createTestState();
     placeFleet(state, "a", fleet());
     placeFleet(state, "b", fleet());
     confirmFleet(state, "a");

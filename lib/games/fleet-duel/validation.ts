@@ -19,10 +19,11 @@ export function normalizeShips(input: Array<{ id?: string; size?: number; cells?
   }));
 }
 
-export function validateFleetPlacement(ships: FleetShip[]) {
+export function validateFleetPlacement(ships: FleetShip[], blockedCells: FleetCell[] = []) {
   if (ships.length !== FLEET_CONFIG.ships.length) return "Place every ship in your fleet.";
 
   const seenCells = new Set<string>();
+  const blocked = new Set(blockedCells.map(key));
   const expected = new Map<string, number>(FLEET_CONFIG.ships.map((ship) => [ship.id, ship.size]));
 
   for (const ship of ships) {
@@ -46,6 +47,7 @@ export function validateFleetPlacement(ships: FleetShip[]) {
 
     for (const cell of ship.cells) {
       const cellKey = key(cell);
+      if (blocked.has(cellKey)) return "Ships cannot be placed on rocks.";
       if (seenCells.has(cellKey)) return "Ships cannot overlap.";
       seenCells.add(cellKey);
     }

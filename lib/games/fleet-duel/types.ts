@@ -20,6 +20,8 @@ export type FleetShot = FleetCell & {
   createdAt: number;
 };
 
+export type FleetBoardTheme = "lagoon" | "river" | "harbor";
+
 export type FleetPlayerState = {
   userId: string;
   username: string;
@@ -35,6 +37,8 @@ export type FleetState = {
   gameKey: "fleet-duel";
   status: FleetGameStatus;
   boardSize: number;
+  boardTheme: FleetBoardTheme;
+  blockedCells: FleetCell[];
   currentTurnUserId: string | null;
   winnerUserId: string | null;
   players: Record<string, FleetPlayerState>;
@@ -65,6 +69,8 @@ export type FleetSnapshot = {
   gameKey: "fleet-duel";
   status: FleetGameStatus;
   boardSize: number;
+  boardTheme: FleetBoardTheme;
+  blockedCells: FleetCell[];
   currentTurnUserId: string | null;
   winnerUserId: string | null;
   you: FleetPublicPlayer;

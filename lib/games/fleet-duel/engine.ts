@@ -1,5 +1,5 @@
 import { FLEET_CONFIG } from "./config";
-import type { FleetCell, FleetPlayerState, FleetShip, FleetState } from "./types";
+import type { FleetBoardTheme, FleetCell, FleetPlayerState, FleetShip, FleetState } from "./types";
 import { cellInShip, cellWasHit, cellWasShot, validateFleetPlacement } from "./validation";
 
 type PlayerInput = {
@@ -8,6 +8,36 @@ type PlayerInput = {
   displayName: string;
 };
 
+const themes: FleetBoardTheme[] = ["lagoon", "river", "harbor"];
+
+function key(cell: FleetCell) {
+  return `${cell.x}:${cell.y}`;
+}
+
+function sameCell(a: FleetCell, b: FleetCell) {
+  return a.x === b.x && a.y === b.y;
+}
+
+function createBlockedCells(boardSize: number) {
+  const blocked = new Set<string>();
+  const target = 5 + Math.floor(Math.random() * 4);
+  const safeCells = new Set(["0:0", "0:1", "1:0", `${boardSize - 1}:${boardSize - 1}`, `${boardSize - 1}:${boardSize - 2}`, `${boardSize - 2}:${boardSize - 1}`]);
+
+  while (blocked.size < target) {
+    const cell = {
+      x: Math.floor(Math.random() * boardSize),
+      y: Math.floor(Math.random() * boardSize)
+    };
+    const cellKey = key(cell);
+    if (!safeCells.has(cellKey)) blocked.add(cellKey);
+  }
+
+  return [...blocked].map((cellKey) => {
+    const [x, y] = cellKey.split(":").map(Number);
+    return { x, y };
+  });
+}
+
 export function createFleetState(sessionId: string, roomId: string, players: PlayerInput[]): FleetState {
   return {
     sessionId,
@@ -15,6 +45,8 @@ export function createFleetState(sessionId: string, roomId: string, players: Pla
     gameKey: "fleet-duel",
     status: "setup",
     boardSize: FLEET_CONFIG.boardSize,
+    boardTheme: themes[Math.floor(Math.random() * themes.length)],
+    blockedCells: createBlockedCells(FLEET_CONFIG.boardSize),
     currentTurnUserId: null,
     winnerUserId: null,
     players: Object.fromEntries(
@@ -37,7 +69,7 @@ export function placeFleet(state: FleetState, userId: string, ships: FleetShip[]
   if (state.status !== "setup") return "Fleet can only be placed during setup.";
   const player = state.players[userId];
   if (!player) return "You are not an active Fleet Duel player.";
-  const error = validateFleetPlacement(ships);
+  const error = validateFleetPlacement(ships, state.blockedCells);
   if (error) return error;
   player.ships = ships.map((ship) => ({ ...ship, cells: ship.cells.map((cell) => ({ ...cell })), hits: [], sunk: false }));
   player.readyToBattle = false;
@@ -49,7 +81,7 @@ export function confirmFleet(state: FleetState, userId: string) {
   if (state.status !== "setup") return "Fleet can only be confirmed during setup.";
   const player = state.players[userId];
   if (!player) return "You are not an active Fleet Duel player.";
-  const error = validateFleetPlacement(player.ships);
+  const error = validateFleetPlacement(player.ships, state.blockedCells);
   if (error) return error;
   player.readyToBattle = true;
   const activePlayers = Object.values(state.players);
@@ -71,6 +103,7 @@ export function fireAt(
   if (!Number.isInteger(cell.x) || !Number.isInteger(cell.y) || cell.x < 0 || cell.y < 0 || cell.x >= state.boardSize || cell.y >= state.boardSize) {
     return { error: "Shot is outside the board." };
   }
+  if (state.blockedCells.some((blocked) => sameCell(blocked, cell))) return { error: "Rocks block that cell." };
 
   const shooter = state.players[shooterUserId];
   const target = Object.values(state.players).find((player) => player.userId !== shooterUserId);

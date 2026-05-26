@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { io, type Socket } from "socket.io-client";
-import { Check, Gamepad2, LogOut, Maximize2, Minimize2, Play, RotateCcw, X } from "lucide-react";
+import { Check, Gamepad2, LogOut, Play, RotateCcw, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
 import { FlappyRushGame } from "@/components/games/flappy-rush/FlappyRushGame";
 import { FleetDuelGame } from "@/components/games/fleet-duel/FleetDuelGame";
 import { GAME_CATALOG } from "@/lib/constants";
@@ -243,7 +244,7 @@ export function RoomClient({
   const isLateJoiner = currentMember?.participationStatus === "waiting_next_round";
   const isFlappyActivePlayer = (status === "playing" || status === "ended") && gameKey === "flappy-rush" && currentMember?.participationStatus === "active_game";
   const isFleetActivePlayer = (status === "playing" || status === "ended") && gameKey === "fleet-duel" && currentMember?.participationStatus === "active_game";
-  const isFlappyLobby = status === "waiting" && gameKey === "flappy-rush";
+  const isGameLobby = status === "waiting" && Boolean(gameKey);
   const startButton = isHost && status === "waiting" ? (
     <Button disabled={!canStart || Boolean(pendingAction)} onClick={() => emitAction("start", "room:start_game")}>
       <Play size={18} /> {pendingAction === "start" ? "Starting..." : "Start Game"}
@@ -372,37 +373,40 @@ export function RoomClient({
             initialSnapshot={endedFleetSnapshot}
             roomStatus={status === "ended" ? "ended" : "playing"}
           />
-        ) : isFlappyLobby ? (
-          <div className={gameExpanded ? "fixed inset-0 z-50 flex h-dvh flex-col gap-3 overflow-y-auto bg-white p-3" : "relative mt-4 grid gap-4"}>
-            <Button
-              type="button"
-              variant="secondary"
-              className="absolute right-4 top-4 z-20 grid size-11 shrink-0 place-items-center rounded-2xl bg-white/92 p-0 shadow-sm"
-              onClick={() => setGameExpanded((value) => !value)}
-              aria-label={gameExpanded ? "Exit full screen" : "Open full screen"}
-              title={gameExpanded ? "Small" : "Full"}
-            >
-              {gameExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-            </Button>
-            <div className="flex flex-col gap-3 rounded-3xl bg-slate-50 px-4 py-3 pr-20 sm:flex-row sm:items-center sm:justify-between">
+        ) : isGameLobby ? (
+          <GameFullscreenShell
+            expanded={gameExpanded}
+            onToggleExpanded={() => setGameExpanded((value) => !value)}
+            header={
               <div>
                 <p className="text-sm font-black text-slate-500">Game stage</p>
-                <p className="text-lg font-black text-slate-900">Flappy Rush</p>
+                <p className="text-lg font-black text-slate-900">{selectedGame?.name || "Selected game"}</p>
               </div>
-            </div>
+            }
+            footer={
+              <div className="grid justify-items-center gap-3">
+                <p className="text-center text-sm font-semibold text-slate-500">
+                  {gameKey === "flappy-rush" ? "Tap, click, or press Space once the round starts." : "Prepare the room, then start when everyone is ready."}
+                </p>
+                {leaveButton}
+              </div>
+            }
+          >
             <div className="relative grid min-h-[22rem] flex-1 place-items-center overflow-hidden rounded-[1.5rem] bg-sky-100 p-5 text-center shadow-inner max-[700px]:landscape:min-h-[16rem]">
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.75),transparent_24%),radial-gradient(circle_at_80%_25%,rgba(255,255,255,0.65),transparent_22%)]" />
               <div className="relative grid justify-items-center gap-3">
-                <p className="text-3xl font-black text-slate-900">Ready to flap?</p>
-                <p className="max-w-md text-slate-500">Start the round when everyone is ready. Full screen is available before the game begins.</p>
+                <p className="text-3xl font-black text-slate-900">{gameKey === "flappy-rush" ? "Ready to flap?" : "Ready to play?"}</p>
+                <p className="max-w-md text-slate-500">
+                  {gameKey === "flappy-rush"
+                    ? "Start the round when everyone is ready. Full screen is available before the game begins."
+                    : "Start the round when the room has enough players and everyone is ready."}
+                </p>
                 {startButton}
                 {readyButton}
                 {startHint}
               </div>
             </div>
-            <p className="text-center text-sm font-semibold text-slate-500">Tap, click, or press Space once the round starts.</p>
-            <div className="flex justify-center">{leaveButton}</div>
-          </div>
+          </GameFullscreenShell>
         ) : (
           <div className="grid min-h-[16rem] place-items-center text-center">
             <div>
@@ -412,15 +416,15 @@ export function RoomClient({
           </div>
         )}
         <div className="flex flex-wrap gap-3">
-          {!isFlappyLobby && startButton}
-          {!isFlappyLobby && <div className="self-center">{startHint}</div>}
+          {!isGameLobby && startButton}
+          {!isGameLobby && <div className="self-center">{startHint}</div>}
           {isHost && (status === "playing" || status === "ended") && !isFlappyActivePlayer && (
             <Button disabled={Boolean(pendingAction)} onClick={() => emitAction("back-to-lobby", "room:back_to_lobby")}>
               <RotateCcw size={18} /> {pendingAction === "back-to-lobby" ? "Returning..." : "Back to Lobby"}
             </Button>
           )}
-          {!isFlappyLobby && readyButton}
-          {!isFlappyLobby && leaveButton}
+          {!isGameLobby && readyButton}
+          {!isGameLobby && leaveButton}
         </div>
       </section>
       <aside className="rounded-[2rem] bg-white/88 p-5 shadow-sm">

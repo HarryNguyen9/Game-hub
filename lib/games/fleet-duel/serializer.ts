@@ -30,6 +30,8 @@ export function serializeFleetStateForUser(state: FleetState, viewerUserId: stri
     gameKey: "fleet-duel",
     status: state.status,
     boardSize: state.boardSize,
+    boardTheme: state.boardTheme,
+    blockedCells: state.blockedCells.map((cell) => ({ ...cell })),
     currentTurnUserId: state.currentTurnUserId,
     winnerUserId: state.winnerUserId,
     you: publicPlayer(you, viewerUserId),
