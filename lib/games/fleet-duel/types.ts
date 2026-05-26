@@ -40,6 +40,9 @@ export type FleetState = {
   boardTheme: FleetBoardTheme;
   blockedCells: FleetCell[];
   currentTurnUserId: string | null;
+  turnStartedAt: number;
+  turnEndsAt: number;
+  turnDurationSeconds: number;
   winnerUserId: string | null;
   players: Record<string, FleetPlayerState>;
   startedAt: number;
@@ -72,6 +75,9 @@ export type FleetSnapshot = {
   boardTheme: FleetBoardTheme;
   blockedCells: FleetCell[];
   currentTurnUserId: string | null;
+  turnStartedAt: number;
+  turnEndsAt: number;
+  turnDurationSeconds: number;
   winnerUserId: string | null;
   you: FleetPublicPlayer;
   opponent: FleetPublicPlayer | null;

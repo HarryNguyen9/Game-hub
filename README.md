@@ -219,6 +219,12 @@ RLS is enabled in `supabase/schema.sql`. Direct browser writes to sensitive tabl
 - `fleet:shot_result`
 - `fleet:turn_changed`
 - `fleet:end`
+- `oaq:sync`
+- `oaq:move`
+- `oaq:snapshot`
+- `oaq:move_result`
+- `oaq:turn_timeout`
+- `oaq:end`
 
 The Socket.IO server runs as a separate long-running Node process in `server/index.ts`. The web app gets a short-lived socket token from `/api/socket-token`; the socket server verifies that token with `SESSION_SECRET`.
 
@@ -228,6 +234,9 @@ Game metadata lives in `lib/constants.ts`. Each game declares `minPlayers` and `
 
 - `Flappy Rush`: 1-4 active players.
 - `Fleet Duel`: exactly 2 active players.
+- `Ô Ăn Quan`: exactly 2 active players.
+
+Turn-based games use a server-owned 30 second turn timer. The client only renders the countdown from server timestamps; if a player does not move in time, the socket server skips their turn and broadcasts the next snapshot. This applies to `Fleet Duel`, `Ô Ăn Quan`, and future turn-based games.
 
 ## Testing Flappy Rush Locally
 
@@ -285,3 +294,25 @@ Use two or three browser sessions with different accounts:
 - Hit/miss/sunk updates appear realtime.
 - A late joiner during battle enters `waiting_next_round` and cannot send Fleet input.
 - When one fleet is sunk, the winner card appears and the host can Back to Lobby.
+
+## Ô Ăn Quan Gameplay QA
+
+This is a simplified online ruleset for the Vietnamese traditional game:
+
+- Board has 12 pits: 2 quan pits and 10 dân pits.
+- Each dân pit starts with 5 small stones.
+- Each quan pit starts with 1 big stone worth 10 points.
+- Players choose one of their five dân pits, then choose clockwise or counterclockwise.
+- The server applies sowing, capture, score, turn changes, timeout, and game end.
+- No client-side official score, capture, or winner calculation is trusted.
+- Advanced borrowing/vay dân rules are intentionally not included in this MVP.
+
+Manual test:
+
+1. Account A creates a room, chooses `Ô Ăn Quan`, and sees `1/2` players.
+2. Account B joins and readies, then A starts.
+3. Both players see the same board and a 30 second countdown.
+4. The current player selects a highlighted dân pit, chooses a direction, and the board updates realtime.
+5. The non-current player cannot move.
+6. Let one turn expire; the server emits a timeout and switches turn.
+7. Finish or force an end state, then verify final score/winner and Back to Lobby.

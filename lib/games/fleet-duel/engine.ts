@@ -1,4 +1,5 @@
 import { FLEET_CONFIG } from "./config";
+import { createTurnWindow } from "@/lib/games/turn-based";
 import type { FleetBoardTheme, FleetCell, FleetPlayerState, FleetShip, FleetState } from "./types";
 import { cellInShip, cellWasHit, cellWasShot, validateFleetPlacement } from "./validation";
 
@@ -16,6 +17,14 @@ function key(cell: FleetCell) {
 
 function sameCell(a: FleetCell, b: FleetCell) {
   return a.x === b.x && a.y === b.y;
+}
+
+function setTurn(state: FleetState, userId: string | null) {
+  state.currentTurnUserId = userId;
+  const turn = createTurnWindow();
+  state.turnStartedAt = turn.turnStartedAt;
+  state.turnEndsAt = turn.turnEndsAt;
+  state.turnDurationSeconds = turn.turnDurationSeconds;
 }
 
 function createBlockedCells(boardSize: number) {
@@ -39,6 +48,7 @@ function createBlockedCells(boardSize: number) {
 }
 
 export function createFleetState(sessionId: string, roomId: string, players: PlayerInput[]): FleetState {
+  const turn = createTurnWindow();
   return {
     sessionId,
     roomId,
@@ -48,6 +58,7 @@ export function createFleetState(sessionId: string, roomId: string, players: Pla
     boardTheme: themes[Math.floor(Math.random() * themes.length)],
     blockedCells: createBlockedCells(FLEET_CONFIG.boardSize),
     currentTurnUserId: null,
+    ...turn,
     winnerUserId: null,
     players: Object.fromEntries(
       players.slice(0, 2).map((player) => [
@@ -87,7 +98,7 @@ export function confirmFleet(state: FleetState, userId: string) {
   const activePlayers = Object.values(state.players);
   if (activePlayers.length === 2 && activePlayers.every((candidate) => candidate.readyToBattle)) {
     state.status = "battle";
-    state.currentTurnUserId = activePlayers[Math.floor(Math.random() * activePlayers.length)].userId;
+    setTurn(state, activePlayers[Math.floor(Math.random() * activePlayers.length)].userId);
   }
   state.updatedAt = Date.now();
   return null;
@@ -100,6 +111,7 @@ export function fireAt(
 ): { error: string } | { result: "miss" | "hit" | "sunk"; targetUserId: string; sunkShipId: string | null } {
   if (state.status !== "battle") return { error: "Battle has not started." };
   if (state.currentTurnUserId !== shooterUserId) return { error: "It is not your turn." };
+  if (Date.now() > state.turnEndsAt) return { error: "Your turn timed out." };
   if (!Number.isInteger(cell.x) || !Number.isInteger(cell.y) || cell.x < 0 || cell.y < 0 || cell.x >= state.boardSize || cell.y >= state.boardSize) {
     return { error: "Shot is outside the board." };
   }
@@ -125,8 +137,17 @@ export function fireAt(
     state.currentTurnUserId = null;
     state.winnerUserId = shooterUserId;
   } else {
-    state.currentTurnUserId = target.userId;
+    setTurn(state, target.userId);
   }
   state.updatedAt = Date.now();
   return { result, targetUserId: target.userId, sunkShipId: hitShip?.sunk ? hitShip.id : null };
+}
+
+export function timeoutFleetTurn(state: FleetState) {
+  if (state.status !== "battle" || !state.currentTurnUserId) return false;
+  const next = Object.keys(state.players).find((userId) => userId !== state.currentTurnUserId);
+  if (!next) return false;
+  setTurn(state, next);
+  state.updatedAt = Date.now();
+  return true;
 }

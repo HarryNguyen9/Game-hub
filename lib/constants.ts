@@ -23,6 +23,17 @@ export const GAME_CATALOG = [
     maxPlayers: 2,
     icon: "🚢",
     accent: "from-cyan-200 to-blue-200"
+  },
+  {
+    id: "o-an-quan",
+    name: "Ô Ăn Quan",
+    displayName: "Ô Ăn Quan",
+    shortLabel: "Quan",
+    description: "Vietnamese traditional strategy game.",
+    minPlayers: 2,
+    maxPlayers: 2,
+    icon: "🪨",
+    accent: "from-amber-200 to-lime-200"
   }
 ] as const;
 

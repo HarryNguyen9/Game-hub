@@ -1,9 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Server, Socket } from "socket.io";
-import { createFleetState, confirmFleet, fireAt, placeFleet, timeoutFleetTurn } from "../../lib/games/fleet-duel/engine";
-import { normalizeShips } from "../../lib/games/fleet-duel/validation";
-import { serializeFleetFinalState, serializeFleetStateForUser } from "../../lib/games/fleet-duel/serializer";
-import type { FleetCell, FleetState } from "../../lib/games/fleet-duel/types";
+import { applyOAnQuanMove, createOAnQuanState, timeoutOAnQuanTurn } from "../../lib/games/o-an-quan/engine";
+import { serializeOAnQuanState } from "../../lib/games/o-an-quan/serializer";
+import type { OAnQuanDirection, OAnQuanState } from "../../lib/games/o-an-quan/types";
 import type { AuthedSocket } from "../auth";
 
 type ActivePlayerRow = {
@@ -11,7 +10,7 @@ type ActivePlayerRow = {
   app_users: { username: string; display_name: string | null } | { username: string; display_name: string | null }[] | null;
 };
 
-const runtimes = new Map<string, FleetState>();
+const runtimes = new Map<string, OAnQuanState>();
 const turnTimers = new Map<string, NodeJS.Timeout>();
 
 function serviceClient() {
@@ -83,14 +82,11 @@ async function openRoomsSnapshot() {
   return data || [];
 }
 
-function emitToPlayers(io: Server, state: FleetState, event = "fleet:snapshot") {
+function emitToPlayers(io: Server, state: OAnQuanState, event = "oaq:snapshot") {
+  const snapshot = serializeOAnQuanState(state);
   for (const userId of Object.keys(state.players)) {
-    io.to(`user:${userId}`).emit(event, serializeFleetStateForUser(state, userId));
+    io.to(`user:${userId}`).emit(event, snapshot);
   }
-}
-
-function emitToSocket(socket: Socket, state: FleetState, userId: string, event = "fleet:snapshot") {
-  socket.emit(event, serializeFleetStateForUser(state, userId));
 }
 
 function clearTurnTimer(roomId: string) {
@@ -100,22 +96,26 @@ function clearTurnTimer(roomId: string) {
   turnTimers.delete(roomId);
 }
 
-function scheduleTurnTimer(io: Server, state: FleetState) {
+function scheduleTurnTimer(io: Server, state: OAnQuanState) {
   clearTurnTimer(state.roomId);
-  if (state.status !== "battle" || !state.currentTurnUserId) return;
+  if (state.status !== "playing" || !state.currentTurnUserId) return;
   const delay = Math.max(0, state.turnEndsAt - Date.now());
-  const timer = setTimeout(() => {
+  const timer = setTimeout(async () => {
     const current = runtimes.get(state.roomId);
-    if (!current || current.sessionId !== state.sessionId || current.status !== "battle") return;
-    if (!timeoutFleetTurn(current)) return;
-    emitToPlayers(io, current, "fleet:turn_timeout");
-    emitToPlayers(io, current, "fleet:turn_changed");
+    if (!current || current.sessionId !== state.sessionId || current.status !== "playing") return;
+    if (!timeoutOAnQuanTurn(current)) return;
+    emitToPlayers(io, current, "oaq:turn_timeout");
+    if ((current as OAnQuanState).status === "ended") {
+      await finishOAnQuan(io, current);
+      return;
+    }
+    emitToPlayers(io, current);
     scheduleTurnTimer(io, current);
   }, delay + 25);
   turnTimers.set(state.roomId, timer);
 }
 
-async function finishFleetDuel(io: Server, state: FleetState) {
+async function finishOAnQuan(io: Server, state: OAnQuanState) {
   clearTurnTimer(state.roomId);
   runtimes.delete(state.roomId);
   const supabase = serviceClient();
@@ -123,22 +123,22 @@ async function finishFleetDuel(io: Server, state: FleetState) {
   await supabase.from("room_members").update({ ready: false }).eq("room_id", state.roomId);
   await supabase
     .from("game_sessions")
-    .update({ status: "ended", state: serializeFleetFinalState(state), ended_at: new Date().toISOString() })
+    .update({ status: "ended", state: serializeOAnQuanState(state), ended_at: new Date().toISOString() })
     .eq("id", state.sessionId);
   const roomState = await roomSnapshot(state.roomId);
   io.to(roomChannel(state.roomId)).emit("room:members_updated", roomState);
   io.to(roomChannel(state.roomId)).emit("room:status_updated", roomState);
   io.emit("room:open_rooms_updated", { rooms: await openRoomsSnapshot() });
-  emitToPlayers(io, state, "fleet:end");
-  console.log("[fleet-duel] Game ended", { roomId: state.roomId, sessionId: state.sessionId, winnerUserId: state.winnerUserId });
+  emitToPlayers(io, state, "oaq:end");
+  console.log("[o-an-quan] Game ended", { roomId: state.roomId, sessionId: state.sessionId, winnerUserId: state.winnerUserId });
 }
 
-export function hasFleetDuelRuntime(roomId: string) {
+export function hasOAnQuanRuntime(roomId: string) {
   return runtimes.has(roomId);
 }
 
-export async function startFleetDuel(io: Server, roomId: string, sessionId: string, activePlayers: ActivePlayerRow[]) {
-  if (runtimes.has(roomId)) throw new Error("Fleet Duel runtime is already running for this room.");
+export async function startOAnQuan(io: Server, roomId: string, sessionId: string, activePlayers: ActivePlayerRow[]) {
+  if (runtimes.has(roomId)) throw new Error("Ô Ăn Quan runtime is already running for this room.");
   const players = activePlayers.slice(0, 2).map((member) => {
     const appUser = Array.isArray(member.app_users) ? member.app_users[0] : member.app_users;
     return {
@@ -147,80 +147,58 @@ export async function startFleetDuel(io: Server, roomId: string, sessionId: stri
       displayName: appUser?.display_name || appUser?.username || "Player"
     };
   });
-  if (players.length !== 2) throw new Error("Fleet Duel needs exactly 2 active players.");
-  const state = createFleetState(sessionId, roomId, players);
+  if (players.length !== 2) throw new Error("Ô Ăn Quan needs exactly 2 active players.");
+  const state = createOAnQuanState(sessionId, roomId, players);
   runtimes.set(roomId, state);
   emitToPlayers(io, state, "game:start");
   emitToPlayers(io, state);
   scheduleTurnTimer(io, state);
-  console.log("[fleet-duel] Runtime started", { roomId, sessionId });
+  console.log("[o-an-quan] Runtime started", { roomId, sessionId });
 }
 
-export async function stopFleetDuel(roomId: string) {
+export async function stopOAnQuan(roomId: string) {
   clearTurnTimer(roomId);
-  if (runtimes.delete(roomId)) console.log("[fleet-duel] Runtime cleaned up", { roomId });
+  if (runtimes.delete(roomId)) console.log("[o-an-quan] Runtime cleaned up", { roomId });
 }
 
-export function emitCurrentFleetDuelSnapshot(socket: Socket, roomId: string, userId: string) {
+export function emitCurrentOAnQuanSnapshot(socket: Socket, roomId: string, userId: string) {
   const state = runtimes.get(roomId);
-  if (!state) return false;
-  if (!state.players[userId]) return false;
-  emitToSocket(socket, state, userId);
+  if (!state || !state.players[userId]) return false;
+  socket.emit("oaq:snapshot", serializeOAnQuanState(state));
   return true;
 }
 
-export function registerFleetDuelHandlers(io: Server, socket: Socket) {
+export function registerOAnQuanHandlers(io: Server, socket: Socket) {
   const authedSocket = socket as AuthedSocket;
   const user = authedSocket.data.user;
 
-  socket.on("fleet:sync", async ({ roomId }: { roomId?: string }) => {
+  socket.on("oaq:sync", async ({ roomId }: { roomId?: string }) => {
     if (!roomId) return gameError(socket, "Room id is required.");
     const active = await ensureActiveMember(roomId, user.userId);
     if (!active) return gameError(socket, "You are waiting for the next round.");
-    const state = runtimes.get(roomId);
-    if (!state || !state.players[user.userId]) return gameError(socket, "Fleet Duel is not active.");
-    emitToSocket(socket, state, user.userId);
+    if (!emitCurrentOAnQuanSnapshot(socket, roomId, user.userId)) return gameError(socket, "Ô Ăn Quan is not active.");
   });
 
-  socket.on("fleet:place_ships", async ({ roomId, sessionId, ships }: { roomId?: string; sessionId?: string; ships?: Array<{ id?: string; size?: number; cells?: FleetCell[] }> }) => {
-    if (!roomId || !sessionId || !Array.isArray(ships)) return gameError(socket, "Invalid fleet placement.");
-    const active = await ensureActiveMember(roomId, user.userId);
-    if (!active) return gameError(socket, "You are waiting for the next round.");
-    const state = runtimes.get(roomId);
-    if (!state || state.sessionId !== sessionId) return gameError(socket, "Fleet Duel session is not active.");
-    const error = placeFleet(state, user.userId, normalizeShips(ships));
-    if (error) return gameError(socket, error);
-    emitToPlayers(io, state, "fleet:setup_updated");
-  });
-
-  socket.on("fleet:confirm_ready", async ({ roomId, sessionId }: { roomId?: string; sessionId?: string }) => {
-    if (!roomId || !sessionId) return gameError(socket, "Invalid fleet ready request.");
-    const active = await ensureActiveMember(roomId, user.userId);
-    if (!active) return gameError(socket, "You are waiting for the next round.");
-    const state = runtimes.get(roomId);
-    if (!state || state.sessionId !== sessionId) return gameError(socket, "Fleet Duel session is not active.");
-    const before = state.status;
-    const error = confirmFleet(state, user.userId);
-    if (error) return gameError(socket, error);
-    emitToPlayers(io, state, before !== state.status ? "fleet:battle_started" : "fleet:setup_updated");
-    if (before !== state.status) scheduleTurnTimer(io, state);
-  });
-
-  socket.on("fleet:fire", async ({ roomId, sessionId, x, y }: { roomId?: string; sessionId?: string; x?: number; y?: number }) => {
-    if (!roomId || !sessionId || typeof x !== "number" || typeof y !== "number") return gameError(socket, "Invalid shot.");
-    const active = await ensureActiveMember(roomId, user.userId);
-    if (!active) return gameError(socket, "You are waiting for the next round.");
-    const state = runtimes.get(roomId);
-    if (!state || state.sessionId !== sessionId) return gameError(socket, "Fleet Duel session is not active.");
-    const result = fireAt(state, user.userId, { x, y });
-    if ("error" in result) return gameError(socket, result.error);
-    clearTurnTimer(roomId);
-    emitToPlayers(io, state, "fleet:shot_result");
-    if (state.status === "ended") {
-      await finishFleetDuel(io, state);
-    } else {
-      emitToPlayers(io, state, "fleet:turn_changed");
-      scheduleTurnTimer(io, state);
+  socket.on("oaq:move", async ({ roomId, sessionId, selectedPitIndex, direction }: { roomId?: string; sessionId?: string; selectedPitIndex?: number; direction?: OAnQuanDirection }) => {
+    if (!roomId || !sessionId || typeof selectedPitIndex !== "number" || (direction !== "clockwise" && direction !== "counterclockwise")) {
+      return gameError(socket, "Invalid Ô Ăn Quan move.");
     }
+    const active = await ensureActiveMember(roomId, user.userId);
+    if (!active) return gameError(socket, "You are waiting for the next round.");
+    const state = runtimes.get(roomId);
+    if (!state || state.sessionId !== sessionId) return gameError(socket, "Ô Ăn Quan session is not active.");
+    clearTurnTimer(roomId);
+    const error = applyOAnQuanMove(state, user.userId, selectedPitIndex, direction);
+    if (error) {
+      scheduleTurnTimer(io, state);
+      return gameError(socket, error);
+    }
+    emitToPlayers(io, state, "oaq:move_result");
+    if ((state as OAnQuanState).status === "ended") {
+      await finishOAnQuan(io, state);
+      return;
+    }
+    emitToPlayers(io, state);
+    scheduleTurnTimer(io, state);
   });
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RotateCcw, Shuffle, Trash2, Ship, CheckCircle2 } from "lucide-react";
 import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
 import { Button } from "@/components/ui/button";
@@ -52,6 +52,15 @@ function nextUnplaced(ships: FleetShip[]) {
   return FLEET_CONFIG.ships.find((ship) => !ships.some((placed) => placed.id === ship.id)) || null;
 }
 
+function useNow(step = 250) {
+  const [now, setNow] = useState(0);
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), step);
+    return () => window.clearInterval(timer);
+  }, [step]);
+  return now;
+}
+
 export function FleetDuelGame({
   roomId,
   currentUserId,
@@ -76,10 +85,14 @@ export function FleetDuelGame({
   const [vertical, setVertical] = useState(false);
   const [returning, setReturning] = useState(false);
   const selectedShip = nextUnplaced(localShips);
+  const now = useNow();
   const enemyShotsOnMe = useMemo(() => snapshot?.opponent?.shots.filter((shot) => shot.targetUserId === currentUserId) || [], [currentUserId, snapshot]);
   const myShots = snapshot?.you.shots || [];
   const canFire = snapshot?.status === "battle" && snapshot.currentTurnUserId === currentUserId;
   const winner = snapshot?.players.find((player) => player.userId === snapshot.winnerUserId);
+  const remainingMs = snapshot?.status === "battle" ? (now ? Math.max(0, snapshot.turnEndsAt - now) : snapshot.turnDurationSeconds * 1000) : 0;
+  const remainingSeconds = Math.ceil(remainingMs / 1000);
+  const timerPercent = snapshot?.status === "battle" ? Math.max(0, Math.min(100, (remainingMs / (snapshot.turnDurationSeconds * 1000)) * 100)) : 0;
 
   function placeLocal(cell: FleetCell) {
     if (!snapshot || snapshot.status !== "setup" || snapshot.you.readyToBattle || !selectedShip) return;
@@ -119,6 +132,17 @@ export function FleetDuelGame({
             <p className="text-sm font-bold text-slate-500">
               {snapshot.status === "setup" ? "Place your fleet." : snapshot.status === "battle" ? (canFire ? "Your turn." : "Opponent's turn.") : "Battle ended."}
             </p>
+            {snapshot.status === "battle" && (
+              <div className="mt-2 max-w-xs">
+                <div className="mb-1 flex justify-between text-xs font-black text-slate-500">
+                  <span>{canFire ? "Your timer" : "Opponent timer"}</span>
+                  <span className={remainingSeconds <= 5 ? "text-red-500" : "text-cyan-700"}>{remainingSeconds}s</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-white">
+                  <div className={`h-full rounded-full ${remainingSeconds <= 5 ? "bg-red-400" : "bg-cyan-400"}`} style={{ width: `${timerPercent}%` }} />
+                </div>
+              </div>
+            )}
           </div>
           <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-cyan-700 shadow-sm">{snapshot.status.toUpperCase()}</span>
         </div>

@@ -9,9 +9,11 @@ import { Button } from "@/components/ui/button";
 import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
 import { FlappyRushGame } from "@/components/games/flappy-rush/FlappyRushGame";
 import { FleetDuelGame } from "@/components/games/fleet-duel/FleetDuelGame";
+import { OAnQuanGame } from "@/components/games/o-an-quan/OAnQuanGame";
 import { GAME_CATALOG } from "@/lib/constants";
 import type { FlappySnapshot } from "@/lib/games/flappy-rush/types";
 import type { FleetSnapshot } from "@/lib/games/fleet-duel/types";
+import type { OAnQuanSnapshot } from "@/lib/games/o-an-quan/types";
 
 type RoomStatus = "waiting" | "playing" | "ended" | "closed";
 type Member = {
@@ -41,6 +43,22 @@ function titleLabel(value: string) {
 }
 
 function GameOptionVisual({ gameId }: { gameId: string }) {
+  if (gameId === "o-an-quan") {
+    return (
+      <div className="relative h-24 overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-amber-100 via-lime-100 to-emerald-100 shadow-inner">
+        <div className="absolute left-4 top-3 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-amber-700">2 players</div>
+        <div className="absolute right-4 top-3 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-emerald-700">Turn-based</div>
+        <div className="absolute inset-x-7 bottom-5 grid grid-cols-[2.2rem_1fr_2.2rem] gap-1">
+          <div className="h-12 rounded-full border-2 border-stone-300 bg-amber-200" />
+          <div className="grid gap-1">
+            <div className="grid grid-cols-5 gap-1">{Array.from({ length: 5 }).map((_, index) => <span key={`t-${index}`} className="h-5 rounded-lg bg-white/75" />)}</div>
+            <div className="grid grid-cols-5 gap-1">{Array.from({ length: 5 }).map((_, index) => <span key={`b-${index}`} className="h-5 rounded-lg bg-white/75" />)}</div>
+          </div>
+          <div className="h-12 rounded-full border-2 border-stone-300 bg-amber-200" />
+        </div>
+      </div>
+    );
+  }
   if (gameId === "fleet-duel") {
     return (
       <div className="relative h-24 overflow-hidden rounded-[1.25rem] bg-gradient-to-b from-cyan-200 via-sky-100 to-blue-200 shadow-inner">
@@ -91,6 +109,7 @@ export function RoomClient({
   initialGameKey,
   initialGameSnapshot,
   initialFleetSnapshot,
+  initialOAnQuanSnapshot,
   initialMinPlayers,
   initialMaxPlayers
 }: {
@@ -102,6 +121,7 @@ export function RoomClient({
   initialGameKey: string | null;
   initialGameSnapshot: FlappySnapshot | null;
   initialFleetSnapshot: FleetSnapshot | null;
+  initialOAnQuanSnapshot: OAnQuanSnapshot | null;
   initialMinPlayers: number;
   initialMaxPlayers: number;
 }) {
@@ -116,6 +136,7 @@ export function RoomClient({
   const [gameExpanded, setGameExpanded] = useState(false);
   const [endedGameSnapshot, setEndedGameSnapshot] = useState<FlappySnapshot | null>(initialGameSnapshot);
   const [endedFleetSnapshot, setEndedFleetSnapshot] = useState<FleetSnapshot | null>(initialFleetSnapshot);
+  const [endedOAnQuanSnapshot, setEndedOAnQuanSnapshot] = useState<OAnQuanSnapshot | null>(initialOAnQuanSnapshot);
   const [minPlayers, setMinPlayers] = useState(initialMinPlayers);
   const [maxPlayers, setMaxPlayers] = useState(initialMaxPlayers);
   const [gamePickerOpen, setGamePickerOpen] = useState(false);
@@ -164,6 +185,7 @@ export function RoomClient({
         if (snapshot.status !== "ended") {
           setEndedGameSnapshot(null);
           setEndedFleetSnapshot(null);
+          setEndedOAnQuanSnapshot(null);
         }
         setPendingAction(null);
       };
@@ -244,6 +266,7 @@ export function RoomClient({
   const isLateJoiner = currentMember?.participationStatus === "waiting_next_round";
   const isFlappyActivePlayer = (status === "playing" || status === "ended") && gameKey === "flappy-rush" && currentMember?.participationStatus === "active_game";
   const isFleetActivePlayer = (status === "playing" || status === "ended") && gameKey === "fleet-duel" && currentMember?.participationStatus === "active_game";
+  const isOAnQuanActivePlayer = (status === "playing" || status === "ended") && gameKey === "o-an-quan" && currentMember?.participationStatus === "active_game";
   const isGameLobby = status === "waiting" && Boolean(gameKey);
   const startButton = isHost && status === "waiting" ? (
     <Button disabled={!canStart || Boolean(pendingAction)} onClick={() => emitAction("start", "room:start_game")}>
@@ -371,6 +394,17 @@ export function RoomClient({
             expanded={gameExpanded}
             onToggleExpanded={() => setGameExpanded((value) => !value)}
             initialSnapshot={endedFleetSnapshot}
+            roomStatus={status === "ended" ? "ended" : "playing"}
+          />
+        ) : isOAnQuanActivePlayer ? (
+          <OAnQuanGame
+            roomId={roomId}
+            currentUserId={currentUserId}
+            isHost={isHost}
+            onGameEnd={markGameEnded}
+            expanded={gameExpanded}
+            onToggleExpanded={() => setGameExpanded((value) => !value)}
+            initialSnapshot={endedOAnQuanSnapshot}
             roomStatus={status === "ended" ? "ended" : "playing"}
           />
         ) : isGameLobby ? (

@@ -7,6 +7,7 @@ import { GAME_CATALOG } from "@/lib/constants";
 import type { FlappySnapshot } from "@/lib/games/flappy-rush/types";
 import type { FleetSnapshot, FleetState } from "@/lib/games/fleet-duel/types";
 import { serializeFleetStateForUser } from "@/lib/games/fleet-duel/serializer";
+import type { OAnQuanSnapshot } from "@/lib/games/o-an-quan/types";
 
 type PageProps = { params: Promise<{ roomId: string }> };
 type AppUserRecord = { username: string; display_name: string | null; avatar_url: string | null } | null;
@@ -60,6 +61,7 @@ export default async function RoomPage({ params }: PageProps) {
     }) || [];
   let initialGameSnapshot: FlappySnapshot | null = null;
   let initialFleetSnapshot: FleetSnapshot | null = null;
+  let initialOAnQuanSnapshot: OAnQuanSnapshot | null = null;
 
   if (room.status === "ended") {
     const { data: session } = await supabase
@@ -82,8 +84,12 @@ export default async function RoomPage({ params }: PageProps) {
         initialFleetSnapshot = serializeFleetStateForUser(state, user.id);
       }
     }
+    if (session?.game_key === "o-an-quan") {
+      const snapshot = (session.state as OAnQuanSnapshot | null) ?? null;
+      if (snapshot?.roomId === roomId && snapshot.status === "ended" && snapshot.players[user.id]) initialOAnQuanSnapshot = snapshot;
+    }
   }
-  const effectiveGameKey = room.game_key || (initialGameSnapshot ? "flappy-rush" : initialFleetSnapshot ? "fleet-duel" : null);
+  const effectiveGameKey = room.game_key || (initialGameSnapshot ? "flappy-rush" : initialFleetSnapshot ? "fleet-duel" : initialOAnQuanSnapshot ? "o-an-quan" : null);
   const game = GAME_CATALOG.find((item) => item.id === effectiveGameKey);
 
   return (
@@ -114,6 +120,7 @@ export default async function RoomPage({ params }: PageProps) {
         initialGameKey={effectiveGameKey}
         initialGameSnapshot={initialGameSnapshot}
         initialFleetSnapshot={initialFleetSnapshot}
+        initialOAnQuanSnapshot={initialOAnQuanSnapshot}
         initialMinPlayers={room.min_players}
         initialMaxPlayers={room.max_players}
       />

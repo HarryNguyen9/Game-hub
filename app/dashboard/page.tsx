@@ -74,6 +74,23 @@ function FleetDuelPreview() {
   );
 }
 
+function OAnQuanPreview() {
+  return (
+    <div className="relative mb-4 h-28 overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-amber-100 via-lime-100 to-emerald-100 shadow-inner">
+      <div className="absolute left-5 top-4 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-amber-700">2 Players</div>
+      <div className="absolute right-5 top-4 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-emerald-700">30s Turns</div>
+      <div className="absolute inset-x-6 bottom-5 grid grid-cols-[2.4rem_1fr_2.4rem] gap-1">
+        <div className="h-14 rounded-full border-2 border-stone-300 bg-amber-200" />
+        <div className="grid gap-1">
+          <div className="grid grid-cols-5 gap-1">{Array.from({ length: 5 }).map((_, index) => <span key={`top-${index}`} className="h-6 rounded-lg bg-white/75" />)}</div>
+          <div className="grid grid-cols-5 gap-1">{Array.from({ length: 5 }).map((_, index) => <span key={`bottom-${index}`} className="h-6 rounded-lg bg-white/75" />)}</div>
+        </div>
+        <div className="h-14 rounded-full border-2 border-stone-300 bg-amber-200" />
+      </div>
+    </div>
+  );
+}
+
 export default async function DashboardPage() {
   noStore();
   const user = await getCurrentUserWithProfile();
@@ -109,7 +126,7 @@ export default async function DashboardPage() {
       <section className="grid gap-4 md:grid-cols-4">
         {GAME_CATALOG.map((game) => (
           <article key={game.id} className="rounded-[1.75rem] bg-white/86 p-4 shadow-sm ring-1 ring-white">
-            {game.id === "flappy-rush" ? <FlappyRushPreview /> : <FleetDuelPreview />}
+            {game.id === "flappy-rush" ? <FlappyRushPreview /> : game.id === "fleet-duel" ? <FleetDuelPreview /> : <OAnQuanPreview />}
             <h2 className="font-black">{game.name}</h2>
             <p className="mt-1 text-sm font-medium text-slate-500">{game.description}</p>
             <p className="mt-2 text-xs font-black text-slate-400">{game.minPlayers}-{game.maxPlayers} players</p>

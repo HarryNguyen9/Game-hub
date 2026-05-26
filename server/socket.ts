@@ -4,6 +4,7 @@ import { registerRoomHandlers } from "./room-handlers";
 import { authenticateSocket } from "./auth";
 import { registerFlappyRushHandlers } from "./socket/flappy-rush-handlers";
 import { registerFleetDuelHandlers } from "./socket/fleet-duel-handlers";
+import { registerOAnQuanHandlers } from "./socket/o-an-quan-handlers";
 import type { AuthedSocket } from "./auth";
 
 export function allowedOrigins() {
@@ -65,6 +66,7 @@ export function createSocketServer(httpServer: HttpServer) {
     registerRoomHandlers(io, socket);
     registerFlappyRushHandlers(io, socket);
     registerFleetDuelHandlers(io, socket);
+    registerOAnQuanHandlers(io, socket);
   });
 
   return io;
