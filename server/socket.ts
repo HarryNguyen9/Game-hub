@@ -15,16 +15,30 @@ function normalizeOrigin(origin: string) {
 
 export function createSocketServer(httpServer: HttpServer) {
   const origins = allowedOrigins();
+  const isAllowedOrigin = (origin?: string) => {
+    const normalizedOrigin = origin ? normalizeOrigin(origin) : undefined;
+    return !normalizedOrigin || origins.includes(normalizedOrigin);
+  };
+
   const io = new Server(httpServer, {
+    allowRequest(request, callback) {
+      const origin = request.headers.origin;
+      if (isAllowedOrigin(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      console.warn("[socket-allow-request] Blocked origin", { origin: origin ? normalizeOrigin(origin) : null, allowedOrigins: origins });
+      callback("Origin is not allowed by APP_ORIGIN.", false);
+    },
     cors: {
       origin(origin, callback) {
-        const normalizedOrigin = origin ? normalizeOrigin(origin) : undefined;
-        if (!normalizedOrigin || origins.includes(normalizedOrigin)) {
+        if (isAllowedOrigin(origin)) {
           callback(null, true);
           return;
         }
 
-        console.warn("[socket-cors] Blocked origin", { origin: normalizedOrigin, allowedOrigins: origins });
+        console.warn("[socket-cors] Blocked origin", { origin: origin ? normalizeOrigin(origin) : null, allowedOrigins: origins });
         callback(new Error("Origin is not allowed by APP_ORIGIN."));
       },
       credentials: true
