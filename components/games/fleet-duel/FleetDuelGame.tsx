@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { RotateCcw, Shuffle, Trash2, Ship, CheckCircle2 } from "lucide-react";
 import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
 import { Button } from "@/components/ui/button";
@@ -98,6 +98,8 @@ export function FleetDuelGame({
   const [localShips, setLocalShips] = useState<FleetShip[]>([]);
   const [rotation, setRotation] = useState(0);
   const [returning, setReturning] = useState(false);
+  const [turnNotice, setTurnNotice] = useState(false);
+  const lastTurnRef = useRef<string | null>(initialSnapshot?.currentTurnUserId ?? null);
   const selectedShip = nextUnplaced(localShips, snapshot?.shipDefinitions || []);
   const now = useNow();
   const enemyShotsOnMe = useMemo(() => snapshot?.opponent?.shots.filter((shot) => shot.targetUserId === currentUserId) || [], [currentUserId, snapshot]);
@@ -123,6 +125,19 @@ export function FleetDuelGame({
     setLocalShips(ships);
     placeShips(snapshot.sessionId, ships);
   }
+
+  useEffect(() => {
+    if (!snapshot) return;
+    const previousTurn = lastTurnRef.current;
+    lastTurnRef.current = snapshot.currentTurnUserId;
+    if (snapshot.status !== "battle" || snapshot.currentTurnUserId !== currentUserId || previousTurn === currentUserId) return;
+    const showTimer = window.setTimeout(() => setTurnNotice(true), 0);
+    const hideTimer = window.setTimeout(() => setTurnNotice(false), 1700);
+    return () => {
+      window.clearTimeout(showTimer);
+      window.clearTimeout(hideTimer);
+    };
+  }, [currentUserId, snapshot?.currentTurnUserId, snapshot?.status, snapshot]);
 
   if (!snapshot) {
     return (
@@ -163,6 +178,31 @@ export function FleetDuelGame({
       }
     >
       {error && <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</p>}
+      {turnNotice && (
+        <div className="pointer-events-none fixed left-1/2 top-24 z-50 -translate-x-1/2 animate-[fleet-turn_1600ms_ease-out_forwards] rounded-full bg-cyan-500 px-5 py-3 text-sm font-black text-white shadow-xl">
+          Your turn
+        </div>
+      )}
+      <style>{`
+        @keyframes fleet-turn {
+          0% {
+            opacity: 0;
+            transform: translate(-50%, 12px) scale(0.92);
+          }
+          18% {
+            opacity: 1;
+            transform: translate(-50%, 0) scale(1);
+          }
+          80% {
+            opacity: 1;
+            transform: translate(-50%, 0) scale(1);
+          }
+          100% {
+            opacity: 0;
+            transform: translate(-50%, -12px) scale(0.96);
+          }
+        }
+      `}</style>
 
       {snapshot.status === "setup" && (
         <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">

@@ -40,11 +40,13 @@ function DanPit({
   pit,
   selectable,
   selected,
+  popup,
   onSelect
 }: {
   pit: OAnQuanPit;
   selectable: boolean;
   selected: boolean;
+  popup?: string | null;
   onSelect: () => void;
 }) {
   return (
@@ -52,7 +54,7 @@ function DanPit({
       type="button"
       disabled={!selectable}
       onClick={onSelect}
-      className={`relative grid min-h-16 min-w-0 place-items-center rounded-2xl border-2 p-1.5 shadow-sm transition sm:min-h-20 sm:p-2 ${
+      className={`relative grid h-16 min-w-0 place-items-center overflow-hidden rounded-2xl border-2 p-1.5 shadow-sm transition sm:h-20 sm:p-2 ${
         selected
           ? "border-rose-400 bg-rose-100"
           : selectable
@@ -60,14 +62,16 @@ function DanPit({
             : "border-amber-200 bg-amber-50"
       }`}
     >
+      {popup && <span className="pointer-events-none absolute left-1/2 top-1 z-10 -translate-x-1/2 animate-[oaq-pop_900ms_ease-out_forwards] rounded-full bg-white px-2 py-0.5 text-[11px] font-black text-rose-600 shadow-sm">{popup}</span>}
       <StoneStack pit={pit} />
     </button>
   );
 }
 
-function QuanPit({ pit }: { pit: OAnQuanPit }) {
+function QuanPit({ pit, popup }: { pit: OAnQuanPit; popup?: string | null }) {
   return (
-    <div className="grid min-h-32 min-w-0 place-items-center rounded-[1.75rem] border-2 border-stone-300 bg-gradient-to-br from-amber-100 to-lime-100 p-2 shadow-inner sm:min-h-40 sm:rounded-[2rem] sm:p-3">
+    <div className="relative grid h-32 min-w-0 place-items-center overflow-hidden rounded-[1.75rem] border-2 border-stone-300 bg-gradient-to-br from-amber-100 to-lime-100 p-2 shadow-inner sm:h-40 sm:rounded-[2rem] sm:p-3">
+      {popup && <span className="pointer-events-none absolute left-1/2 top-2 z-10 -translate-x-1/2 animate-[oaq-pop_900ms_ease-out_forwards] rounded-full bg-white px-2 py-0.5 text-[11px] font-black text-rose-600 shadow-sm">{popup}</span>}
       <div className="grid min-w-0 justify-items-center gap-1.5 sm:gap-2">
         <span className="text-[10px] font-black uppercase text-stone-500 sm:text-xs">Quan</span>
         <StoneStack pit={pit} />
@@ -81,6 +85,9 @@ export function OAnQuanBoard({
   mySide,
   canMove,
   selectedPit,
+  popupPitIndex,
+  popupNonce,
+  capturePopup,
   onSelectPit,
   onMove
 }: {
@@ -88,6 +95,9 @@ export function OAnQuanBoard({
   mySide: OAnQuanSide;
   canMove: boolean;
   selectedPit: number | null;
+  popupPitIndex?: number | null;
+  popupNonce?: number;
+  capturePopup?: string | null;
   onSelectPit: (index: number) => void;
   onMove: (direction: OAnQuanDirection) => void;
 }) {
@@ -98,30 +108,61 @@ export function OAnQuanBoard({
     const selectable = canMove && myPits.has(index) && pit.smallStones > 0;
     const selected = selectedPit === index;
     return (
-      <DanPit key={index} pit={pit} selectable={selectable} selected={selected} onSelect={() => onSelectPit(index)} />
+      <DanPit key={index} pit={pit} selectable={selectable} selected={selected} popup={popupPitIndex === index ? "+1" : null} onSelect={() => onSelectPit(index)} />
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-[2rem] border border-amber-200 bg-gradient-to-br from-amber-100 via-lime-50 to-emerald-100 p-2 shadow-inner sm:p-3">
-      <div className="grid grid-cols-[3.45rem_minmax(0,1fr)_3.45rem] gap-1.5 sm:grid-cols-[6rem_minmax(0,1fr)_6rem] sm:gap-2">
-        <QuanPit pit={board[0]} />
+    <div className="relative overflow-hidden rounded-[2rem] border border-amber-200 bg-gradient-to-br from-amber-100 via-lime-50 to-emerald-100 p-2 shadow-inner sm:p-3">
+      <style>{`
+        @keyframes oaq-pop {
+          0% {
+            opacity: 0;
+            transform: translate(-50%, 8px) scale(0.86);
+          }
+          22% {
+            opacity: 1;
+            transform: translate(-50%, 0) scale(1);
+          }
+          100% {
+            opacity: 0;
+            transform: translate(-50%, -20px) scale(0.96);
+          }
+        }
+      `}</style>
+      {capturePopup && (
+        <div className="pointer-events-none absolute left-1/2 top-3 z-20 -translate-x-1/2 animate-[oaq-pop_1200ms_ease-out_forwards] rounded-full bg-amber-400 px-3 py-1 text-xs font-black text-white shadow-lg">
+          {capturePopup}
+        </div>
+      )}
+      <div key={`popup-${popupNonce ?? 0}`} className="grid grid-cols-[3.45rem_minmax(0,1fr)_3.45rem] gap-1.5 sm:grid-cols-[6rem_minmax(0,1fr)_6rem] sm:gap-2">
+        <QuanPit pit={board[0]} popup={popupPitIndex === 0 ? "+1" : null} />
         <div className="grid min-w-0 gap-1.5 sm:gap-2">
           <div className="grid min-w-0 grid-cols-5 gap-1 sm:gap-2">{top.map(danPit)}</div>
           <div className="grid min-w-0 grid-cols-5 gap-1 sm:gap-2">{bottom.map(danPit)}</div>
         </div>
-        <QuanPit pit={board[6]} />
+        <QuanPit pit={board[6]} popup={popupPitIndex === 6 ? "+1" : null} />
       </div>
-      {selectedPit !== null && canMove && (
-        <div className="mt-3 flex justify-center gap-3">
-          <button type="button" aria-label="Move left" className="grid size-12 place-items-center rounded-2xl bg-white text-slate-800 shadow-sm ring-1 ring-amber-200" onClick={() => onMove("counterclockwise")}>
-            <ArrowLeft size={22} />
-          </button>
-          <button type="button" aria-label="Move right" className="grid size-12 place-items-center rounded-2xl bg-[#ff7a90] text-white shadow-sm" onClick={() => onMove("clockwise")}>
-            <ArrowRight size={22} />
-          </button>
-        </div>
-      )}
+      <div className="mt-3 flex justify-center gap-3">
+        <button
+          type="button"
+          aria-label="Move left"
+          disabled={selectedPit === null || !canMove}
+          className="grid size-12 place-items-center rounded-2xl bg-white text-slate-800 shadow-sm ring-1 ring-amber-200 transition disabled:cursor-not-allowed disabled:opacity-40"
+          onClick={() => onMove("counterclockwise")}
+        >
+          <ArrowLeft size={22} />
+        </button>
+        <button
+          type="button"
+          aria-label="Move right"
+          disabled={selectedPit === null || !canMove}
+          className="grid size-12 place-items-center rounded-2xl bg-[#ff7a90] text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-40"
+          onClick={() => onMove("clockwise")}
+        >
+          <ArrowRight size={22} />
+        </button>
+      </div>
     </div>
   );
 }

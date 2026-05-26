@@ -29,6 +29,10 @@ function pitHasStones(pit: OAnQuanPit) {
   return pit.smallStones > 0 || pit.bigStones > 0;
 }
 
+function pitTotal(pit: OAnQuanPit) {
+  return pit.smallStones + pit.bigStones * 10;
+}
+
 function buildMoveFrames(board: OAnQuanPit[], move: OAnQuanMove) {
   if (move.reason !== "move" || move.selectedPitIndex === null || !move.direction) return [];
   const frames: OAnQuanPit[][] = [];
@@ -100,7 +104,12 @@ export function OAnQuanGame({
   const [returning, setReturning] = useState(false);
   const [displayBoard, setDisplayBoard] = useState<OAnQuanPit[] | null>(initialSnapshot ? cloneBoard(initialSnapshot.board) : null);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [popupPitIndex, setPopupPitIndex] = useState<number | null>(null);
+  const [popupNonce, setPopupNonce] = useState(0);
+  const [capturePopup, setCapturePopup] = useState<string | null>(null);
+  const [turnNotice, setTurnNotice] = useState(false);
   const lastAnimatedMoveRef = useRef<number | null>(null);
+  const lastTurnRef = useRef<string | null>(initialSnapshot?.currentTurnUserId ?? null);
   const previousBoardRef = useRef<OAnQuanPit[] | null>(initialSnapshot ? cloneBoard(initialSnapshot.board) : null);
   const now = useNow();
   const currentPlayer = snapshot?.players[currentUserId];
@@ -137,18 +146,54 @@ export function OAnQuanGame({
     }
 
     let index = 0;
+    let previousFrame = currentBoard;
     lastAnimatedMoveRef.current = moveId;
     previousBoardRef.current = cloneBoard(snapshot.board);
+    const startTimer = window.setTimeout(() => setIsAnimating(true), 0);
+    let captureTimer: number | null = null;
+    let clearCaptureTimer: number | null = null;
+    if (lastMove?.captured && lastMove.captured > 0) {
+      captureTimer = window.setTimeout(() => setCapturePopup(`+${lastMove.captured} pts`), 500);
+      clearCaptureTimer = window.setTimeout(() => setCapturePopup(null), 1800);
+    }
     const timer = window.setInterval(() => {
-      setDisplayBoard(index < frames.length ? frames[index] : null);
+      const nextFrame = index < frames.length ? frames[index] : null;
+      if (nextFrame) {
+        const changedPit = nextFrame.find((pit, pitIndex) => pitTotal(pit) > pitTotal(previousFrame[pitIndex]));
+        if (changedPit) {
+          setPopupPitIndex(changedPit.index);
+          setPopupNonce((value) => value + 1);
+        }
+        previousFrame = nextFrame;
+      }
+      setDisplayBoard(nextFrame);
       index += 1;
       if (index > frames.length) {
         setIsAnimating(false);
+        setPopupPitIndex(null);
         window.clearInterval(timer);
       }
-    }, 180);
-    return () => window.clearInterval(timer);
+    }, 280);
+    return () => {
+      window.clearTimeout(startTimer);
+      if (captureTimer) window.clearTimeout(captureTimer);
+      if (clearCaptureTimer) window.clearTimeout(clearCaptureTimer);
+      window.clearInterval(timer);
+    };
   }, [snapshot?.lastMove?.createdAt, snapshot?.status, snapshot]);
+
+  useEffect(() => {
+    if (!snapshot) return;
+    const previousTurn = lastTurnRef.current;
+    lastTurnRef.current = snapshot.currentTurnUserId;
+    if (snapshot.status !== "playing" || snapshot.currentTurnUserId !== currentUserId || previousTurn === currentUserId) return;
+    const showTimer = window.setTimeout(() => setTurnNotice(true), 0);
+    const hideTimer = window.setTimeout(() => setTurnNotice(false), 1700);
+    return () => {
+      window.clearTimeout(showTimer);
+      window.clearTimeout(hideTimer);
+    };
+  }, [currentUserId, snapshot?.currentTurnUserId, snapshot?.status, snapshot]);
 
   const header = (
     <div className="grid gap-3 sm:grid-cols-[auto_1fr] sm:items-center">
@@ -183,6 +228,31 @@ export function OAnQuanGame({
     <GameFullscreenShell expanded={expanded} onToggleExpanded={onToggleExpanded} header={header}>
       {error && <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</p>}
       <div className="grid gap-4">
+        {turnNotice && (
+          <div className="pointer-events-none fixed left-1/2 top-24 z-50 -translate-x-1/2 animate-[oaq-turn_1600ms_ease-out_forwards] rounded-full bg-[#ff7a90] px-5 py-3 text-sm font-black text-white shadow-xl">
+            Your turn
+          </div>
+        )}
+        <style>{`
+          @keyframes oaq-turn {
+            0% {
+              opacity: 0;
+              transform: translate(-50%, 12px) scale(0.92);
+            }
+            18% {
+              opacity: 1;
+              transform: translate(-50%, 0) scale(1);
+            }
+            80% {
+              opacity: 1;
+              transform: translate(-50%, 0) scale(1);
+            }
+            100% {
+              opacity: 0;
+              transform: translate(-50%, -12px) scale(0.96);
+            }
+          }
+        `}</style>
         <div className="grid gap-2 sm:grid-cols-2">
           {scores.map((player) => (
             <div key={player.userId} className={`rounded-2xl px-4 py-3 text-sm font-black shadow-sm ${player.userId === currentUserId ? "bg-rose-50 text-rose-700" : "bg-white text-slate-700"}`}>
@@ -190,7 +260,17 @@ export function OAnQuanGame({
             </div>
           ))}
         </div>
-        <OAnQuanBoard board={displayBoard || snapshot.board} mySide={currentPlayer?.side || "bottom"} canMove={isMyTurn && !isAnimating} selectedPit={selectedPit} onSelectPit={setSelectedPit} onMove={submit} />
+        <OAnQuanBoard
+          board={displayBoard || snapshot.board}
+          mySide={currentPlayer?.side || "bottom"}
+          canMove={isMyTurn && !isAnimating}
+          selectedPit={selectedPit}
+          popupPitIndex={popupPitIndex}
+          popupNonce={popupNonce}
+          capturePopup={capturePopup}
+          onSelectPit={setSelectedPit}
+          onMove={submit}
+        />
         {snapshot.lastMove && (
           <p className="rounded-2xl bg-white/80 px-4 py-3 text-sm font-bold text-slate-500">
             Last: {snapshot.players[snapshot.lastMove.userId]?.displayName || "Player"} {snapshot.lastMove.reason === "timeout" ? "lost the turn by timeout" : snapshot.lastMove.reason === "no_moves" ? "had no legal moves" : `captured ${snapshot.lastMove.captured} points`}
