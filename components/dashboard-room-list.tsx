@@ -20,7 +20,12 @@ type Room = {
   room_members?: { user_id: string; participation_status?: "lobby" | "active_game" | "waiting_next_round" }[];
 };
 
-export function DashboardRoomList() {
+type DashboardRoomListProps = {
+  searchQuery?: string;
+  limit?: number;
+};
+
+export function DashboardRoomList({ searchQuery = "", limit }: DashboardRoomListProps = {}) {
   const router = useRouter();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [joiningRoom, setJoiningRoom] = useState<Room | null>(null);
@@ -66,6 +71,27 @@ export function DashboardRoomList() {
     };
   }, []);
 
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const visibleRooms = rooms
+    .filter((room) => {
+      if (!normalizedSearch) return true;
+      const game = getGameConfig(room.game_key);
+      const host = Array.isArray(room.app_users) ? room.app_users[0] : room.app_users;
+      return [
+        room.name,
+        room.room_code,
+        room.status,
+        game?.name,
+        host?.display_name,
+        host?.username
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(normalizedSearch);
+    })
+    .slice(0, limit ?? rooms.length);
+
   if (rooms.length === 0) {
     return <p className="rounded-3xl bg-white/80 p-5 text-sm font-semibold text-slate-500">No rooms yet. Create the first cozy lobby.</p>;
   }
@@ -90,12 +116,16 @@ export function DashboardRoomList() {
 
   return (
     <div className="grid gap-3">
-      {rooms.map((room) => (
+      {visibleRooms.length === 0 && (
+        <p className="rounded-3xl bg-white/80 p-5 text-sm font-semibold text-slate-500">No rooms match your search.</p>
+      )}
+      {visibleRooms.map((room) => (
         <article key={room.id} className="rounded-3xl bg-white/88 p-4 shadow-sm ring-1 ring-white transition hover:-translate-y-0.5">
           {(() => {
             const game = getGameConfig(room.game_key);
             const playerCount = room.room_members?.filter((member) => member.participation_status !== "waiting_next_round").length || 0;
-            const full = room.status === "waiting" && Boolean(room.max_players) && playerCount >= (room.max_players || 0);
+            const maxPlayers = game?.maxPlayers || room.max_players;
+            const full = room.status === "waiting" && Boolean(maxPlayers) && playerCount >= (maxPlayers || 0);
             return (
               <>
           <div className="flex items-start justify-between gap-4">
@@ -117,7 +147,7 @@ export function DashboardRoomList() {
             </div>
           </div>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm font-bold text-slate-500">
-            <span className="inline-flex items-center gap-2"><UsersRound size={16} /> {playerCount}/{room.max_players || "?"} players</span>
+            <span className="inline-flex items-center gap-2"><UsersRound size={16} /> {playerCount}/{maxPlayers || "?"} players</span>
             <Button className="min-h-9 px-4 py-1" variant="secondary" disabled={loadingRoomId === room.id || full} onClick={() => (room.has_password ? (setPassword(""), setError(""), setJoiningRoom(room)) : join(room))}>
               {loadingRoomId === room.id ? "Joining..." : "Join"}
             </Button>

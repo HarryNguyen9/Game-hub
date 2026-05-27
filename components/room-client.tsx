@@ -62,8 +62,8 @@ function GameOptionVisual({ gameId }: { gameId: string }) {
   if (gameId === "chess") {
     return (
       <div className="relative h-24 overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-indigo-100 via-white to-amber-100 shadow-inner">
-        <div className="absolute left-4 top-3 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-indigo-700">2 players</div>
-        <div className="absolute right-4 top-3 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-amber-700">Turn-based</div>
+        <div className="absolute left-3 top-3 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-indigo-700 shadow-sm">2 players</div>
+        <div className="absolute right-3 top-3 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-amber-700 shadow-sm">Turn-based</div>
         <div className="absolute inset-x-8 bottom-5 grid grid-cols-6 overflow-hidden rounded-xl border-2 border-white/80 shadow-sm">
           {Array.from({ length: 18 }).map((_, index) => (
             <span key={index} className={`h-5 ${index % 2 === Math.floor(index / 6) % 2 ? "bg-[#7fc8a9]" : "bg-[#fff4c7]"}`} />
@@ -76,8 +76,8 @@ function GameOptionVisual({ gameId }: { gameId: string }) {
   if (gameId === "o-an-quan") {
     return (
       <div className="relative h-24 overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-amber-100 via-lime-100 to-emerald-100 shadow-inner">
-        <div className="absolute left-4 top-3 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-amber-700">2 players</div>
-        <div className="absolute right-4 top-3 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-emerald-700">Turn-based</div>
+        <div className="absolute left-3 top-3 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-amber-700 shadow-sm">2 players</div>
+        <div className="absolute right-3 top-3 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-emerald-700 shadow-sm">Turn-based</div>
         <div className="absolute inset-x-7 bottom-5 grid grid-cols-[2.2rem_1fr_2.2rem] gap-1">
           <div className="h-12 rounded-full border-2 border-stone-300 bg-amber-200" />
           <div className="grid gap-1">
@@ -93,8 +93,8 @@ function GameOptionVisual({ gameId }: { gameId: string }) {
     return (
       <div className="relative h-24 overflow-hidden rounded-[1.25rem] bg-gradient-to-b from-cyan-200 via-sky-100 to-blue-200 shadow-inner">
         <div className="absolute inset-x-0 bottom-0 h-10 bg-cyan-300/50" />
-        <div className="absolute left-4 top-3 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-cyan-700">2 players</div>
-        <div className="absolute right-4 top-3 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-blue-700">Turn-based</div>
+        <div className="absolute left-3 top-3 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-cyan-700 shadow-sm">2 players</div>
+        <div className="absolute right-3 top-3 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-blue-700 shadow-sm">Turn-based</div>
         <div className="absolute left-[24%] top-[50%] h-7 w-16 rounded-b-xl rounded-t-md bg-slate-700 shadow-md">
           <div className="absolute -top-4 left-5 h-4 w-7 rounded-t-lg bg-slate-500" />
           <div className="absolute -right-4 top-2 h-0 w-0 border-y-[8px] border-l-[16px] border-y-transparent border-l-slate-700" />
@@ -115,8 +115,8 @@ function GameOptionVisual({ gameId }: { gameId: string }) {
       <div className="absolute bottom-0 left-0 h-2 w-full bg-sky-300" />
       <div className="absolute right-8 top-0 h-9 w-9 rounded-b-lg border-2 border-emerald-500 bg-emerald-300" />
       <div className="absolute bottom-2 right-8 h-10 w-9 rounded-t-lg border-2 border-emerald-500 bg-emerald-300" />
-      <div className="absolute left-4 top-3 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-sky-700">1-4 players</div>
-      <div className="absolute right-4 top-3 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-rose-500">Realtime</div>
+      <div className="absolute left-3 top-3 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-sky-700 shadow-sm">1-4 players</div>
+      <div className="absolute right-3 top-3 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-rose-500 shadow-sm">Realtime</div>
       <div className="absolute left-[30%] top-[48%] h-10 w-11 -rotate-3 rounded-[50%] border-2 border-slate-800 bg-pink-300 shadow-md">
         <div className="absolute -top-1 left-2 h-3.5 w-3 rounded-full border border-slate-800 bg-pink-400" />
         <div className="absolute -top-0.5 right-2 h-3 w-2.5 rounded-full border border-slate-800 bg-pink-400" />

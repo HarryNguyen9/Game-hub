@@ -42,8 +42,8 @@ function FlappyRushPreview() {
           </div>
         </div>
       </div>
-      <div className="absolute left-5 top-4 rounded-full bg-white/70 px-2 py-1 text-[10px] font-black uppercase text-sky-700">1-4 Players</div>
-      <div className="absolute right-5 top-4 rounded-full bg-white/70 px-2 py-1 text-[10px] font-black uppercase text-rose-500">Realtime</div>
+      <div className="absolute left-4 top-4 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-sky-700 shadow-sm">1-4 Players</div>
+      <div className="absolute right-4 top-4 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-rose-500 shadow-sm">Realtime</div>
     </div>
   );
 }
@@ -52,8 +52,8 @@ function FleetDuelPreview() {
   return (
     <div className="relative mb-4 h-28 overflow-hidden rounded-[1.5rem] bg-gradient-to-b from-cyan-200 via-sky-100 to-blue-200 shadow-inner">
       <div className="absolute inset-x-0 bottom-0 h-12 bg-cyan-300/50" />
-      <div className="absolute left-5 top-4 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-cyan-700">2 Players</div>
-      <div className="absolute right-5 top-4 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-blue-700">Turn-based</div>
+      <div className="absolute left-4 top-4 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-cyan-700 shadow-sm">2 Players</div>
+      <div className="absolute right-4 top-4 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-blue-700 shadow-sm">Turn-based</div>
       <div className="absolute left-8 top-16 h-1.5 w-20 rounded-full bg-white/60" />
       <div className="absolute right-8 top-20 h-1.5 w-24 rounded-full bg-white/50" />
       <div className="absolute left-[24%] top-[48%] h-7 w-16 rounded-b-xl rounded-t-md bg-slate-700 shadow-md">
@@ -72,8 +72,8 @@ function FleetDuelPreview() {
 function OAnQuanPreview() {
   return (
     <div className="relative mb-4 h-28 overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-amber-100 via-lime-100 to-emerald-100 shadow-inner">
-      <div className="absolute left-5 top-4 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-amber-700">2 Players</div>
-      <div className="absolute right-5 top-4 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-emerald-700">Turn-based</div>
+      <div className="absolute left-4 top-4 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-amber-700 shadow-sm">2 Players</div>
+      <div className="absolute right-4 top-4 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-emerald-700 shadow-sm">Turn-based</div>
       <div className="absolute inset-x-6 bottom-5 grid grid-cols-[2.4rem_1fr_2.4rem] gap-1">
         <div className="h-14 rounded-full border-2 border-stone-300 bg-amber-200" />
         <div className="grid gap-1">
@@ -89,8 +89,8 @@ function OAnQuanPreview() {
 function ChessPreview() {
   return (
     <div className="relative mb-4 h-28 overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-indigo-100 via-white to-amber-100 shadow-inner">
-      <div className="absolute left-5 top-4 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-indigo-700">2 Players</div>
-      <div className="absolute right-5 top-4 rounded-full bg-white/75 px-2 py-1 text-[10px] font-black uppercase text-amber-700">Turn-based</div>
+      <div className="absolute left-4 top-4 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-indigo-700 shadow-sm">2 Players</div>
+      <div className="absolute right-4 top-4 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-amber-700 shadow-sm">Turn-based</div>
       <div className="absolute inset-x-8 bottom-5 grid grid-cols-6 overflow-hidden rounded-xl border-2 border-white/80 shadow-sm">
         {Array.from({ length: 18 }).map((_, index) => (
           <span key={index} className={`h-5 ${index % 2 === Math.floor(index / 6) % 2 ? "bg-[#7fc8a9]" : "bg-[#fff4c7]"}`} />
