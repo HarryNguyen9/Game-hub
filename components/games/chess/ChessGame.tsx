@@ -52,6 +52,7 @@ export function ChessGame({
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [returning, setReturning] = useState(false);
   const [turnNotice, setTurnNotice] = useState(false);
+  const [errorToast, setErrorToast] = useState("");
   const lastTurnRef = useRef<string | null>(initialSnapshot?.currentTurnUserId ?? null);
   const now = useNow();
 
@@ -75,6 +76,16 @@ export function ChessGame({
       window.clearTimeout(hideTimer);
     };
   }, [currentUserId, snapshot?.currentTurnUserId, snapshot?.status, snapshot]);
+
+  useEffect(() => {
+    if (!error) return;
+    const showTimer = window.setTimeout(() => setErrorToast(error), 0);
+    const hideTimer = window.setTimeout(() => setErrorToast(""), 2200);
+    return () => {
+      window.clearTimeout(showTimer);
+      window.clearTimeout(hideTimer);
+    };
+  }, [error]);
 
   function handleSquareClick(square: string, piece: BoardPiece | null) {
     if (!snapshot || !currentPlayer || !isMyTurn) return;
@@ -132,8 +143,12 @@ export function ChessGame({
 
   return (
     <GameFullscreenShell expanded={expanded} onToggleExpanded={onToggleExpanded} header={header}>
-      {error && <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</p>}
       <div className="relative grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
+        {errorToast && (
+          <div className="pointer-events-none absolute left-1/2 top-4 z-40 w-max max-w-[calc(100%-2rem)] -translate-x-1/2 rounded-full bg-red-50 px-5 py-3 text-sm font-black text-red-600 shadow-xl ring-1 ring-red-100">
+            {errorToast}
+          </div>
+        )}
         {turnNotice && (
           <div className="pointer-events-none absolute left-1/2 top-3 z-30 -translate-x-1/2 animate-[chess-turn_1600ms_ease-out_forwards] rounded-full bg-[#ff7a90] px-5 py-3 text-sm font-black text-white shadow-xl">
             Your turn

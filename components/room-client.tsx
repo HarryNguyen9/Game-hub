@@ -132,6 +132,9 @@ function GameOptionVisual({ gameId }: { gameId: string }) {
 
 export function RoomClient({
   roomId,
+  roomName,
+  roomCode,
+  hasPassword,
   initialMembers,
   initialStatus,
   isHost,
@@ -145,6 +148,9 @@ export function RoomClient({
   initialMaxPlayers
 }: {
   roomId: string;
+  roomName: string;
+  roomCode: string | null;
+  hasPassword: boolean;
   initialMembers: Member[];
   initialStatus: RoomStatus;
   isHost: boolean;
@@ -233,6 +239,7 @@ export function RoomClient({
         }
         setPendingAction(null);
       };
+      nextSocket.on("room:joined", applySnapshot);
       nextSocket.on("room:members_updated", applySnapshot);
       nextSocket.on("room:status_updated", applySnapshot);
       nextSocket.on("room:error", ({ message: errorMessage }: { message: string }) => {
@@ -327,7 +334,10 @@ export function RoomClient({
   const effectiveMaxPlayers = displayLimits.maxPlayers;
   const hasEnoughPlayers = lobbyMembers.length >= effectiveMinPlayers;
   const canStart = isHost && status === "waiting" && Boolean(selectedGame) && hasEnoughPlayers && lobbyMembers.length <= effectiveMaxPlayers && unreadyPlayers.length === 0;
-  const playerCountLabel = displayLimits.hasSelectedGame ? `${activeMembers.length}/${effectiveMaxPlayers}` : `${activeMembers.length}`;
+  const playerCountValue = displayLimits.hasSelectedGame ? `${activeMembers.length}/${effectiveMaxPlayers}` : `${activeMembers.length}`;
+  const playerCountBadgeLabel = displayLimits.hasSelectedGame
+    ? `${activeMembers.length}/${effectiveMaxPlayers} players`
+    : `${activeMembers.length} ${activeMembers.length === 1 ? "player" : "players"}`;
   const isLateJoiner = currentMember?.participationStatus === "waiting_next_round";
   const isFlappyActivePlayer = (status === "playing" || status === "ended") && gameKey === "flappy-rush" && currentMember?.participationStatus === "active_game";
   const isFleetActivePlayer = (status === "playing" || status === "ended") && gameKey === "fleet-duel" && currentMember?.participationStatus === "active_game";
@@ -362,7 +372,23 @@ export function RoomClient({
   };
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[1fr_24rem]">
+    <>
+      <header className="mb-5 rounded-[2rem] bg-white/70 p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-black uppercase text-[#ff7a90]">{selectedGame?.name || "No game selected"}</p>
+            <h1 className="mt-1 text-3xl font-black">{roomName}</h1>
+            <p className="mt-2 text-sm font-bold text-slate-500">
+              {titleLabel(status)} · {hasPassword ? "Password Room" : "Public Room"}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {roomCode && <div className="rounded-3xl bg-sky-100 px-5 py-3 text-center font-black text-sky-800">Code {roomCode}</div>}
+            <div className="rounded-3xl bg-[#ffcf5a] px-5 py-3 text-center font-black">{playerCountBadgeLabel}</div>
+          </div>
+        </div>
+      </header>
+      <div className="grid gap-5 lg:grid-cols-[1fr_24rem]">
       <section className="min-h-[22rem] rounded-[2rem] bg-white/88 p-5 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <span className="rounded-full bg-sky-100 px-3 py-1 text-sm font-black text-sky-700">
@@ -434,7 +460,7 @@ export function RoomClient({
           </p>
         )}
         <div className="mt-4 rounded-[1.5rem] bg-slate-50 p-4">
-          <p className="text-sm font-black text-slate-500">Selected game · Players {playerCountLabel}</p>
+          <p className="text-sm font-black text-slate-500">Selected game · Players {playerCountValue}</p>
           {isHost && status === "waiting" ? (
             <button
               type="button"
@@ -574,6 +600,7 @@ export function RoomClient({
         </div>
       </aside>
     </div>
+    </>
   );
 }
 

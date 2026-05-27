@@ -3,7 +3,6 @@ import { AppShell } from "@/components/app-shell";
 import { RoomClient } from "@/components/room-client";
 import { getCurrentUserWithProfile } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/server";
-import { GAME_CATALOG } from "@/lib/constants";
 import type { FlappySnapshot } from "@/lib/games/flappy-rush/types";
 import type { FleetSnapshot, FleetState } from "@/lib/games/fleet-duel/types";
 import { serializeFleetStateForUser } from "@/lib/games/fleet-duel/serializer";
@@ -19,14 +18,6 @@ function profileFrom(appUser: AppUserRecord) {
     displayName: appUser?.display_name || appUser?.username || "Player",
     avatarUrl: appUser?.avatar_url || null
   };
-}
-
-function titleLabel(value: string) {
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
-function roomPlayerLimit(gameKey: string | null, fallback: number) {
-  return GAME_CATALOG.find((game) => game.id === gameKey)?.maxPlayers || fallback;
 }
 
 export default async function RoomPage({ params }: PageProps) {
@@ -64,6 +55,7 @@ export default async function RoomPage({ params }: PageProps) {
         ...profileFrom(appUser)
       };
     }) || [];
+
   let initialGameSnapshot: FlappySnapshot | null = null;
   let initialFleetSnapshot: FleetSnapshot | null = null;
   let initialOAnQuanSnapshot: OAnQuanSnapshot | null = null;
@@ -99,32 +91,17 @@ export default async function RoomPage({ params }: PageProps) {
       if (snapshot?.roomId === roomId && snapshot.status === "ended" && snapshot.players[user.id]) initialChessSnapshot = snapshot;
     }
   }
-  const effectiveGameKey = room.game_key || (initialGameSnapshot ? "flappy-rush" : initialFleetSnapshot ? "fleet-duel" : initialOAnQuanSnapshot ? "o-an-quan" : initialChessSnapshot ? "chess" : null);
-  const game = GAME_CATALOG.find((item) => item.id === effectiveGameKey);
-  const activeMemberCount = members.filter((member) => member.participationStatus !== "waiting_next_round").length;
-  const maxPlayerLabel = game ? `${activeMemberCount}/${roomPlayerLimit(effectiveGameKey, room.max_players)}` : `${activeMemberCount}`;
+
+  const effectiveGameKey =
+    room.game_key || (initialGameSnapshot ? "flappy-rush" : initialFleetSnapshot ? "fleet-duel" : initialOAnQuanSnapshot ? "o-an-quan" : initialChessSnapshot ? "chess" : null);
 
   return (
     <AppShell user={user}>
-      <header className="mb-5 rounded-[2rem] bg-white/70 p-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-sm font-black uppercase text-[#ff7a90]">{game?.name || "No game selected"}</p>
-            <h1 className="mt-1 text-3xl font-black">{room.name}</h1>
-            <p className="mt-2 text-sm font-bold text-slate-500">
-              {titleLabel(room.status)} · {room.has_password ? "Password Room" : "Public Room"}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {room.room_code && <div className="rounded-3xl bg-sky-100 px-5 py-3 text-center font-black text-sky-800">Code {room.room_code}</div>}
-            <div className="rounded-3xl bg-[#ffcf5a] px-5 py-3 text-center font-black">
-              {maxPlayerLabel} players
-            </div>
-          </div>
-        </div>
-      </header>
       <RoomClient
         roomId={room.id}
+        roomName={room.name}
+        roomCode={room.room_code}
+        hasPassword={room.has_password}
         initialMembers={members}
         initialStatus={room.status}
         isHost={room.host_user_id === user.id}

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Plus, Search, Ticket } from "lucide-react";
-import { ButtonLink } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { DashboardRoomList } from "@/components/dashboard-room-list";
 import { GAME_CATALOG } from "@/lib/constants";
 
@@ -113,6 +113,7 @@ export function DashboardHub({ activeRoomId }: { activeRoomId: string | null }) 
   const [tab, setTab] = useState<DashboardTab>("games");
   const [gameSearch, setGameSearch] = useState("");
   const [roomSearch, setRoomSearch] = useState("");
+  const [showActiveRoomDialog, setShowActiveRoomDialog] = useState(false);
   const currentSearch = tab === "games" ? gameSearch : roomSearch;
   const setCurrentSearch = tab === "games" ? setGameSearch : setRoomSearch;
   const visibleGames = useMemo(() => {
@@ -135,9 +136,9 @@ export function DashboardHub({ activeRoomId }: { activeRoomId: string | null }) 
               <ButtonLink href={`/rooms/${activeRoomId}`}>
                 <Plus size={18} /> Back to room
               </ButtonLink>
-              <ButtonLink href="/rooms/create" variant="secondary">
+              <Button type="button" variant="secondary" onClick={() => setShowActiveRoomDialog(true)}>
                 <Plus size={18} /> New room
-              </ButtonLink>
+              </Button>
             </>
           ) : (
             <ButtonLink href="/rooms/create">
@@ -205,6 +206,20 @@ export function DashboardHub({ activeRoomId }: { activeRoomId: string | null }) 
           </div>
           <DashboardRoomList searchQuery={roomSearch} limit={10} />
         </section>
+      )}
+      {showActiveRoomDialog && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-[2rem] bg-white p-5 text-center shadow-2xl">
+            <div className="mx-auto grid size-14 place-items-center rounded-3xl bg-amber-100 text-2xl">🎮</div>
+            <h3 className="mt-4 text-xl font-black text-slate-900">Bạn đang trong phòng</h3>
+            <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
+              Vui lòng rời phòng hiện tại trước khi tạo phòng mới.
+            </p>
+            <Button className="mt-5 w-full" type="button" onClick={() => setShowActiveRoomDialog(false)}>
+              OK
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );

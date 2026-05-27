@@ -198,7 +198,6 @@ export function registerOAnQuanHandlers(io: Server, socket: Socket) {
       await finishOAnQuan(io, state);
       return;
     }
-    emitToPlayers(io, state);
     scheduleTurnTimer(io, state);
   });
 }

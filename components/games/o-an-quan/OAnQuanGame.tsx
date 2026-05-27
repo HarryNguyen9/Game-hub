@@ -112,6 +112,7 @@ export function OAnQuanGame({
   const lastAnimatedMoveRef = useRef<number | null>(null);
   const lastTurnRef = useRef<string | null>(initialSnapshot?.currentTurnUserId ?? null);
   const previousBoardRef = useRef<OAnQuanPit[] | null>(initialSnapshot ? cloneBoard(initialSnapshot.board) : null);
+  const snapshotRef = useRef<OAnQuanSnapshot | null>(initialSnapshot ?? null);
   const now = useNow();
   const currentPlayer = snapshot?.players[currentUserId];
   const currentTurnPlayer = snapshot?.currentTurnUserId ? snapshot.players[snapshot.currentTurnUserId] : null;
@@ -129,6 +130,7 @@ export function OAnQuanGame({
   const remainingSeconds = Math.ceil(remainingMs / 1000);
   const timerPercent = snapshot ? Math.max(0, Math.min(100, (remainingMs / (snapshot.turnDurationSeconds * 1000)) * 100)) : 0;
   const scores = useMemo(() => (snapshot ? Object.values(snapshot.players).sort((a) => (a.side === "top" ? -1 : 1)) : []), [snapshot]);
+  const moveId = snapshot?.lastMove?.createdAt || 0;
 
   function submit(direction: OAnQuanDirection) {
     if (!snapshot || selectedPit === null || !isMyTurn || isAnimating) return;
@@ -137,21 +139,33 @@ export function OAnQuanGame({
   }
 
   useEffect(() => {
-    if (!snapshot) return;
+    snapshotRef.current = snapshot;
+  }, [snapshot]);
+
+  useEffect(() => {
+    if (!snapshot || isAnimating) return;
     const lastMove = snapshot.lastMove;
-    const moveId = lastMove?.createdAt || 0;
-    const currentBoard = previousBoardRef.current || cloneBoard(snapshot.board);
-    const shouldAnimate = lastMove?.reason === "move" && lastAnimatedMoveRef.current !== moveId && snapshot.status === "playing";
+    const currentMoveId = lastMove?.createdAt || 0;
+    if (lastMove?.reason === "move" && lastAnimatedMoveRef.current !== currentMoveId && snapshot.status === "playing") return;
+    previousBoardRef.current = cloneBoard(snapshot.board);
+    setDisplayBoard(cloneBoard(snapshot.board));
+  }, [isAnimating, snapshot]);
+
+  useEffect(() => {
+    const activeSnapshot = snapshotRef.current;
+    if (!activeSnapshot) return;
+    const lastMove = activeSnapshot.lastMove;
+    const currentBoard = previousBoardRef.current || cloneBoard(activeSnapshot.board);
+    const shouldAnimate = lastMove?.reason === "move" && lastAnimatedMoveRef.current !== moveId && activeSnapshot.status === "playing";
     if (!shouldAnimate) {
-      previousBoardRef.current = cloneBoard(snapshot.board);
       return;
     }
 
     const frames = lastMove ? buildMoveFrames(currentBoard, lastMove) : [];
     if (!frames.length) {
-      previousBoardRef.current = cloneBoard(snapshot.board);
+      previousBoardRef.current = cloneBoard(activeSnapshot.board);
       lastAnimatedMoveRef.current = moveId;
-      setDisplayBoard(cloneBoard(snapshot.board));
+      setDisplayBoard(cloneBoard(activeSnapshot.board));
       setIsAnimating(false);
       return;
     }
@@ -159,14 +173,15 @@ export function OAnQuanGame({
     let index = 1;
     let previousFrame = frames[0];
     lastAnimatedMoveRef.current = moveId;
-    previousBoardRef.current = cloneBoard(snapshot.board);
+    previousBoardRef.current = cloneBoard(activeSnapshot.board);
     setIsAnimating(true);
     setDisplayBoard(frames[0]);
     let captureTimer: number | null = null;
     let clearCaptureTimer: number | null = null;
     if (lastMove?.captured && lastMove.captured > 0) {
-      captureTimer = window.setTimeout(() => setCapturePopup(`+${lastMove.captured} pts`), 500);
-      clearCaptureTimer = window.setTimeout(() => setCapturePopup(null), 1800);
+      const captureDelay = Math.max(0, (frames.length - 1) * OAQ_CONFIG.moveAnimationFrameMs - OAQ_CONFIG.moveAnimationFrameMs);
+      captureTimer = window.setTimeout(() => setCapturePopup(`+${lastMove.captured} pts`), captureDelay);
+      clearCaptureTimer = window.setTimeout(() => setCapturePopup(null), captureDelay + 1700);
     }
     const timer = window.setInterval(() => {
       const nextFrame = frames[index] || frames[frames.length - 1];
@@ -180,7 +195,7 @@ export function OAnQuanGame({
       if (index >= frames.length - 1) {
         setIsAnimating(false);
         setPopupPitIndex(null);
-        setDisplayBoard(cloneBoard(snapshot.board));
+        setDisplayBoard(cloneBoard(activeSnapshot.board));
         window.clearInterval(timer);
       }
       index += 1;
@@ -190,7 +205,7 @@ export function OAnQuanGame({
       if (clearCaptureTimer) window.clearTimeout(clearCaptureTimer);
       window.clearInterval(timer);
     };
-  }, [snapshot?.lastMove?.createdAt, snapshot?.status, snapshot]);
+  }, [moveId]);
 
   useEffect(() => {
     if (!snapshot) return;
@@ -239,11 +254,6 @@ export function OAnQuanGame({
     <GameFullscreenShell expanded={expanded} onToggleExpanded={onToggleExpanded} header={header}>
       {error && <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</p>}
       <div className="grid gap-4">
-        {turnNotice && (
-          <div className="pointer-events-none absolute left-1/2 top-3 z-30 -translate-x-1/2 animate-[oaq-turn_1600ms_ease-out_forwards] rounded-full bg-[#ff7a90] px-5 py-3 text-sm font-black text-white shadow-xl">
-            Your turn
-          </div>
-        )}
         <style>{`
           @keyframes oaq-turn {
             0% {
@@ -271,17 +281,24 @@ export function OAnQuanGame({
             </div>
           ))}
         </div>
-        <OAnQuanBoard
-          board={displayBoard || snapshot.board}
-          mySide={currentPlayer?.side || "bottom"}
-          canMove={isMyTurn && !isAnimating}
-          selectedPit={selectedPit}
-          popupPitIndex={popupPitIndex}
-          popupNonce={popupNonce}
-          capturePopup={capturePopup}
-          onSelectPit={setSelectedPit}
-          onMove={submit}
-        />
+        <div className="relative">
+          {turnNotice && (
+            <div className="pointer-events-none absolute left-1/2 top-4 z-30 w-max max-w-[calc(100%-2rem)] -translate-x-1/2 animate-[oaq-turn_1600ms_ease-out_forwards] rounded-full bg-[#ff7a90] px-5 py-3 text-sm font-black text-white shadow-xl sm:top-5">
+              Your turn
+            </div>
+          )}
+          <OAnQuanBoard
+            board={displayBoard || snapshot.board}
+            mySide={currentPlayer?.side || "bottom"}
+            canMove={isMyTurn && !isAnimating}
+            selectedPit={selectedPit}
+            popupPitIndex={popupPitIndex}
+            popupNonce={popupNonce}
+            capturePopup={capturePopup}
+            onSelectPit={setSelectedPit}
+            onMove={submit}
+          />
+        </div>
         {snapshot.lastMove && (
           <p className="rounded-2xl bg-white/80 px-4 py-3 text-sm font-bold text-slate-500">
             Last: {snapshot.players[snapshot.lastMove.userId]?.displayName || "Player"} {snapshot.lastMove.reason === "timeout" ? "lost the turn by timeout" : snapshot.lastMove.reason === "no_moves" ? "had no legal moves" : `captured ${snapshot.lastMove.captured} points`}

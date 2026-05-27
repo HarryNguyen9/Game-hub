@@ -3,7 +3,7 @@ export const OAQ_CONFIG = {
   quanValue: 10,
   initialSmallStones: 5,
   initialBigStones: 1,
-  moveAnimationFrameMs: 360,
-  moveAnimationSettleMs: 550,
-  maxMoveAnimationDelayMs: 7000
+  moveAnimationFrameMs: 540,
+  moveAnimationSettleMs: 825,
+  maxMoveAnimationDelayMs: 10500
 } as const;
