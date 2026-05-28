@@ -5,7 +5,7 @@ import { RotateCcw, Trophy } from "lucide-react";
 import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
 import { Button } from "@/components/ui/button";
 import { OAQ_CONFIG } from "@/lib/games/o-an-quan/config";
-import type { OAnQuanDirection, OAnQuanMove, OAnQuanPit, OAnQuanSnapshot } from "@/lib/games/o-an-quan/types";
+import type { OAnQuanDirection, OAnQuanMove, OAnQuanPit, OAnQuanPlayer, OAnQuanSnapshot } from "@/lib/games/o-an-quan/types";
 import { OAnQuanBoard } from "./OAnQuanBoard";
 import { useOAnQuanSocket } from "./useOAnQuanSocket";
 
@@ -104,6 +104,7 @@ export function OAnQuanGame({
   const [selectedPit, setSelectedPit] = useState<number | null>(null);
   const [returning, setReturning] = useState(false);
   const [displayBoard, setDisplayBoard] = useState<OAnQuanPit[] | null>(initialSnapshot ? cloneBoard(initialSnapshot.board) : null);
+  const [displayPlayers, setDisplayPlayers] = useState<Record<string, OAnQuanPlayer>>(initialSnapshot?.players ?? {});
   const [isAnimating, setIsAnimating] = useState(false);
   const [popupPitIndex, setPopupPitIndex] = useState<number | null>(null);
   const [popupNonce, setPopupNonce] = useState(0);
@@ -132,7 +133,7 @@ export function OAnQuanGame({
     : 0;
   const remainingSeconds = Math.ceil(remainingMs / 1000);
   const timerPercent = snapshot ? Math.max(0, Math.min(100, (remainingMs / (snapshot.turnDurationSeconds * 1000)) * 100)) : 0;
-  const scores = useMemo(() => (snapshot ? Object.values(snapshot.players).sort((a) => (a.side === "top" ? -1 : 1)) : []), [snapshot]);
+  const scores = useMemo(() => Object.values(displayPlayers).sort((a) => (a.side === "top" ? -1 : 1)), [displayPlayers]);
   const moveId = snapshot?.lastMove?.createdAt || 0;
 
   function submit(direction: OAnQuanDirection) {
@@ -144,6 +145,10 @@ export function OAnQuanGame({
   useEffect(() => {
     snapshotRef.current = snapshot;
   }, [snapshot]);
+
+  useEffect(() => {
+    setSelectedPit(null);
+  }, [snapshot?.currentTurnUserId]);
 
   useEffect(() => {
     if (!snapshot) return;
@@ -164,6 +169,7 @@ export function OAnQuanGame({
     if (lastMove?.reason === "move" && lastAnimatedMoveRef.current !== currentMoveId && snapshot.status === "playing") return;
     previousBoardRef.current = cloneBoard(snapshot.board);
     setDisplayBoard(cloneBoard(snapshot.board));
+    setDisplayPlayers(snapshot.players);
   }, [isAnimating, snapshot]);
 
   useEffect(() => {
@@ -181,6 +187,7 @@ export function OAnQuanGame({
       previousBoardRef.current = cloneBoard(activeSnapshot.board);
       lastAnimatedMoveRef.current = moveId;
       setDisplayBoard(cloneBoard(activeSnapshot.board));
+      setDisplayPlayers(activeSnapshot.players);
       setIsAnimating(false);
       return;
     }
@@ -211,6 +218,7 @@ export function OAnQuanGame({
         setIsAnimating(false);
         setPopupPitIndex(null);
         setDisplayBoard(cloneBoard(activeSnapshot.board));
+        setDisplayPlayers(activeSnapshot.players);
         window.clearInterval(timer);
       }
       index += 1;

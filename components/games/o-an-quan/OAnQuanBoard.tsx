@@ -81,8 +81,8 @@ function DanPit({
 
 function QuanPit({ pit, popup, popupNonce }: { pit: OAnQuanPit; popup?: string | null; popupNonce?: number }) {
   return (
-    <div className="grid min-w-0 justify-items-center gap-1">
-      <div className="relative grid h-32 w-full min-w-0 place-items-center overflow-visible rounded-[1.75rem] border-2 border-stone-300 bg-gradient-to-br from-amber-100 to-lime-100 p-2 shadow-inner sm:h-40 sm:rounded-[2rem] sm:p-3">
+    <div className="grid h-full min-w-0 grid-rows-[1fr_auto] justify-items-center gap-1">
+      <div className="relative grid h-full w-full min-w-0 place-items-center overflow-visible rounded-[1.75rem] border-2 border-stone-300 bg-gradient-to-br from-amber-100 to-lime-100 p-2 shadow-inner sm:rounded-[2rem] sm:p-3">
         {popup && <span key={popupNonce} className="pointer-events-none absolute left-1/2 top-2 z-10 -translate-x-1/2 animate-[oaq-pop_900ms_ease-out_forwards] rounded-full bg-white px-2 py-0.5 text-[11px] font-black text-rose-600 shadow-sm">{popup}</span>}
         <div className="grid min-w-0 justify-items-center gap-1.5 sm:gap-2">
           <span className="text-[10px] font-black uppercase text-stone-500 sm:text-xs">Quan</span>
@@ -159,7 +159,7 @@ export function OAnQuanBoard({
           {capturePopup}
         </div>
       )}
-      <div className="grid grid-cols-[3.45rem_minmax(0,1fr)_3.45rem] items-center gap-1.5 sm:grid-cols-[6rem_minmax(0,1fr)_6rem] sm:gap-2">
+      <div className="grid grid-cols-[3.45rem_minmax(0,1fr)_3.45rem] gap-1.5 sm:grid-cols-[6rem_minmax(0,1fr)_6rem] sm:gap-2">
         <QuanPit pit={leftQuan} popup={popupPitIndex === leftQuanIndex ? "+1" : null} popupNonce={popupNonce} />
         <div className="grid min-w-0 gap-1.5 sm:gap-2">
           <div className="grid min-w-0 grid-cols-5 gap-1 sm:gap-2">{displayTopRow.map(danPit)}</div>
