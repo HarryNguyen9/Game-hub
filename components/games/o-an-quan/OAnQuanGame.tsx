@@ -321,8 +321,10 @@ export function OAnQuanGame({
         </div>
         <div className="relative">
           {turnNotice && !isAnimating && (
-            <div className="pointer-events-none absolute left-1/2 top-4 z-30 w-max max-w-[calc(100%-2rem)] -translate-x-1/2 animate-[oaq-turn_1600ms_ease-out_forwards] rounded-full bg-[#ff7a90] px-5 py-3 text-sm font-black text-white shadow-xl sm:top-5">
-              Your turn
+            <div className="pointer-events-none absolute inset-x-0 top-4 z-30 flex justify-center px-4">
+              <div className="animate-[oaq-turn_1600ms_ease-out_forwards] rounded-full bg-[#ff7a90] px-5 py-3 text-sm font-black text-white shadow-xl">
+                Your turn
+              </div>
             </div>
           )}
           <OAnQuanBoard

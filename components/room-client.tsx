@@ -114,7 +114,7 @@ function GameOptionVisual({ gameId }: { gameId: string }) {
       <div className="relative h-24 overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-red-100 via-rose-50 to-rose-200 shadow-inner">
         <div className="absolute left-3 top-3 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-red-700 shadow-sm">1-8 players</div>
         <div className="absolute right-3 top-3 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-rose-600 shadow-sm">Watch</div>
-        <div className="absolute inset-x-20 bottom-2 top-10 rounded-xl border-4 border-slate-700 bg-slate-900 shadow-md">
+        <div className="absolute inset-x-[24%] bottom-2 top-10 rounded-xl border-4 border-slate-700 bg-slate-900 shadow-md">
           <div className="absolute inset-1 flex items-center justify-center rounded-lg bg-red-600">
             <div className="h-0 w-0 border-y-[9px] border-l-[16px] border-y-transparent border-l-white" />
           </div>
@@ -427,7 +427,6 @@ export function RoomClient({
                   <h2 className="text-2xl font-black text-slate-900">Pick the room game</h2>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button type="button" variant="secondary" disabled={gamePickerConfirming} onClick={closeGamePicker}>Cancel</Button>
                   <Button
                     type="button"
                     disabled={!pendingGameKey || gamePickerConfirming}
@@ -606,16 +605,18 @@ export function RoomClient({
             </div>
           </div>
         )}
-        <div className="flex flex-wrap gap-3">
-          {!isGameLobby && startButton}
-          {!isGameLobby && <div className="self-center">{startHint}</div>}
-          {isHost && (status === "playing" || status === "ended") && !isFlappyActivePlayer && !isWatchTogetherActivePlayer && (
-            <Button disabled={Boolean(pendingAction)} onClick={() => emitAction("back-to-lobby", "room:back_to_lobby")}>
-              <RotateCcw size={18} /> {pendingAction === "back-to-lobby" ? "Returning..." : "Back to Lobby"}
-            </Button>
-          )}
-          {!isGameLobby && readyButton}
-          {!isGameLobby && leaveButton}
+        <div className="flex w-full items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {!isGameLobby && startButton}
+            {!isGameLobby && <div className="self-center">{startHint}</div>}
+            {isHost && (status === "playing" || status === "ended") && !isFlappyActivePlayer && !isWatchTogetherActivePlayer && (
+              <Button disabled={Boolean(pendingAction)} onClick={() => emitAction("back-to-lobby", "room:back_to_lobby")}>
+                <RotateCcw size={18} /> {pendingAction === "back-to-lobby" ? "Returning..." : "Back to Lobby"}
+              </Button>
+            )}
+            {!isGameLobby && readyButton}
+          </div>
+          {!isGameLobby && <div className="shrink-0">{leaveButton}</div>}
         </div>
       </section>
       <aside className="rounded-[2rem] bg-white/88 p-5 shadow-sm">

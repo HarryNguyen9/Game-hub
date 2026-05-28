@@ -163,8 +163,10 @@ export function ChessGame({
           </div>
         )}
         {turnNotice && (
-          <div className="pointer-events-none absolute left-1/2 top-3 z-30 -translate-x-1/2 animate-[chess-turn_1600ms_ease-out_forwards] rounded-full bg-[#ff7a90] px-5 py-3 text-sm font-black text-white shadow-xl">
-            Your turn
+          <div className="pointer-events-none absolute inset-x-0 top-3 z-30 flex justify-center px-4">
+            <div className="animate-[chess-turn_1600ms_ease-out_forwards] rounded-full bg-[#ff7a90] px-5 py-3 text-sm font-black text-white shadow-xl">
+              Your turn
+            </div>
           </div>
         )}
         <style>{`

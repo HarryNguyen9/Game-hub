@@ -12,8 +12,8 @@ export const metadata: Metadata = {
   title: "GameHub",
   description: "A friendly multiplayer game hub",
   icons: {
-    icon: "/icons/icon-192.png",
-    apple: "/icons/apple-touch-icon.png"
+    icon: "/icons/icon-512.png",
+    apple: "/icons/icon-512.png"
   }
 };
 
