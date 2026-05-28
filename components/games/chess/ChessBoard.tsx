@@ -1,8 +1,8 @@
 "use client";
 
+import { ChessPiece } from "./ChessPiece";
+
 const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
-const WHITE_SYMBOLS: Record<string, string> = { k: "♔", q: "♕", r: "♖", b: "♗", n: "♘", p: "♙" };
-const BLACK_SYMBOLS: Record<string, string> = { k: "♚", q: "♛", r: "♜", b: "♝", n: "♞", p: "♟" };
 
 export type BoardPiece = {
   square: string;
@@ -27,12 +27,7 @@ export function boardFromFen(fen: string) {
       const color = char === char.toUpperCase() ? "w" : "b";
       const type = char.toLowerCase();
       const square = `${FILES[fileIndex]}${rank}`;
-      board[square] = {
-        square,
-        type,
-        color,
-        symbol: color === "w" ? WHITE_SYMBOLS[type] : BLACK_SYMBOLS[type]
-      };
+      board[square] = { square, type, color, symbol: type };
       fileIndex += 1;
     }
   }
@@ -78,16 +73,18 @@ export function ChessBoard({
             type="button"
             disabled={!canInteract}
             onClick={() => onSquareClick(square, piece)}
-            className={`relative grid aspect-square place-items-center text-[clamp(2.1rem,8.5vw,4.5rem)] font-black leading-none transition ${
+            className={`relative grid aspect-square place-items-center p-[6%] transition ${
               isLight ? "bg-[#eeeed2]" : "bg-[#769656]"
-            } ${selected ? "ring-4 ring-inset ring-[#ff6b8a]" : ""} ${moved ? "after:absolute after:inset-0 after:bg-yellow-400/40" : ""} ${
-              canInteract ? "cursor-pointer hover:brightness-110" : "cursor-default"
-            }`}
+            } ${selected ? "ring-4 ring-inset ring-[#ff6b8a]" : ""} ${
+              moved ? "after:absolute after:inset-0 after:bg-yellow-400/40" : ""
+            } ${canInteract ? "cursor-pointer hover:brightness-110" : "cursor-default"}`}
             aria-label={square}
           >
-            <span className={`relative z-10 ${piece?.color === "w" ? "text-white [text-shadow:_0_1px_3px_rgba(0,0,0,0.8),_0_0_1px_rgba(0,0,0,1)]" : "text-[#1a1a1a] [text-shadow:_0_1px_2px_rgba(255,255,255,0.3)]"}`}>
-              {piece?.symbol}
-            </span>
+            {piece && (
+              <div className="relative z-10 h-full w-full">
+                <ChessPiece type={piece.type} color={piece.color} />
+              </div>
+            )}
           </button>
         );
       })}
