@@ -366,16 +366,15 @@ export function RoomClient({
   const isChessActivePlayer = (status === "playing" || status === "ended") && gameKey === "chess" && currentMember?.participationStatus === "active_game";
   const isWatchTogetherActivePlayer = status === "playing" && gameKey === "watch-together" && currentMember?.participationStatus === "active_game";
   const isGameLobby = status === "waiting" && Boolean(gameKey);
-  const startButton = isHost && status === "waiting" ? (
+  const startButton = isHost && status === "waiting" && Boolean(gameKey) ? (
     <Button disabled={!canStart || Boolean(pendingAction)} onClick={() => emitAction("start", "room:start_game")}>
       <Play size={18} /> {pendingAction === "start" ? "Starting..." : "Start Game"}
     </Button>
   ) : null;
   const startHint = isHost && status === "waiting" ? (
     <>
-      {!gameKey && <p className="text-sm font-bold text-slate-500">Choose a game before starting.</p>}
-      {gameKey && !hasEnoughPlayers && <p className="text-sm font-bold text-slate-500">Need {effectiveMinPlayers} players to start.</p>}
-      {gameKey && hasEnoughPlayers && unreadyPlayers.length > 0 && <p className="text-sm font-bold text-slate-500">Waiting for all players to be ready.</p>}
+      {gameKey && !hasEnoughPlayers && <p className="text-center text-sm font-bold text-slate-500">Need {effectiveMinPlayers} players to start.</p>}
+      {gameKey && hasEnoughPlayers && unreadyPlayers.length > 0 && <p className="text-center text-sm font-bold text-slate-500">Waiting for all players to be ready.</p>}
     </>
   ) : null;
   const readyButton = !isHost && status === "waiting" && currentMember?.participationStatus === "lobby" ? (
@@ -614,16 +613,18 @@ export function RoomClient({
             </div>
           </div>
         )}
-        <div className="flex w-full flex-wrap items-center gap-3">
-          {!isGameLobby && startButton}
-          {!isGameLobby && <div className="self-center">{startHint}</div>}
-          {isHost && (status === "playing" || status === "ended") && !isFlappyActivePlayer && !isWatchTogetherActivePlayer && (
-            <Button disabled={Boolean(pendingAction)} onClick={() => emitAction("back-to-lobby", "room:back_to_lobby")}>
-              <RotateCcw size={18} /> {pendingAction === "back-to-lobby" ? "Returning..." : "Back to Lobby"}
-            </Button>
-          )}
-          {!isGameLobby && readyButton}
-          {!isGameLobby && <div className="flex w-full justify-center">{leaveButton}</div>}
+        <div className="grid w-full gap-2">
+          <div className="flex flex-wrap justify-center gap-3">
+            {!isGameLobby && startButton}
+            {isHost && (status === "playing" || status === "ended") && !isFlappyActivePlayer && !isWatchTogetherActivePlayer && (
+              <Button disabled={Boolean(pendingAction)} onClick={() => emitAction("back-to-lobby", "room:back_to_lobby")}>
+                <RotateCcw size={18} /> {pendingAction === "back-to-lobby" ? "Returning..." : "Back to Lobby"}
+              </Button>
+            )}
+            {!isGameLobby && readyButton}
+            {!isGameLobby && leaveButton}
+          </div>
+          {!isGameLobby && startHint}
         </div>
       </section>
       <aside className="rounded-[2rem] bg-white/88 p-[clamp(12px,4vw,20px)] shadow-sm">

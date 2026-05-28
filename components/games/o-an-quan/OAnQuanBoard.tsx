@@ -43,6 +43,31 @@ function StoneStack({ pit, maxSmall, maxBig }: { pit: OAnQuanPit; maxSmall: numb
   );
 }
 
+function QuanStoneStack({ pit, maxSmall, maxBig }: { pit: OAnQuanPit; maxSmall: number; maxBig: number }) {
+  const overflow = pit.smallStones > maxSmall || pit.bigStones > maxBig;
+  if (overflow) {
+    if (pit.bigStones > 0) {
+      return (
+        <div className="grid w-full place-items-center gap-1">
+          <span className="size-4 rounded-full bg-gradient-to-br from-amber-300 to-orange-500 shadow-sm ring-1 ring-amber-600/20 sm:size-5" />
+          <span className="font-black leading-none text-amber-500" style={{ fontSize: "clamp(14px, 4vw, 20px)" }}>+</span>
+        </div>
+      );
+    }
+    return (
+      <div className="grid w-full place-items-center">
+        <span className="font-black leading-none text-amber-400" style={{ fontSize: "clamp(22px, 7vw, 32px)" }}>+</span>
+      </div>
+    );
+  }
+  return (
+    <div className="grid w-full justify-items-center gap-[3px]">
+      <Pebbles count={pit.bigStones} type="big" />
+      <Pebbles count={pit.smallStones} type="small" />
+    </div>
+  );
+}
+
 function PitCount({ pit }: { pit: OAnQuanPit }) {
   return (
     <span className="grid min-w-[1.1rem] place-items-center rounded-full bg-white/90 px-[3px] text-[9px] font-black text-stone-700 shadow-sm [line-height:1.1rem] sm:min-w-[1.4rem] sm:px-[6px] sm:text-[11px] sm:[line-height:1.4rem]">
@@ -108,7 +133,7 @@ function QuanPit({ pit, popup, popupNonce }: { pit: OAnQuanPit; popup?: string |
           </span>
         )}
         <div className="flex w-full min-w-0 items-center justify-center overflow-hidden">
-          <StoneStack pit={pit} maxSmall={8} maxBig={2} />
+          <QuanStoneStack pit={pit} maxSmall={8} maxBig={2} />
         </div>
       </div>
       <PitCount pit={pit} />
