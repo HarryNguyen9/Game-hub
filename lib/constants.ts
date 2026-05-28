@@ -55,6 +55,18 @@ export const GAME_CATALOG = [
     icon: "♟️",
     turnDurationLabel: "30s / turn",
     accent: "from-indigo-100 to-amber-100"
+  },
+  {
+    id: "watch-together",
+    name: "Watch Together",
+    displayName: "Watch Together",
+    shortLabel: "Watch",
+    description: "Co-watch YouTube videos in sync with your room.",
+    minPlayers: 1,
+    maxPlayers: 8,
+    gameType: "watch",
+    icon: "📺",
+    accent: "from-red-100 to-rose-200"
   }
 ] as const;
 

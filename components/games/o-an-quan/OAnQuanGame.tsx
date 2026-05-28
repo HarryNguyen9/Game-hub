@@ -108,6 +108,7 @@ export function OAnQuanGame({
   const [isAnimating, setIsAnimating] = useState(false);
   const [popupPitIndex, setPopupPitIndex] = useState<number | null>(null);
   const [popupNonce, setPopupNonce] = useState(0);
+  const [pitPopupText, setPitPopupText] = useState("+1");
   const [capturePopup, setCapturePopup] = useState<string | null>(null);
   const [turnNotice, setTurnNotice] = useState(false);
   const lastAnimatedMoveRef = useRef<number | null>(initialSnapshot?.lastMove?.createdAt ?? null);
@@ -124,7 +125,7 @@ export function OAnQuanGame({
   const turnActive = turnReady;
   const isMyTurn = snapshot?.status === "playing" && snapshot.currentTurnUserId === currentUserId && turnActive && !isAnimating;
   const resolvingMove = Boolean(snapshot && snapshot.status === "playing" && (!turnActive || isAnimating));
-  const remainingMs = snapshot
+  const remainingMs = snapshot && snapshot.status !== "ended"
     ? resolvingMove
       ? snapshot.turnDurationSeconds * 1000
       : now
@@ -209,8 +210,22 @@ export function OAnQuanGame({
       const nextFrame = frames[index] || frames[frames.length - 1];
       const changedPit = nextFrame.find((pit, pitIndex) => pitTotal(pit) > pitTotal(previousFrame[pitIndex]));
       if (changedPit) {
+        setPitPopupText("+1");
         setPopupPitIndex(changedPit.index);
         setPopupNonce((value) => value + 1);
+      }
+      const capturedQuanPit = nextFrame.find((pit, pitIndex) => pit.type === "quan" && pitTotal(pit) === 0 && pitTotal(previousFrame[pitIndex]) > 0);
+      if (capturedQuanPit) {
+        const quanCapturedValue = pitTotal(previousFrame[capturedQuanPit.index]);
+        setPitPopupText(`+${quanCapturedValue}`);
+        setPopupPitIndex(capturedQuanPit.index);
+        setPopupNonce((n) => n + 1);
+        if (captureTimer) { window.clearTimeout(captureTimer); captureTimer = null; }
+        if (clearCaptureTimer) { window.clearTimeout(clearCaptureTimer); clearCaptureTimer = null; }
+        if (lastMove?.captured && lastMove.captured > 0) {
+          setCapturePopup(`+${lastMove.captured} pts`);
+          clearCaptureTimer = window.setTimeout(() => setCapturePopup(null), 1700);
+        }
       }
       previousFrame = nextFrame;
       setDisplayBoard(nextFrame);
@@ -317,6 +332,7 @@ export function OAnQuanGame({
             selectedPit={selectedPit}
             popupPitIndex={popupPitIndex}
             popupNonce={popupNonce}
+            pitPopupText={pitPopupText}
             capturePopup={capturePopup}
             onSelectPit={setSelectedPit}
             onMove={submit}

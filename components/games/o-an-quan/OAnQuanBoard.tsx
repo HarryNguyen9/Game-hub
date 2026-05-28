@@ -6,8 +6,8 @@ import type { OAnQuanDirection, OAnQuanPit, OAnQuanSide } from "@/lib/games/o-an
 const topRow = [11, 10, 9, 8, 7];
 const bottomRow = [1, 2, 3, 4, 5];
 
-function Pebbles({ count, type }: { count: number; type: "small" | "big" }) {
-  const visible = Math.min(count, type === "big" ? 3 : 18);
+function Pebbles({ count, type, max }: { count: number; type: "small" | "big"; max: number }) {
+  const visible = Math.min(count, max);
   if (count <= 0) return null;
   return (
     <div className="flex max-w-full flex-wrap items-center justify-center gap-0.5">
@@ -26,11 +26,11 @@ function Pebbles({ count, type }: { count: number; type: "small" | "big" }) {
   );
 }
 
-function StoneStack({ pit }: { pit: OAnQuanPit }) {
+function StoneStack({ pit, maxSmall, maxBig }: { pit: OAnQuanPit; maxSmall: number; maxBig: number }) {
   return (
     <div className="grid w-full justify-items-center gap-1">
-      <Pebbles count={pit.bigStones} type="big" />
-      <Pebbles count={pit.smallStones} type="small" />
+      <Pebbles count={pit.bigStones} type="big" max={maxBig} />
+      <Pebbles count={pit.smallStones} type="small" max={maxSmall} />
     </div>
   );
 }
@@ -72,7 +72,7 @@ function DanPit({
         }`}
       >
         {popup && <span key={popupNonce} className="pointer-events-none absolute left-1/2 top-1 z-10 -translate-x-1/2 animate-[oaq-pop_900ms_ease-out_forwards] rounded-full bg-white px-2 py-0.5 text-[11px] font-black text-rose-600 shadow-sm">{popup}</span>}
-        <StoneStack pit={pit} />
+        <StoneStack pit={pit} maxSmall={9} maxBig={2} />
       </button>
       {countPosition === "bottom" && <PitCount pit={pit} />}
     </div>
@@ -81,12 +81,13 @@ function DanPit({
 
 function QuanPit({ pit, popup, popupNonce }: { pit: OAnQuanPit; popup?: string | null; popupNonce?: number }) {
   return (
-    <div className="grid h-full min-w-0 grid-rows-[1fr_auto] justify-items-center gap-1">
-      <div className="relative grid h-full w-full min-w-0 place-items-center overflow-visible rounded-[1.75rem] border-2 border-stone-300 bg-gradient-to-br from-amber-100 to-lime-100 p-2 shadow-inner sm:rounded-[2rem] sm:p-3">
+    <div className="grid h-full min-w-0 grid-rows-[auto_1fr_auto] justify-items-center gap-1">
+      <div className="h-6" />
+      <div className="relative grid w-full min-w-0 place-items-center overflow-visible rounded-[1.75rem] border-2 border-stone-300 bg-gradient-to-br from-amber-100 to-lime-100 p-2 shadow-inner sm:rounded-[2rem] sm:p-3">
         {popup && <span key={popupNonce} className="pointer-events-none absolute left-1/2 top-2 z-10 -translate-x-1/2 animate-[oaq-pop_900ms_ease-out_forwards] rounded-full bg-white px-2 py-0.5 text-[11px] font-black text-rose-600 shadow-sm">{popup}</span>}
         <div className="grid min-w-0 justify-items-center gap-1.5 sm:gap-2">
           <span className="text-[10px] font-black uppercase text-stone-500 sm:text-xs">Quan</span>
-          <StoneStack pit={pit} />
+          <StoneStack pit={pit} maxSmall={12} maxBig={3} />
         </div>
       </div>
       <PitCount pit={pit} />
@@ -101,6 +102,7 @@ export function OAnQuanBoard({
   selectedPit,
   popupPitIndex,
   popupNonce,
+  pitPopupText = "+1",
   capturePopup,
   onSelectPit,
   onMove
@@ -111,6 +113,7 @@ export function OAnQuanBoard({
   selectedPit: number | null;
   popupPitIndex?: number | null;
   popupNonce?: number;
+  pitPopupText?: string;
   capturePopup?: string | null;
   onSelectPit: (index: number) => void;
   onMove: (direction: OAnQuanDirection) => void;
@@ -132,7 +135,7 @@ export function OAnQuanBoard({
     const selected = selectedPit === index;
     const countPosition = displayTopRow.includes(index) ? "top" : "bottom";
     return (
-      <DanPit key={index} pit={pit} selectable={selectable} selected={selected} popup={popupPitIndex === index ? "+1" : null} popupNonce={popupNonce} countPosition={countPosition} onSelect={() => onSelectPit(index)} />
+      <DanPit key={index} pit={pit} selectable={selectable} selected={selected} popup={popupPitIndex === index ? pitPopupText : null} popupNonce={popupNonce} countPosition={countPosition} onSelect={() => onSelectPit(index)} />
     );
   }
 
@@ -160,12 +163,12 @@ export function OAnQuanBoard({
         </div>
       )}
       <div className="grid grid-cols-[3.45rem_minmax(0,1fr)_3.45rem] gap-1.5 sm:grid-cols-[6rem_minmax(0,1fr)_6rem] sm:gap-2">
-        <QuanPit pit={leftQuan} popup={popupPitIndex === leftQuanIndex ? "+1" : null} popupNonce={popupNonce} />
+        <QuanPit pit={leftQuan} popup={popupPitIndex === leftQuanIndex ? pitPopupText : null} popupNonce={popupNonce} />
         <div className="grid min-w-0 gap-1.5 sm:gap-2">
           <div className="grid min-w-0 grid-cols-5 gap-1 sm:gap-2">{displayTopRow.map(danPit)}</div>
           <div className="grid min-w-0 grid-cols-5 gap-1 sm:gap-2">{displayBottomRow.map(danPit)}</div>
         </div>
-        <QuanPit pit={rightQuan} popup={popupPitIndex === rightQuanIndex ? "+1" : null} popupNonce={popupNonce} />
+        <QuanPit pit={rightQuan} popup={popupPitIndex === rightQuanIndex ? pitPopupText : null} popupNonce={popupNonce} />
       </div>
       <div className="mt-3 flex justify-center gap-3">
         <button

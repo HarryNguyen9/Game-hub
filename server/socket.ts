@@ -6,6 +6,7 @@ import { registerFlappyRushHandlers } from "./socket/flappy-rush-handlers";
 import { registerFleetDuelHandlers } from "./socket/fleet-duel-handlers";
 import { registerOAnQuanHandlers } from "./socket/o-an-quan-handlers";
 import { registerChessHandlers } from "./socket/chess-handlers";
+import { registerWatchTogetherHandlers } from "./socket/watch-together-handlers";
 import type { AuthedSocket } from "./auth";
 
 export function allowedOrigins() {
@@ -69,6 +70,7 @@ export function createSocketServer(httpServer: HttpServer) {
     registerFleetDuelHandlers(io, socket);
     registerOAnQuanHandlers(io, socket);
     registerChessHandlers(io, socket);
+    registerWatchTogetherHandlers(io, socket);
   });
 
   return io;

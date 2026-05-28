@@ -6,6 +6,7 @@ import { emitCurrentFlappyRushSnapshot, hasFlappyRushRuntime, startFlappyRush, s
 import { emitCurrentFleetDuelSnapshot, hasFleetDuelRuntime, startFleetDuel, stopFleetDuel } from "./socket/fleet-duel-handlers";
 import { emitCurrentOAnQuanSnapshot, hasOAnQuanRuntime, startOAnQuan, stopOAnQuan } from "./socket/o-an-quan-handlers";
 import { emitCurrentChessSnapshot, hasChessRuntime, startChess, stopChess } from "./socket/chess-handlers";
+import { emitCurrentWatchTogetherSnapshot, hasWatchTogetherRuntime, startWatchTogether, stopWatchTogether } from "./socket/watch-together-handlers";
 
 const DISCONNECT_GRACE_MS = 7000;
 const presenceDisconnectTimers = new Map<string, NodeJS.Timeout>();
@@ -91,6 +92,7 @@ async function stopGameRuntime(roomId: string, gameKey?: string | null) {
   if (!gameKey || gameKey === "fleet-duel") await stopFleetDuel(roomId);
   if (!gameKey || gameKey === "o-an-quan") await stopOAnQuan(roomId);
   if (!gameKey || gameKey === "chess") await stopChess(roomId);
+  if (!gameKey || gameKey === "watch-together") await stopWatchTogether(roomId);
 }
 
 function roomError(socket: Socket, message: string) {
@@ -174,6 +176,14 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
     if (snapshot.room?.status === "playing" && snapshot.room.game_key === "chess" && member.participation_status === "active_game") {
       emitCurrentChessSnapshot(socket, roomId, user.userId);
     }
+    if (snapshot.room?.status === "playing" && snapshot.room.game_key === "watch-together") {
+      if (member.participation_status === "waiting_next_round") {
+        const supabase = serviceClient();
+        await supabase.from("room_members").update({ participation_status: "active_game" }).match({ room_id: roomId, user_id: user.userId });
+        await emitRoom(io, roomId);
+      }
+      emitCurrentWatchTogetherSnapshot(socket, roomId);
+    }
   });
 
   socket.on("room:select_game", async ({ roomId, gameKey }: { roomId?: string; gameKey?: string }) => {
@@ -229,6 +239,7 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
       if (room.game_key === "fleet-duel" && hasFleetDuelRuntime(roomId)) return roomError(socket, "A game is already running for this room.");
       if (room.game_key === "o-an-quan" && hasOAnQuanRuntime(roomId)) return roomError(socket, "A game is already running for this room.");
       if (room.game_key === "chess" && hasChessRuntime(roomId)) return roomError(socket, "A game is already running for this room.");
+      if (room.game_key === "watch-together" && hasWatchTogetherRuntime(roomId)) return roomError(socket, "A game is already running for this room.");
 
       const { data: members } = await supabase.from("room_members").select("role, ready, participation_status").eq("room_id", roomId);
       const lobbyMembers = (members || []).filter((member) => member.participation_status === "lobby");
@@ -263,6 +274,8 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
           await startOAnQuan(io, roomId, session.id, activePlayers);
         } else if (room.game_key === "chess") {
           await startChess(io, roomId, session.id, activePlayers);
+        } else if (room.game_key === "watch-together") {
+          await startWatchTogether(io, roomId, session.id, activePlayers, room.host_user_id);
         }
       } catch (error) {
         console.error("[room:start_game] Could not start game runtime", { error, roomId, gameKey: room.game_key });
@@ -276,6 +289,7 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
         await stopFleetDuel(roomId);
         await stopOAnQuan(roomId);
         await stopChess(roomId);
+        await stopWatchTogether(roomId);
         await supabase.from("game_sessions").update({ status: "ended", ended_at: new Date().toISOString() }).eq("id", session.id);
         return roomError(socket, `Could not update room status: ${roomUpdateError.message}`);
       }
@@ -286,7 +300,7 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
       await emitRoom(io, roomId);
       console.log("[room:start_game]", { roomId, sessionId: session.id, gameKey: room.game_key, activePlayers: activePlayers.length });
 
-      if (room.game_key !== "flappy-rush" && room.game_key !== "fleet-duel" && room.game_key !== "o-an-quan" && room.game_key !== "chess") {
+      if (room.game_key !== "flappy-rush" && room.game_key !== "fleet-duel" && room.game_key !== "o-an-quan" && room.game_key !== "chess" && room.game_key !== "watch-together") {
         io.to(`room:${roomId}`).emit("game:start", snapshot);
       }
     } finally {
@@ -308,6 +322,7 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
       await stopFleetDuel(roomId);
       await stopOAnQuan(roomId);
       await stopChess(roomId);
+      await stopWatchTogether(roomId);
       await supabase.from("rooms").update({ status: "waiting" }).eq("id", roomId);
       const { data: orderedMembers } = await supabase.from("room_members").select("user_id").eq("room_id", roomId).order("joined_at", { ascending: true });
       const lobbyIds = (orderedMembers || []).slice(0, room.max_players).map((row) => row.user_id);

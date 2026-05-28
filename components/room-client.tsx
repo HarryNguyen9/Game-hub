@@ -11,6 +11,7 @@ import { FlappyRushGame } from "@/components/games/flappy-rush/FlappyRushGame";
 import { FleetDuelGame } from "@/components/games/fleet-duel/FleetDuelGame";
 import { OAnQuanGame } from "@/components/games/o-an-quan/OAnQuanGame";
 import { ChessGame } from "@/components/games/chess/ChessGame";
+import { WatchTogetherGame } from "@/components/games/watch-together/WatchTogetherGame";
 import { GAME_CATALOG } from "@/lib/constants";
 import type { FlappySnapshot } from "@/lib/games/flappy-rush/types";
 import type { FleetSnapshot } from "@/lib/games/fleet-duel/types";
@@ -103,6 +104,20 @@ function GameOptionVisual({ gameId }: { gameId: string }) {
         <div className="absolute right-[22%] top-[52%] h-6 w-14 rounded-b-xl rounded-t-md bg-rose-400 opacity-75 shadow-md">
           <div className="absolute -top-3 left-4 h-3 w-6 rounded-t-lg bg-rose-300" />
           <div className="absolute -left-3 top-2 h-0 w-0 border-y-[7px] border-r-[14px] border-y-transparent border-r-rose-400" />
+        </div>
+      </div>
+    );
+  }
+
+  if (gameId === "watch-together") {
+    return (
+      <div className="relative h-24 overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-red-100 via-rose-50 to-rose-200 shadow-inner">
+        <div className="absolute left-3 top-3 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-red-700 shadow-sm">1-8 players</div>
+        <div className="absolute right-3 top-3 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-rose-600 shadow-sm">Watch</div>
+        <div className="absolute inset-x-20 bottom-2 top-10 rounded-xl border-4 border-slate-700 bg-slate-900 shadow-md">
+          <div className="absolute inset-1 flex items-center justify-center rounded-lg bg-red-600">
+            <div className="h-0 w-0 border-y-[9px] border-l-[16px] border-y-transparent border-l-white" />
+          </div>
         </div>
       </div>
     );
@@ -349,6 +364,7 @@ export function RoomClient({
   const isFleetActivePlayer = (status === "playing" || status === "ended") && gameKey === "fleet-duel" && currentMember?.participationStatus === "active_game";
   const isOAnQuanActivePlayer = (status === "playing" || status === "ended") && gameKey === "o-an-quan" && currentMember?.participationStatus === "active_game";
   const isChessActivePlayer = (status === "playing" || status === "ended") && gameKey === "chess" && currentMember?.participationStatus === "active_game";
+  const isWatchTogetherActivePlayer = status === "playing" && gameKey === "watch-together" && currentMember?.participationStatus === "active_game";
   const isGameLobby = status === "waiting" && Boolean(gameKey);
   const startButton = isHost && status === "waiting" ? (
     <Button disabled={!canStart || Boolean(pendingAction)} onClick={() => emitAction("start", "room:start_game")}>
@@ -404,56 +420,58 @@ export function RoomClient({
         </div>
         {gamePickerOpen && (
           <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Choose game">
-            <div className="max-h-[90dvh] w-full max-w-3xl overflow-y-auto rounded-[2rem] bg-white p-5 shadow-2xl">
-              <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="flex max-h-[90dvh] w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] bg-white shadow-2xl">
+              <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-5">
                 <div>
                   <p className="text-sm font-black uppercase tracking-wide text-[#ff7a90]">Choose game</p>
                   <h2 className="text-2xl font-black text-slate-900">Pick the room game</h2>
                 </div>
-                <Button type="button" variant="secondary" className="grid size-10 place-items-center rounded-2xl p-0" onClick={closeGamePicker} aria-label="Close game picker">
-                  <X size={18} />
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button type="button" variant="secondary" disabled={gamePickerConfirming} onClick={closeGamePicker}>Cancel</Button>
+                  <Button
+                    type="button"
+                    disabled={!pendingGameKey || gamePickerConfirming}
+                    onClick={() => { if (pendingGameKey) chooseGame(pendingGameKey); }}
+                  >
+                    {gamePickerConfirming ? "Saving..." : "Confirm"}
+                  </Button>
+                  <Button type="button" variant="secondary" className="grid size-10 place-items-center rounded-2xl p-0" onClick={closeGamePicker} aria-label="Close game picker">
+                    <X size={18} />
+                  </Button>
+                </div>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {GAME_CATALOG.map((game) => {
-                  const selected = game.id === pendingGameKey;
-                  return (
-                    <button
-                      key={game.id}
-                      type="button"
-                      disabled={Boolean(pendingAction)}
-                      onClick={() => setPendingGameKey(game.id)}
-                      className={`rounded-[1.75rem] p-3 text-left shadow-sm ring-1 transition hover:-translate-y-0.5 hover:shadow-md ${
-                        selected ? "bg-rose-50 ring-rose-200" : "bg-white ring-slate-100"
-                      }`}
-                    >
-                      <GameOptionVisual gameId={game.id} />
-                      <div className="mt-3 flex items-start justify-between gap-3">
-                        <div>
-                          <p className="font-black text-slate-900">{game.name}</p>
-                          <p className="mt-1 text-sm font-semibold text-slate-500">{game.description}</p>
-                          {"turnDurationLabel" in game && <p className="mt-1 text-xs font-bold text-slate-400">{game.turnDurationLabel}</p>}
-                          <p className="mt-2 text-xs font-black text-slate-400">
-                            {game.minPlayers}-{game.maxPlayers} players
-                          </p>
+              <div className="flex-1 overflow-y-auto p-5">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {GAME_CATALOG.map((game) => {
+                    const selected = game.id === pendingGameKey;
+                    return (
+                      <button
+                        key={game.id}
+                        type="button"
+                        disabled={Boolean(pendingAction)}
+                        onClick={() => setPendingGameKey(game.id)}
+                        className={`rounded-[1.75rem] p-3 text-left shadow-sm ring-1 transition hover:-translate-y-0.5 hover:shadow-md ${
+                          selected ? "bg-rose-50 ring-rose-200" : "bg-white ring-slate-100"
+                        }`}
+                      >
+                        <GameOptionVisual gameId={game.id} />
+                        <div className="mt-3 flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-black text-slate-900">{game.name}</p>
+                            <p className="mt-1 text-sm font-semibold text-slate-500">{game.description}</p>
+                            {"turnDurationLabel" in game && <p className="mt-1 text-xs font-bold text-slate-400">{game.turnDurationLabel}</p>}
+                            <p className="mt-2 text-xs font-black text-slate-400">
+                              {game.minPlayers}-{game.maxPlayers} players
+                            </p>
+                          </div>
+                          <span className={`grid size-8 shrink-0 place-items-center rounded-full ${selected ? "bg-[#ff7a90] text-white" : "bg-slate-100 text-slate-400"}`}>
+                            {selected ? <Check size={16} /> : <Gamepad2 size={16} />}
+                          </span>
                         </div>
-                        <span className={`grid size-8 shrink-0 place-items-center rounded-full ${selected ? "bg-[#ff7a90] text-white" : "bg-slate-100 text-slate-400"}`}>
-                          {selected ? <Check size={16} /> : <Gamepad2 size={16} />}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="mt-5 flex justify-end gap-3">
-                <Button type="button" variant="secondary" disabled={gamePickerConfirming} onClick={closeGamePicker}>Cancel</Button>
-                <Button
-                  type="button"
-                  disabled={!pendingGameKey || gamePickerConfirming}
-                  onClick={() => { if (pendingGameKey) chooseGame(pendingGameKey); }}
-                >
-                  {gamePickerConfirming ? "Saving..." : "Confirm"}
-                </Button>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
@@ -538,6 +556,14 @@ export function RoomClient({
             initialSnapshot={endedChessSnapshot}
             roomStatus={status === "ended" ? "ended" : "playing"}
           />
+        ) : isWatchTogetherActivePlayer ? (
+          <WatchTogetherGame
+            roomId={roomId}
+            currentUserId={currentUserId}
+            isHost={isHost}
+            expanded={gameExpanded}
+            onToggleExpanded={() => setGameExpanded((value) => !value)}
+          />
         ) : isGameLobby ? (
           <GameFullscreenShell
             expanded={gameExpanded}
@@ -583,7 +609,7 @@ export function RoomClient({
         <div className="flex flex-wrap gap-3">
           {!isGameLobby && startButton}
           {!isGameLobby && <div className="self-center">{startHint}</div>}
-          {isHost && (status === "playing" || status === "ended") && !isFlappyActivePlayer && (
+          {isHost && (status === "playing" || status === "ended") && !isFlappyActivePlayer && !isWatchTogetherActivePlayer && (
             <Button disabled={Boolean(pendingAction)} onClick={() => emitAction("back-to-lobby", "room:back_to_lobby")}>
               <RotateCcw size={18} /> {pendingAction === "back-to-lobby" ? "Returning..." : "Back to Lobby"}
             </Button>

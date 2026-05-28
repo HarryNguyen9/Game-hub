@@ -45,6 +45,7 @@ export function ChessBoard({
   orientation,
   selectedSquare,
   lastMove,
+  hintSquares,
   canInteract,
   onSquareClick
 }: {
@@ -52,6 +53,7 @@ export function ChessBoard({
   orientation: "white" | "black";
   selectedSquare: string | null;
   lastMove?: { from: string; to: string } | null;
+  hintSquares?: Set<string>;
   canInteract: boolean;
   onSquareClick: (square: string, piece: BoardPiece | null) => void;
 }) {
@@ -67,6 +69,8 @@ export function ChessBoard({
         const piece = board[square] || null;
         const selected = selectedSquare === square;
         const moved = lastMove?.from === square || lastMove?.to === square;
+        const isHint = hintSquares?.has(square) ?? false;
+        const isCaptureHint = isHint && piece !== null;
         return (
           <button
             key={square}
@@ -84,6 +88,12 @@ export function ChessBoard({
               <div className="relative z-10 h-full w-full">
                 <ChessPiece type={piece.type} color={piece.color} />
               </div>
+            )}
+            {isHint && !isCaptureHint && (
+              <span className="pointer-events-none absolute z-20 size-[32%] rounded-full bg-black/20" />
+            )}
+            {isCaptureHint && (
+              <span className="pointer-events-none absolute inset-0 z-20 rounded-[2px] ring-[5px] ring-inset ring-black/25" />
             )}
           </button>
         );
