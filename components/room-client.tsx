@@ -179,6 +179,7 @@ export function RoomClient({
   const [minPlayers, setMinPlayers] = useState(initialMinPlayers);
   const [maxPlayers, setMaxPlayers] = useState(initialMaxPlayers);
   const [gamePickerOpen, setGamePickerOpen] = useState(false);
+  const [pendingGameKey, setPendingGameKey] = useState<string | null>(null);
   const [opponentLeftNotice, setOpponentLeftNotice] = useState<OpponentLeftNotice | null>(null);
 
   useEffect(() => {
@@ -410,13 +411,13 @@ export function RoomClient({
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 {GAME_CATALOG.map((game) => {
-                  const selected = game.id === gameKey;
+                  const selected = game.id === pendingGameKey;
                   return (
                     <button
                       key={game.id}
                       type="button"
                       disabled={Boolean(pendingAction)}
-                      onClick={() => chooseGame(game.id)}
+                      onClick={() => setPendingGameKey(game.id)}
                       className={`rounded-[1.75rem] p-3 text-left shadow-sm ring-1 transition hover:-translate-y-0.5 hover:shadow-md ${
                         selected ? "bg-rose-50 ring-rose-200" : "bg-white ring-slate-100"
                       }`}
@@ -438,6 +439,16 @@ export function RoomClient({
                     </button>
                   );
                 })}
+              </div>
+              <div className="mt-5 flex justify-end gap-3">
+                <Button type="button" variant="secondary" onClick={() => setGamePickerOpen(false)}>Cancel</Button>
+                <Button
+                  type="button"
+                  disabled={!pendingGameKey || Boolean(pendingAction)}
+                  onClick={() => { if (pendingGameKey) chooseGame(pendingGameKey); }}
+                >
+                  {pendingAction === "choose-game" ? "Saving..." : "Confirm"}
+                </Button>
               </div>
             </div>
           </div>
@@ -465,7 +476,7 @@ export function RoomClient({
             <button
               type="button"
               disabled={Boolean(pendingAction)}
-              onClick={() => setGamePickerOpen(true)}
+              onClick={() => { setGamePickerOpen(true); setPendingGameKey(gameKey); }}
               className="mt-2 flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left font-bold outline-none transition hover:border-rose-300 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-sky-50 text-xl">{selectedGame?.icon || "🎮"}</span>
