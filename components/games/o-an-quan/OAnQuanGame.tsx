@@ -113,11 +113,14 @@ export function OAnQuanGame({
   const lastTurnRef = useRef<string | null>(initialSnapshot?.currentTurnUserId ?? null);
   const previousBoardRef = useRef<OAnQuanPit[] | null>(initialSnapshot ? cloneBoard(initialSnapshot.board) : null);
   const snapshotRef = useRef<OAnQuanSnapshot | null>(initialSnapshot ?? null);
+  const [turnReady, setTurnReady] = useState(() => {
+    if (!initialSnapshot) return false;
+    return initialSnapshot.turnStartedAt <= initialSnapshot.serverTime;
+  });
   const now = useNow();
   const currentPlayer = snapshot?.players[currentUserId];
   const currentTurnPlayer = snapshot?.currentTurnUserId ? snapshot.players[snapshot.currentTurnUserId] : null;
-  const timelineNow = now || snapshot?.serverTime || 0;
-  const turnActive = snapshot ? timelineNow >= snapshot.turnStartedAt : false;
+  const turnActive = turnReady;
   const isMyTurn = snapshot?.status === "playing" && snapshot.currentTurnUserId === currentUserId && turnActive;
   const resolvingMove = Boolean(snapshot && snapshot.status === "playing" && !turnActive);
   const remainingMs = snapshot
@@ -141,6 +144,18 @@ export function OAnQuanGame({
   useEffect(() => {
     snapshotRef.current = snapshot;
   }, [snapshot]);
+
+  useEffect(() => {
+    if (!snapshot) return;
+    const delay = snapshot.turnStartedAt - snapshot.serverTime;
+    if (delay <= 0) {
+      setTurnReady(true);
+      return;
+    }
+    setTurnReady(false);
+    const timer = window.setTimeout(() => setTurnReady(true), delay);
+    return () => window.clearTimeout(timer);
+  }, [snapshot?.turnStartedAt]);
 
   useEffect(() => {
     if (!snapshot || isAnimating) return;
@@ -212,7 +227,7 @@ export function OAnQuanGame({
     const previousTurn = lastTurnRef.current;
     lastTurnRef.current = snapshot.currentTurnUserId;
     if (snapshot.status !== "playing" || snapshot.currentTurnUserId !== currentUserId || previousTurn === currentUserId) return;
-    const delay = Math.max(0, snapshot.turnStartedAt - Date.now());
+    const delay = Math.max(0, snapshot.turnStartedAt - snapshot.serverTime);
     const showTimer = window.setTimeout(() => setTurnNotice(true), delay);
     const hideTimer = window.setTimeout(() => setTurnNotice(false), delay + 1700);
     return () => {
