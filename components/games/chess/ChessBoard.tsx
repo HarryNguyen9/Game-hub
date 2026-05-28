@@ -64,7 +64,7 @@ export function ChessBoard({
   const squares = orientedSquares(orientation);
 
   return (
-    <div className="mx-auto grid aspect-square w-full max-w-[min(92vw,38rem)] grid-cols-8 overflow-hidden rounded-[1.4rem] border-4 border-[#f7d885] bg-[#f7d885] shadow-xl">
+    <div className="mx-auto grid aspect-square w-full max-w-[min(92vw,38rem)] grid-cols-8 overflow-hidden rounded-[1rem] border-[6px] border-[#2d2d2d] bg-[#2d2d2d] shadow-2xl">
       {squares.map((square) => {
         const fileIndex = FILES.indexOf(square[0]);
         const rank = Number(square[1]);
@@ -79,13 +79,13 @@ export function ChessBoard({
             disabled={!canInteract}
             onClick={() => onSquareClick(square, piece)}
             className={`relative grid aspect-square place-items-center text-[clamp(2.1rem,8.5vw,4.5rem)] font-black leading-none transition ${
-              isLight ? "bg-[#fff4c7]" : "bg-[#7fc8a9]"
-            } ${selected ? "ring-4 ring-inset ring-[#ff6b8a]" : ""} ${moved ? "after:absolute after:inset-2 after:rounded-xl after:bg-white/35" : ""} ${
-              canInteract ? "cursor-pointer hover:brightness-105" : "cursor-default"
+              isLight ? "bg-[#eeeed2]" : "bg-[#769656]"
+            } ${selected ? "ring-4 ring-inset ring-[#ff6b8a]" : ""} ${moved ? "after:absolute after:inset-0 after:bg-yellow-400/40" : ""} ${
+              canInteract ? "cursor-pointer hover:brightness-110" : "cursor-default"
             }`}
             aria-label={square}
           >
-            <span className={`relative z-10 drop-shadow-sm ${piece?.color === "w" ? "text-white [text-shadow:_0_2px_0_rgb(30_41_59)]" : "text-slate-900"}`}>
+            <span className={`relative z-10 ${piece?.color === "w" ? "text-white [text-shadow:_0_1px_3px_rgba(0,0,0,0.8),_0_0_1px_rgba(0,0,0,1)]" : "text-[#1a1a1a] [text-shadow:_0_1px_2px_rgba(255,255,255,0.3)]"}`}>
               {piece?.symbol}
             </span>
           </button>

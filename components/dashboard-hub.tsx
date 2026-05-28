@@ -126,7 +126,7 @@ export function DashboardHub({ activeRoomId }: { activeRoomId: string | null }) 
 
   return (
     <div>
-      <header className="sticky top-0 z-10 -mx-4 mb-5 rounded-b-[2rem] bg-white/82 px-4 py-4 shadow-sm backdrop-blur-xl md:-mx-8 md:px-8">
+      <header className="sticky top-0 z-30 -mx-4 mb-5 rounded-b-[2rem] bg-white/82 px-4 py-4 shadow-sm backdrop-blur-xl md:-mx-8 md:px-8">
         <p className="text-sm font-black uppercase tracking-wide text-[#ff7a90]">Game hub</p>
         <h1 className="mt-1 text-3xl font-black text-slate-900 md:text-5xl">Pick a room, bring the snacks.</h1>
         <p className="mt-2 max-w-2xl text-sm text-slate-600 md:text-base">Online party games hub. Let have some fun with your friends!</p>

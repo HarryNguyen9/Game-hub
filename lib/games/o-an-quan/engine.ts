@@ -173,7 +173,7 @@ export function applyOAnQuanMove(state: OAnQuanState, userId: string, selectedPi
     animationFrames * OAQ_CONFIG.moveAnimationFrameMs + OAQ_CONFIG.moveAnimationSettleMs
   );
   state.lastMove = { userId, selectedPitIndex, direction, captured, reason: "move", animationDelayMs, createdAt: Date.now() };
-  advanceTurn(state, userId, "move", Date.now() + animationDelayMs);
+  advanceTurn(state, userId, "move", Date.now() + animationDelayMs + OAQ_CONFIG.postAnimationSettleMs);
   state.updatedAt = Date.now();
   return null;
 }

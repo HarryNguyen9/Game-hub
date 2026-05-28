@@ -3,8 +3,8 @@
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import type { OAnQuanDirection, OAnQuanPit, OAnQuanSide } from "@/lib/games/o-an-quan/types";
 
-const top = [11, 10, 9, 8, 7];
-const bottom = [1, 2, 3, 4, 5];
+const topRow = [11, 10, 9, 8, 7];
+const bottomRow = [1, 2, 3, 4, 5];
 
 function Pebbles({ count, type }: { count: number; type: "small" | "big" }) {
   const visible = Math.min(count, type === "big" ? 3 : 18);
@@ -115,13 +115,22 @@ export function OAnQuanBoard({
   onSelectPit: (index: number) => void;
   onMove: (direction: OAnQuanDirection) => void;
 }) {
-  const myPits = new Set(mySide === "bottom" ? bottom : top);
+  const flipped = mySide === "top";
+  const myPits = new Set(flipped ? topRow : bottomRow);
+
+  // When flipped (top player): their pits (7-11) appear at the bottom, opponent (1-5) at top
+  const displayTopRow = flipped ? [...bottomRow].reverse() : topRow;
+  const displayBottomRow = flipped ? [...topRow].reverse() : bottomRow;
+  const leftQuan = flipped ? board[6] : board[0];
+  const rightQuan = flipped ? board[0] : board[6];
+  const leftQuanIndex = flipped ? 6 : 0;
+  const rightQuanIndex = flipped ? 0 : 6;
 
   function danPit(index: number) {
     const pit = board[index];
     const selectable = canMove && myPits.has(index) && pit.smallStones > 0;
     const selected = selectedPit === index;
-    const countPosition = top.includes(index) ? "top" : "bottom";
+    const countPosition = displayTopRow.includes(index) ? "top" : "bottom";
     return (
       <DanPit key={index} pit={pit} selectable={selectable} selected={selected} popup={popupPitIndex === index ? "+1" : null} popupNonce={popupNonce} countPosition={countPosition} onSelect={() => onSelectPit(index)} />
     );
@@ -151,12 +160,12 @@ export function OAnQuanBoard({
         </div>
       )}
       <div className="grid grid-cols-[3.45rem_minmax(0,1fr)_3.45rem] items-center gap-1.5 sm:grid-cols-[6rem_minmax(0,1fr)_6rem] sm:gap-2">
-        <QuanPit pit={board[0]} popup={popupPitIndex === 0 ? "+1" : null} popupNonce={popupNonce} />
+        <QuanPit pit={leftQuan} popup={popupPitIndex === leftQuanIndex ? "+1" : null} popupNonce={popupNonce} />
         <div className="grid min-w-0 gap-1.5 sm:gap-2">
-          <div className="grid min-w-0 grid-cols-5 gap-1 sm:gap-2">{top.map(danPit)}</div>
-          <div className="grid min-w-0 grid-cols-5 gap-1 sm:gap-2">{bottom.map(danPit)}</div>
+          <div className="grid min-w-0 grid-cols-5 gap-1 sm:gap-2">{displayTopRow.map(danPit)}</div>
+          <div className="grid min-w-0 grid-cols-5 gap-1 sm:gap-2">{displayBottomRow.map(danPit)}</div>
         </div>
-        <QuanPit pit={board[6]} popup={popupPitIndex === 6 ? "+1" : null} popupNonce={popupNonce} />
+        <QuanPit pit={rightQuan} popup={popupPitIndex === rightQuanIndex ? "+1" : null} popupNonce={popupNonce} />
       </div>
       <div className="mt-3 flex justify-center gap-3">
         <button

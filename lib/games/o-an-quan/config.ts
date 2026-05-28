@@ -5,5 +5,6 @@ export const OAQ_CONFIG = {
   initialBigStones: 1,
   moveAnimationFrameMs: 540,
   moveAnimationSettleMs: 825,
-  maxMoveAnimationDelayMs: 10500
+  maxMoveAnimationDelayMs: 30000,
+  postAnimationSettleMs: 1000
 } as const;
