@@ -180,6 +180,7 @@ export function RoomClient({
   const [maxPlayers, setMaxPlayers] = useState(initialMaxPlayers);
   const [gamePickerOpen, setGamePickerOpen] = useState(false);
   const [pendingGameKey, setPendingGameKey] = useState<string | null>(null);
+  const [gamePickerConfirming, setGamePickerConfirming] = useState(false);
   const [opponentLeftNotice, setOpponentLeftNotice] = useState<OpponentLeftNotice | null>(null);
 
   useEffect(() => {
@@ -288,9 +289,14 @@ export function RoomClient({
     router.refresh();
   }
 
+  function closeGamePicker() {
+    setGamePickerOpen(false);
+    setGamePickerConfirming(false);
+  }
+
   async function chooseGame(nextGameKey: string) {
-    if (!nextGameKey || pendingAction) return;
-    setPendingAction("choose-game");
+    if (!nextGameKey || gamePickerConfirming) return;
+    setGamePickerConfirming(true);
     setMessage("");
     setGameKey(nextGameKey);
     socket?.emit("room:select_game", { roomId, gameKey: nextGameKey });
@@ -303,14 +309,13 @@ export function RoomClient({
     const payload = await response.json();
     if (!response.ok) {
       setMessage(payload.error || "Could not choose game.");
-      setPendingAction(null);
+      setGamePickerConfirming(false);
       return;
     }
     setGameKey(payload.gameKey);
     setMinPlayers(payload.minPlayers || minPlayers);
     setMaxPlayers(payload.maxPlayers || maxPlayers);
-    setPendingAction(null);
-    setGamePickerOpen(false);
+    closeGamePicker();
     router.refresh();
   }
 
@@ -405,7 +410,7 @@ export function RoomClient({
                   <p className="text-sm font-black uppercase tracking-wide text-[#ff7a90]">Choose game</p>
                   <h2 className="text-2xl font-black text-slate-900">Pick the room game</h2>
                 </div>
-                <Button type="button" variant="secondary" className="grid size-10 place-items-center rounded-2xl p-0" onClick={() => setGamePickerOpen(false)} aria-label="Close game picker">
+                <Button type="button" variant="secondary" className="grid size-10 place-items-center rounded-2xl p-0" onClick={closeGamePicker} aria-label="Close game picker">
                   <X size={18} />
                 </Button>
               </div>
@@ -441,13 +446,13 @@ export function RoomClient({
                 })}
               </div>
               <div className="mt-5 flex justify-end gap-3">
-                <Button type="button" variant="secondary" onClick={() => setGamePickerOpen(false)}>Cancel</Button>
+                <Button type="button" variant="secondary" disabled={gamePickerConfirming} onClick={closeGamePicker}>Cancel</Button>
                 <Button
                   type="button"
-                  disabled={!pendingGameKey || Boolean(pendingAction)}
+                  disabled={!pendingGameKey || gamePickerConfirming}
                   onClick={() => { if (pendingGameKey) chooseGame(pendingGameKey); }}
                 >
-                  {pendingAction === "choose-game" ? "Saving..." : "Confirm"}
+                  {gamePickerConfirming ? "Saving..." : "Confirm"}
                 </Button>
               </div>
             </div>
