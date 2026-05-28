@@ -16,13 +16,13 @@ function Pebbles({ count, type, max }: { count: number; type: "small" | "big"; m
           key={`${type}-${index}`}
           className={
             type === "big"
-              ? "rounded-full bg-gradient-to-br from-amber-300 to-orange-500 shadow-sm ring-1 ring-amber-600/20 [--s:clamp(0.6rem,3.5cqw,1rem)] size-[--s]"
-              : "rounded-full bg-gradient-to-br from-stone-50 via-amber-100 to-stone-300 shadow-[0_1px_0_rgba(0,0,0,0.12)] ring-1 ring-stone-300/50 [--s:clamp(0.4rem,2.2cqw,0.625rem)] size-[--s]"
+              ? "size-3 rounded-full bg-gradient-to-br from-amber-300 to-orange-500 shadow-sm ring-1 ring-amber-600/20 sm:size-4"
+              : "size-2 rounded-full bg-gradient-to-br from-stone-50 via-amber-100 to-stone-300 shadow-[0_1px_0_rgba(0,0,0,0.12)] ring-1 ring-stone-300/50 sm:size-2.5"
           }
         />
       ))}
       {count > visible && (
-        <span className="rounded-full bg-white/80 px-[3px] py-px text-[clamp(7px,2cqw,10px)] font-black text-stone-600">
+        <span className="rounded-full bg-white/80 px-1 py-0.5 text-[9px] font-black text-stone-600 sm:px-1.5 sm:text-[10px]">
           +{count - visible}
         </span>
       )}
@@ -32,7 +32,7 @@ function Pebbles({ count, type, max }: { count: number; type: "small" | "big"; m
 
 function StoneStack({ pit, maxSmall, maxBig }: { pit: OAnQuanPit; maxSmall: number; maxBig: number }) {
   return (
-    <div className="grid w-full justify-items-center gap-[2px]">
+    <div className="grid w-full justify-items-center gap-[3px]">
       <Pebbles count={pit.bigStones} type="big" max={maxBig} />
       <Pebbles count={pit.smallStones} type="small" max={maxSmall} />
     </div>
@@ -41,7 +41,7 @@ function StoneStack({ pit, maxSmall, maxBig }: { pit: OAnQuanPit; maxSmall: numb
 
 function PitCount({ pit }: { pit: OAnQuanPit }) {
   return (
-    <span className="grid min-w-[clamp(1.1rem,6cqw,1.5rem)] place-items-center rounded-full bg-white/90 px-[clamp(3px,1.5cqw,8px)] text-[clamp(8px,2.8cqw,11px)] font-black text-stone-700 shadow-sm [line-height:clamp(1.1rem,6cqw,1.5rem)]">
+    <span className="grid min-w-[1.1rem] place-items-center rounded-full bg-white/90 px-[3px] text-[9px] font-black text-stone-700 shadow-sm [line-height:1.1rem] sm:min-w-[1.4rem] sm:px-[6px] sm:text-[11px] sm:[line-height:1.4rem]">
       {pit.smallStones + pit.bigStones * 10}
     </span>
   );
@@ -71,7 +71,7 @@ function DanPit({
         type="button"
         disabled={!selectable}
         onClick={onSelect}
-        className={`relative aspect-square w-full min-w-0 overflow-visible rounded-[clamp(0.5rem,3cqw,1rem)] border-2 shadow-sm transition ${
+        className={`relative aspect-square w-full min-w-0 overflow-visible rounded-[clamp(0.5rem,3vw,1rem)] border-2 shadow-sm transition ${
           selected
             ? "border-rose-400 bg-rose-100"
             : selectable
@@ -96,16 +96,15 @@ function DanPit({
 function QuanPit({ pit, popup, popupNonce }: { pit: OAnQuanPit; popup?: string | null; popupNonce?: number }) {
   return (
     <div className="grid h-full min-w-0 grid-rows-[auto_1fr_auto] justify-items-center gap-[3px]">
-      <div className="[height:clamp(1.1rem,6cqw,1.5rem)]" />
-      <div className="relative grid w-full min-w-0 place-items-center overflow-visible rounded-[clamp(1rem,5cqw,1.75rem)] border-2 border-stone-300 bg-gradient-to-br from-amber-100 to-lime-100 shadow-inner [padding:clamp(4px,4%,12px)]">
+      <div className="h-[1.1rem] sm:h-[1.4rem]" />
+      <div className="relative grid w-full min-w-0 place-items-center overflow-visible rounded-[clamp(1rem,4vw,1.75rem)] border-2 border-stone-300 bg-gradient-to-br from-amber-100 to-lime-100 p-[clamp(4px,3%,10px)] shadow-inner">
         {popup && (
           <span key={popupNonce} className="pointer-events-none absolute left-1/2 top-2 z-10 -translate-x-1/2 animate-[oaq-pop_900ms_ease-out_forwards] rounded-full bg-white px-2 py-0.5 text-[11px] font-black text-rose-600 shadow-sm">
             {popup}
           </span>
         )}
-        <div className="grid min-w-0 w-full justify-items-center gap-1 overflow-hidden">
-          <span className="text-[clamp(7px,2.5cqw,10px)] font-black uppercase text-stone-500">Quan</span>
-          <StoneStack pit={pit} maxSmall={10} maxBig={3} />
+        <div className="flex w-full min-w-0 items-center justify-center overflow-hidden">
+          <StoneStack pit={pit} maxSmall={12} maxBig={3} />
         </div>
       </div>
       <PitCount pit={pit} />
@@ -166,7 +165,7 @@ export function OAnQuanBoard({
   }
 
   return (
-    <div className="@container relative overflow-hidden rounded-[clamp(1rem,4cqw,2rem)] border border-amber-200 bg-gradient-to-br from-amber-100 via-lime-50 to-emerald-100 p-[clamp(6px,2cqw,12px)] shadow-inner">
+    <div className="relative overflow-hidden rounded-[clamp(1rem,3vw,2rem)] border border-amber-200 bg-gradient-to-br from-amber-100 via-lime-50 to-emerald-100 p-[clamp(6px,2vw,12px)] shadow-inner">
       <style>{`
         @keyframes oaq-pop {
           0% { opacity: 0; transform: translate(-50%, 8px) scale(0.86); }
@@ -179,20 +178,20 @@ export function OAnQuanBoard({
           {capturePopup}
         </div>
       )}
-      <div className="grid grid-cols-[clamp(2rem,12%,6rem)_minmax(0,1fr)_clamp(2rem,12%,6rem)] gap-[clamp(3px,1.5%,8px)]">
+      <div className="grid grid-cols-[clamp(2rem,10vw,5.5rem)_minmax(0,1fr)_clamp(2rem,10vw,5.5rem)] gap-[clamp(3px,1.5vw,8px)]">
         <QuanPit pit={leftQuan} popup={popupPitIndex === leftQuanIndex ? pitPopupText : null} popupNonce={popupNonce} />
-        <div className="grid min-w-0 gap-[clamp(3px,1.5%,8px)]">
-          <div className="grid min-w-0 grid-cols-5 gap-[clamp(2px,1%,6px)]">{displayTopRow.map(danPit)}</div>
-          <div className="grid min-w-0 grid-cols-5 gap-[clamp(2px,1%,6px)]">{displayBottomRow.map(danPit)}</div>
+        <div className="grid min-w-0 gap-[clamp(3px,1.5vw,8px)]">
+          <div className="grid min-w-0 grid-cols-5 gap-[clamp(2px,1vw,6px)]">{displayTopRow.map(danPit)}</div>
+          <div className="grid min-w-0 grid-cols-5 gap-[clamp(2px,1vw,6px)]">{displayBottomRow.map(danPit)}</div>
         </div>
         <QuanPit pit={rightQuan} popup={popupPitIndex === rightQuanIndex ? pitPopupText : null} popupNonce={popupNonce} />
       </div>
-      <div className="mt-[clamp(6px,2cqw,12px)] flex justify-center gap-3">
+      <div className="mt-[clamp(6px,2vw,12px)] flex justify-center gap-3">
         <button
           type="button"
           aria-label="Move left"
           disabled={selectedPit === null || !canMove}
-          className="grid size-[clamp(2.5rem,12cqw,3rem)] place-items-center rounded-2xl bg-white text-slate-800 shadow-sm ring-1 ring-amber-200 transition disabled:cursor-not-allowed disabled:opacity-40"
+          className="grid size-[clamp(2.5rem,10vw,3rem)] place-items-center rounded-2xl bg-white text-slate-800 shadow-sm ring-1 ring-amber-200 transition disabled:cursor-not-allowed disabled:opacity-40"
           onClick={() => onMove("counterclockwise")}
         >
           <ArrowLeft size={20} />
@@ -201,7 +200,7 @@ export function OAnQuanBoard({
           type="button"
           aria-label="Move right"
           disabled={selectedPit === null || !canMove}
-          className="grid size-[clamp(2.5rem,12cqw,3rem)] place-items-center rounded-2xl bg-[#ff7a90] text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-40"
+          className="grid size-[clamp(2.5rem,10vw,3rem)] place-items-center rounded-2xl bg-[#ff7a90] text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-40"
           onClick={() => onMove("clockwise")}
         >
           <ArrowRight size={20} />

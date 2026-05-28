@@ -296,19 +296,19 @@ export function OAnQuanGame({
           @keyframes oaq-turn {
             0% {
               opacity: 0;
-              transform: translate(-50%, 12px) scale(0.92);
+              transform: translateY(12px) scale(0.92);
             }
             18% {
               opacity: 1;
-              transform: translate(-50%, 0) scale(1);
+              transform: translateY(0) scale(1);
             }
             80% {
               opacity: 1;
-              transform: translate(-50%, 0) scale(1);
+              transform: translateY(0) scale(1);
             }
             100% {
               opacity: 0;
-              transform: translate(-50%, -12px) scale(0.96);
+              transform: translateY(-12px) scale(0.96);
             }
           }
         `}</style>

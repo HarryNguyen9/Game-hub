@@ -84,7 +84,7 @@ export function WatchTogetherGame({
           onPause={pause}
           onHeartbeat={heartbeat}
         />
-        {watchingPlayers.length > 0 && (
+        <div className="flex items-center justify-between gap-3">
           <div className="flex flex-wrap gap-2">
             {watchingPlayers.map((player) => (
               <span
@@ -96,34 +96,32 @@ export function WatchTogetherGame({
               </span>
             ))}
           </div>
-        )}
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm font-semibold text-slate-500">
-            {!snapshot.videoId
-              ? isHost
-                ? "Load a YouTube video to start watching together."
-                : "Waiting for host to choose a video..."
-              : snapshot.status === "playing"
-                ? isHost
-                  ? "Playing · viewers are synced."
-                  : "Synced with host"
-                : snapshot.status === "paused"
-                  ? "Paused"
-                  : "Ready to play"}
-          </p>
-          {isHost && (
-            <Button
-              variant="secondary"
-              disabled={returning}
-              onClick={() => {
-                setReturning(true);
-                backToLobby();
-              }}
-            >
-              <RotateCcw size={16} /> Back to Lobby
-            </Button>
-          )}
+          <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-black ${
+            snapshot.status === "playing" ? "bg-emerald-100 text-emerald-700" :
+            snapshot.status === "paused" ? "bg-amber-100 text-amber-700" :
+            "bg-slate-100 text-slate-500"
+          }`}>
+            {!snapshot.videoId ? "Idle" : snapshot.status === "playing" ? "Playing" : snapshot.status === "paused" ? "Paused" : "Ready"}
+          </span>
         </div>
+        {!snapshot.videoId && (
+          <p className="text-sm font-semibold text-slate-400">
+            {isHost ? "Load a YouTube video to start watching together." : "Waiting for host to choose a video..."}
+          </p>
+        )}
+        {isHost && (
+          <Button
+            variant="secondary"
+            className="w-full justify-center"
+            disabled={returning}
+            onClick={() => {
+              setReturning(true);
+              backToLobby();
+            }}
+          >
+            <RotateCcw size={16} /> {returning ? "Returning..." : "Back to Lobby"}
+          </Button>
+        )}
       </div>
     </GameFullscreenShell>
   );

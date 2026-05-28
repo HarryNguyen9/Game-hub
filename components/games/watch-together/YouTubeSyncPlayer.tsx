@@ -200,7 +200,7 @@ export function YouTubeSyncPlayer({
 
   return (
     <div className={`relative aspect-video w-full overflow-hidden rounded-2xl bg-black ${!isHost ? "pointer-events-none" : ""}`}>
-      <div ref={wrapperRef} className="h-full w-full" />
+      <div ref={wrapperRef} className="absolute inset-0 [&_iframe]:!h-full [&_iframe]:!w-full" />
     </div>
   );
 }

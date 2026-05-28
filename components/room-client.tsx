@@ -395,49 +395,52 @@ export function RoomClient({
 
   return (
     <>
-      <header className="mb-5 rounded-[2rem] bg-white/70 p-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-sm font-black uppercase text-[#ff7a90]">{selectedGame?.name || "No game selected"}</p>
-            <h1 className="mt-1 text-3xl font-black">{roomName}</h1>
-            <p className="mt-2 text-sm font-bold text-slate-500">
+      <header className="mb-5 rounded-[2rem] bg-white/70 p-[clamp(12px,4vw,20px)]">
+        <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-black uppercase text-[#ff7a90]">{selectedGame?.name || "No game selected"}</p>
+            <h1 className="mt-1 text-[clamp(1.5rem,6vw,1.875rem)] font-black leading-tight">{roomName}</h1>
+            <p className="mt-1 text-sm font-bold text-slate-500">
               {titleLabel(status)} · {hasPassword ? "Password Room" : "Public Room"}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {roomCode && <div className="rounded-3xl bg-sky-100 px-5 py-3 text-center font-black text-sky-800">Code {roomCode}</div>}
-            <div className="rounded-3xl bg-[#ffcf5a] px-5 py-3 text-center font-black">{playerCountBadgeLabel}</div>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            {roomCode && <div className="rounded-3xl bg-sky-100 px-[clamp(10px,3vw,20px)] py-2 text-center text-sm font-black text-sky-800">Code {roomCode}</div>}
+            <div className="rounded-3xl bg-[#ffcf5a] px-[clamp(10px,3vw,20px)] py-2 text-center text-sm font-black">{playerCountBadgeLabel}</div>
           </div>
         </div>
       </header>
       <div className="grid gap-5 lg:grid-cols-[1fr_24rem]">
-      <section className="min-h-[22rem] rounded-[2rem] bg-white/88 p-5 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <section className="min-h-[22rem] rounded-[2rem] bg-white/88 p-[clamp(12px,4vw,20px)] shadow-sm">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-sky-100 px-3 py-1 text-sm font-black text-sky-700">
-            {connected ? "Realtime connected" : "Connecting..."}
+            {connected ? "Connected" : "Connecting..."}
           </span>
           <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-black text-amber-700">{titleLabel(status)}</span>
         </div>
         {gamePickerOpen && (
           <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Choose game">
-            <div className="flex max-h-[90dvh] w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] bg-white shadow-2xl">
-              <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-5">
-                <div>
-                  <p className="text-sm font-black uppercase tracking-wide text-[#ff7a90]">Choose game</p>
-                  <h2 className="text-2xl font-black text-slate-900">Pick the room game</h2>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    disabled={!pendingGameKey || gamePickerConfirming}
-                    onClick={() => { if (pendingGameKey) chooseGame(pendingGameKey); }}
-                  >
-                    {gamePickerConfirming ? "Saving..." : "Confirm"}
-                  </Button>
-                  <Button type="button" variant="secondary" className="grid size-10 place-items-center rounded-2xl p-0" onClick={closeGamePicker} aria-label="Close game picker">
-                    <X size={18} />
-                  </Button>
-                </div>
+            <div className="relative flex max-h-[90dvh] w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] bg-white shadow-2xl">
+              <button
+                type="button"
+                onClick={closeGamePicker}
+                aria-label="Close game picker"
+                className="absolute right-3 top-3 z-10 grid size-7 place-items-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200"
+              >
+                <X size={14} />
+              </button>
+              <div className="shrink-0 border-b border-slate-100 p-5 pr-12">
+                <p className="text-sm font-black uppercase tracking-wide text-[#ff7a90]">Choose game</p>
+                <h2 className="text-2xl font-black text-slate-900">Pick the room game</h2>
+              </div>
+              <div className="shrink-0 border-b border-slate-100 px-5 pb-4 pt-3">
+                <Button
+                  type="button"
+                  disabled={!pendingGameKey || gamePickerConfirming}
+                  onClick={() => { if (pendingGameKey) chooseGame(pendingGameKey); }}
+                >
+                  {gamePickerConfirming ? "Saving..." : "Confirm"}
+                </Button>
               </div>
               <div className="flex-1 overflow-y-auto p-5">
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -582,10 +585,10 @@ export function RoomClient({
               </div>
             }
           >
-            <div className="relative grid min-h-[22rem] flex-1 place-items-center overflow-hidden rounded-[1.5rem] bg-sky-100 p-5 text-center shadow-inner max-[700px]:landscape:min-h-[16rem]">
+            <div className="relative grid min-h-[18rem] flex-1 place-items-center overflow-hidden rounded-[1.5rem] bg-sky-100 p-[clamp(12px,4vw,20px)] text-center shadow-inner max-[700px]:landscape:min-h-[14rem]">
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.75),transparent_24%),radial-gradient(circle_at_80%_25%,rgba(255,255,255,0.65),transparent_22%)]" />
               <div className="relative grid justify-items-center gap-3">
-                <p className="text-3xl font-black text-slate-900">{gameKey === "flappy-rush" ? "Ready to flap?" : "Ready to play?"}</p>
+                <p className="text-[clamp(1.5rem,5vw,1.875rem)] font-black text-slate-900">{gameKey === "flappy-rush" ? "Ready to flap?" : "Ready to play?"}</p>
                 <p className="max-w-md text-slate-500">
                   {gameKey === "flappy-rush"
                     ? "Start the round when everyone is ready. Full screen is available before the game begins."
@@ -605,21 +608,19 @@ export function RoomClient({
             </div>
           </div>
         )}
-        <div className="flex w-full items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3">
-            {!isGameLobby && startButton}
-            {!isGameLobby && <div className="self-center">{startHint}</div>}
-            {isHost && (status === "playing" || status === "ended") && !isFlappyActivePlayer && !isWatchTogetherActivePlayer && (
-              <Button disabled={Boolean(pendingAction)} onClick={() => emitAction("back-to-lobby", "room:back_to_lobby")}>
-                <RotateCcw size={18} /> {pendingAction === "back-to-lobby" ? "Returning..." : "Back to Lobby"}
-              </Button>
-            )}
-            {!isGameLobby && readyButton}
-          </div>
-          {!isGameLobby && <div className="shrink-0">{leaveButton}</div>}
+        <div className="flex w-full flex-wrap items-center gap-3">
+          {!isGameLobby && startButton}
+          {!isGameLobby && <div className="self-center">{startHint}</div>}
+          {isHost && (status === "playing" || status === "ended") && !isFlappyActivePlayer && !isWatchTogetherActivePlayer && (
+            <Button disabled={Boolean(pendingAction)} onClick={() => emitAction("back-to-lobby", "room:back_to_lobby")}>
+              <RotateCcw size={18} /> {pendingAction === "back-to-lobby" ? "Returning..." : "Back to Lobby"}
+            </Button>
+          )}
+          {!isGameLobby && readyButton}
+          {!isGameLobby && <div className="ml-auto shrink-0">{leaveButton}</div>}
         </div>
       </section>
-      <aside className="rounded-[2rem] bg-white/88 p-5 shadow-sm">
+      <aside className="rounded-[2rem] bg-white/88 p-[clamp(12px,4vw,20px)] shadow-sm">
         <h2 className="mb-4 text-lg font-black">Room members</h2>
         <div className="grid gap-3">
           {members.map((member) => (

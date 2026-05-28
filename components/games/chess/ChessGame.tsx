@@ -158,8 +158,10 @@ export function ChessGame({
     <GameFullscreenShell expanded={expanded} onToggleExpanded={onToggleExpanded} header={header}>
       <div className="relative grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
         {errorToast && (
-          <div className="pointer-events-none absolute left-1/2 top-4 z-40 w-max max-w-[calc(100%-2rem)] -translate-x-1/2 rounded-full bg-red-50 px-5 py-3 text-sm font-black text-red-600 shadow-xl ring-1 ring-red-100">
-            {errorToast}
+          <div className="pointer-events-none absolute inset-x-0 top-4 z-40 flex justify-center px-4">
+            <div className="rounded-full bg-red-50 px-5 py-3 text-sm font-black text-red-600 shadow-xl ring-1 ring-red-100">
+              {errorToast}
+            </div>
           </div>
         )}
         {turnNotice && (
@@ -171,10 +173,10 @@ export function ChessGame({
         )}
         <style>{`
           @keyframes chess-turn {
-            0% { opacity: 0; transform: translate(-50%, 12px) scale(0.92); }
-            18% { opacity: 1; transform: translate(-50%, 0) scale(1); }
-            82% { opacity: 1; transform: translate(-50%, 0) scale(1); }
-            100% { opacity: 0; transform: translate(-50%, -10px) scale(0.96); }
+            0% { opacity: 0; transform: translateY(12px) scale(0.92); }
+            18% { opacity: 1; transform: translateY(0) scale(1); }
+            82% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-10px) scale(0.96); }
           }
         `}</style>
         <div className="rounded-[1.6rem] bg-gradient-to-br from-indigo-50 via-white to-amber-50 p-4">
