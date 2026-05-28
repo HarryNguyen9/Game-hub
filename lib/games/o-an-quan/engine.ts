@@ -148,6 +148,7 @@ export function applyOAnQuanMove(state: OAnQuanState, userId: string, selectedPi
     if (nextPit.type === "dan" && pitHasStones(nextPit)) {
       stones = nextPit.smallStones;
       nextPit.smallStones = 0;
+      current = next;
       animationFrames += 1;
       continue;
     }
