@@ -410,8 +410,8 @@ export function RoomClient({
           </div>
         </div>
       </header>
-      <div className="grid gap-5 lg:grid-cols-[1fr_24rem]">
-      <section className="min-h-[22rem] rounded-[2rem] bg-white/88 p-[clamp(12px,4vw,20px)] shadow-sm">
+      <div className="grid min-w-0 gap-5 lg:grid-cols-[1fr_24rem]">
+      <section className="min-h-[22rem] min-w-0 overflow-hidden rounded-[2rem] bg-white/88 p-[clamp(12px,4vw,20px)] shadow-sm">
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-sky-100 px-3 py-1 text-sm font-black text-sky-700">
             {connected ? "Connected" : "Connecting..."}
@@ -420,27 +420,33 @@ export function RoomClient({
         </div>
         {gamePickerOpen && (
           <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Choose game">
-            <div className="relative flex max-h-[90dvh] w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] bg-white shadow-2xl">
-              <button
-                type="button"
-                onClick={closeGamePicker}
-                aria-label="Close game picker"
-                className="absolute right-3 top-3 z-10 grid size-7 place-items-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200"
-              >
-                <X size={14} />
-              </button>
-              <div className="shrink-0 border-b border-slate-100 p-5 pr-12">
-                <p className="text-sm font-black uppercase tracking-wide text-[#ff7a90]">Choose game</p>
-                <h2 className="text-2xl font-black text-slate-900">Pick the room game</h2>
-              </div>
-              <div className="shrink-0 border-b border-slate-100 px-5 pb-4 pt-3">
-                <Button
-                  type="button"
-                  disabled={!pendingGameKey || gamePickerConfirming}
-                  onClick={() => { if (pendingGameKey) chooseGame(pendingGameKey); }}
-                >
-                  {gamePickerConfirming ? "Saving..." : "Confirm"}
-                </Button>
+            <div className="flex max-h-[90dvh] w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] bg-white shadow-2xl">
+              <div className="shrink-0 border-b border-slate-100 p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-black uppercase tracking-wide text-[#ff7a90]">Choose game</p>
+                    <h2 className="text-2xl font-black text-slate-900">Pick the room game</h2>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-2">
+                    <button
+                      type="button"
+                      onClick={closeGamePicker}
+                      aria-label="Close game picker"
+                      className="grid size-7 place-items-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200"
+                    >
+                      <X size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!pendingGameKey || gamePickerConfirming}
+                      onClick={() => { if (pendingGameKey) chooseGame(pendingGameKey); }}
+                      aria-label="Confirm game selection"
+                      className="grid size-7 place-items-center rounded-full bg-[#ff7a90] text-white shadow-sm transition hover:bg-[#ff6070] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <Check size={14} />
+                    </button>
+                  </div>
+                </div>
               </div>
               <div className="flex-1 overflow-y-auto p-5">
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -571,9 +577,9 @@ export function RoomClient({
             expanded={gameExpanded}
             onToggleExpanded={() => setGameExpanded((value) => !value)}
             header={
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm font-black text-slate-500">Game stage</p>
-                <p className="text-lg font-black text-slate-900">{selectedGame?.name || "Selected game"}</p>
+                <p className="truncate text-lg font-black text-slate-900">{selectedGame?.name || "Selected game"}</p>
               </div>
             }
             footer={
@@ -617,7 +623,7 @@ export function RoomClient({
             </Button>
           )}
           {!isGameLobby && readyButton}
-          {!isGameLobby && <div className="ml-auto shrink-0">{leaveButton}</div>}
+          {!isGameLobby && <div className="flex w-full justify-center">{leaveButton}</div>}
         </div>
       </section>
       <aside className="rounded-[2rem] bg-white/88 p-[clamp(12px,4vw,20px)] shadow-sm">

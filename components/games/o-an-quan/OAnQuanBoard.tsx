@@ -6,12 +6,11 @@ import type { OAnQuanDirection, OAnQuanPit, OAnQuanSide } from "@/lib/games/o-an
 const topRow = [11, 10, 9, 8, 7];
 const bottomRow = [1, 2, 3, 4, 5];
 
-function Pebbles({ count, type, max }: { count: number; type: "small" | "big"; max: number }) {
-  const visible = Math.min(count, max);
+function Pebbles({ count, type }: { count: number; type: "small" | "big" }) {
   if (count <= 0) return null;
   return (
     <div className="flex max-w-full flex-wrap items-center justify-center gap-[2px]">
-      {Array.from({ length: visible }).map((_, index) => (
+      {Array.from({ length: count }).map((_, index) => (
         <span
           key={`${type}-${index}`}
           className={
@@ -21,20 +20,25 @@ function Pebbles({ count, type, max }: { count: number; type: "small" | "big"; m
           }
         />
       ))}
-      {count > visible && (
-        <span className="rounded-full bg-white/80 px-1 py-0.5 text-[9px] font-black text-stone-600 sm:px-1.5 sm:text-[10px]">
-          +{count - visible}
-        </span>
-      )}
     </div>
   );
 }
 
 function StoneStack({ pit, maxSmall, maxBig }: { pit: OAnQuanPit; maxSmall: number; maxBig: number }) {
+  const overflow = pit.smallStones > maxSmall || pit.bigStones > maxBig;
+  if (overflow) {
+    return (
+      <div className="grid w-full place-items-center">
+        <span className="font-black leading-none tracking-widest text-amber-400" style={{ fontSize: "clamp(11px, 3.5vw, 16px)" }}>
+          +++
+        </span>
+      </div>
+    );
+  }
   return (
     <div className="grid w-full justify-items-center gap-[3px]">
-      <Pebbles count={pit.bigStones} type="big" max={maxBig} />
-      <Pebbles count={pit.smallStones} type="small" max={maxSmall} />
+      <Pebbles count={pit.bigStones} type="big" />
+      <Pebbles count={pit.smallStones} type="small" />
     </div>
   );
 }
@@ -85,7 +89,7 @@ function DanPit({
           </span>
         )}
         <div className="absolute inset-[clamp(3px,5%,8px)] flex items-center justify-center overflow-hidden">
-          <StoneStack pit={pit} maxSmall={9} maxBig={2} />
+          <StoneStack pit={pit} maxSmall={5} maxBig={1} />
         </div>
       </button>
       {countPosition === "bottom" && <PitCount pit={pit} />}
@@ -104,7 +108,7 @@ function QuanPit({ pit, popup, popupNonce }: { pit: OAnQuanPit; popup?: string |
           </span>
         )}
         <div className="flex w-full min-w-0 items-center justify-center overflow-hidden">
-          <StoneStack pit={pit} maxSmall={12} maxBig={3} />
+          <StoneStack pit={pit} maxSmall={8} maxBig={2} />
         </div>
       </div>
       <PitCount pit={pit} />
