@@ -170,7 +170,7 @@ export function applyOAnQuanMove(state: OAnQuanState, userId: string, selectedPi
   player.score += captured;
   const animationDelayMs = Math.min(
     OAQ_CONFIG.maxMoveAnimationDelayMs,
-    animationFrames * OAQ_CONFIG.moveAnimationFrameMs + OAQ_CONFIG.moveAnimationSettleMs
+    (animationFrames - 1) * OAQ_CONFIG.moveAnimationFrameMs
   );
   state.lastMove = { userId, selectedPitIndex, direction, captured, reason: "move", animationDelayMs, createdAt: Date.now() };
   advanceTurn(state, userId, "move", Date.now() + animationDelayMs + OAQ_CONFIG.postAnimationSettleMs);

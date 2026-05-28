@@ -121,8 +121,8 @@ export function OAnQuanGame({
   const currentPlayer = snapshot?.players[currentUserId];
   const currentTurnPlayer = snapshot?.currentTurnUserId ? snapshot.players[snapshot.currentTurnUserId] : null;
   const turnActive = turnReady;
-  const isMyTurn = snapshot?.status === "playing" && snapshot.currentTurnUserId === currentUserId && turnActive;
-  const resolvingMove = Boolean(snapshot && snapshot.status === "playing" && !turnActive);
+  const isMyTurn = snapshot?.status === "playing" && snapshot.currentTurnUserId === currentUserId && turnActive && !isAnimating;
+  const resolvingMove = Boolean(snapshot && snapshot.status === "playing" && (!turnActive || isAnimating));
   const remainingMs = snapshot
     ? resolvingMove
       ? snapshot.turnDurationSeconds * 1000
@@ -159,9 +159,7 @@ export function OAnQuanGame({
 
   useEffect(() => {
     if (!snapshot || isAnimating) return;
-    const lastMove = snapshot.lastMove;
-    const currentMoveId = lastMove?.createdAt || 0;
-    if (lastMove?.reason === "move" && lastAnimatedMoveRef.current !== currentMoveId && snapshot.status === "playing") return;
+    if (snapshot.lastMove?.reason === "move") return;
     previousBoardRef.current = cloneBoard(snapshot.board);
     setDisplayBoard(cloneBoard(snapshot.board));
   }, [isAnimating, snapshot]);
@@ -234,7 +232,7 @@ export function OAnQuanGame({
       window.clearTimeout(showTimer);
       window.clearTimeout(hideTimer);
     };
-  }, [currentUserId, snapshot?.currentTurnUserId, snapshot?.status, snapshot]);
+  }, [currentUserId, snapshot?.currentTurnUserId, snapshot?.status]);
 
   const header = (
     <div className="grid gap-3 sm:grid-cols-[auto_1fr] sm:items-center">
@@ -297,7 +295,7 @@ export function OAnQuanGame({
           ))}
         </div>
         <div className="relative">
-          {turnNotice && (
+          {turnNotice && !isAnimating && (
             <div className="pointer-events-none absolute left-1/2 top-4 z-30 w-max max-w-[calc(100%-2rem)] -translate-x-1/2 animate-[oaq-turn_1600ms_ease-out_forwards] rounded-full bg-[#ff7a90] px-5 py-3 text-sm font-black text-white shadow-xl sm:top-5">
               Your turn
             </div>
