@@ -16,7 +16,7 @@ export async function AppShell({ user, children }: { user: ShellUser; children: 
   const activeRoom = await getActiveRoomForUser(user.id);
 
   return (
-    <div className="min-h-screen overflow-x-hidden pb-24 md:pb-0">
+    <div className="flex min-h-screen flex-col overflow-x-hidden pb-24 md:pb-0">
       <aside className="fixed left-0 top-0 hidden h-screen w-64 border-r border-white/70 bg-white/72 p-5 shadow-sm backdrop-blur-xl md:block">
         <Link href="/dashboard" className="flex items-center gap-3 text-xl font-black text-slate-800">
           <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#ffcf5a]">
@@ -50,7 +50,7 @@ export async function AppShell({ user, children }: { user: ShellUser; children: 
           </button>
         </form>
       </aside>
-      <main className="px-4 py-5 md:ml-64 md:px-8 md:py-8">{children}</main>
+      <main className="flex flex-1 flex-col px-4 py-5 md:ml-64 md:px-8 md:py-8">{children}</main>
       <nav className="fixed bottom-3 left-3 right-3 z-20 grid grid-cols-5 rounded-3xl bg-white/90 p-2 shadow-2xl shadow-slate-200 backdrop-blur md:hidden">
         <MobileBackButton />
         <Link className="grid place-items-center gap-1 rounded-2xl p-2 text-xs font-bold" href="/dashboard">

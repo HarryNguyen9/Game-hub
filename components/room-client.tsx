@@ -393,8 +393,8 @@ export function RoomClient({
   };
 
   return (
-    <>
-      <header className="mb-5 rounded-[2rem] bg-white/70 p-[clamp(12px,4vw,20px)]">
+    <div className="flex flex-1 flex-col gap-5">
+      <header className="rounded-[2rem] bg-white/70 p-[clamp(12px,4vw,20px)]">
         <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="truncate text-sm font-black uppercase text-[#ff7a90]">{selectedGame?.name || "No game selected"}</p>
@@ -409,8 +409,8 @@ export function RoomClient({
           </div>
         </div>
       </header>
-      <div className="grid min-w-0 gap-5 lg:grid-cols-[1fr_26rem] xl:grid-cols-[1fr_30rem]">
-      <section className="min-h-[22rem] min-w-0 overflow-hidden rounded-[2rem] bg-white/88 p-[clamp(12px,4vw,20px)] shadow-sm">
+      <div className="grid min-h-0 min-w-0 flex-1 gap-5 lg:grid-cols-[1fr_26rem] xl:grid-cols-[1fr_30rem]">
+      <section className="flex min-h-[20rem] min-w-0 flex-col overflow-hidden rounded-[2rem] bg-white/88 p-[clamp(12px,4vw,20px)] shadow-sm">
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-sky-100 px-3 py-1 text-sm font-black text-sky-700">
             {connected ? "Connected" : "Connecting..."}
@@ -519,6 +519,7 @@ export function RoomClient({
             <p className="mt-1 text-xl font-black text-slate-900">{selectedGame?.name || "No game selected yet"}</p>
           )}
         </div>
+        <div className="flex flex-1 flex-col">
         {isFlappyActivePlayer ? (
           <FlappyRushGame
             roomId={roomId}
@@ -590,7 +591,7 @@ export function RoomClient({
               </div>
             }
           >
-            <div className="relative grid min-h-[18rem] flex-1 place-items-center overflow-hidden rounded-[1.5rem] bg-sky-100 p-[clamp(12px,4vw,20px)] text-center shadow-inner max-[700px]:landscape:min-h-[14rem]">
+            <div className="relative grid min-h-[16rem] flex-1 place-items-center overflow-hidden rounded-[1.5rem] bg-sky-100 p-[clamp(12px,4vw,20px)] text-center shadow-inner">
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.75),transparent_24%),radial-gradient(circle_at_80%_25%,rgba(255,255,255,0.65),transparent_22%)]" />
               <div className="relative grid justify-items-center gap-3">
                 <p className="text-[clamp(1.5rem,5vw,1.875rem)] font-black text-slate-900">{gameKey === "flappy-rush" ? "Ready to flap?" : "Ready to play?"}</p>
@@ -613,7 +614,8 @@ export function RoomClient({
             </div>
           </div>
         )}
-        <div className="grid w-full gap-2">
+        </div>
+        <div className="mt-auto grid w-full gap-2 pt-4">
           <div className="flex flex-wrap justify-center gap-3">
             {!isGameLobby && startButton}
             {isHost && (status === "playing" || status === "ended") && !isFlappyActivePlayer && !isWatchTogetherActivePlayer && (
@@ -651,7 +653,7 @@ export function RoomClient({
         </div>
       </aside>
     </div>
-    </>
+    </div>
   );
 }
 

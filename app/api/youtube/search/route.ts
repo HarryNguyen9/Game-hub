@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   url.searchParams.set("part", "snippet");
   url.searchParams.set("q", q);
   url.searchParams.set("type", "video");
-  url.searchParams.set("maxResults", "6");
+  url.searchParams.set("maxResults", "50");
   url.searchParams.set("key", apiKey);
 
   const res = await fetch(url.toString());

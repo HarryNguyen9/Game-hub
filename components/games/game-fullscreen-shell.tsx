@@ -20,7 +20,7 @@ export function GameFullscreenShell({
   className?: string;
 }) {
   return (
-    <div className={expanded ? "fixed inset-0 z-50 flex h-dvh flex-col gap-3 overflow-y-auto bg-white p-3" : `relative mt-4 min-w-0 grid gap-4 ${className}`}>
+    <div className={expanded ? "fixed inset-0 z-50 flex h-dvh flex-col gap-3 overflow-y-auto bg-white p-3" : `relative flex flex-1 flex-col gap-4 min-w-0 ${className}`}>
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-3xl bg-slate-50 px-4 py-3">
         <div className="min-w-0">{header}</div>
         <Button
