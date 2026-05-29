@@ -82,17 +82,18 @@ export function WatchTogetherGame({
           </p>
         )}
         {isHost && (
-          <Button
-            variant="secondary"
-            className="w-full justify-center"
-            disabled={returning}
-            onClick={() => {
-              setReturning(true);
-              backToLobby();
-            }}
-          >
-            <RotateCcw size={16} /> {returning ? "Returning..." : "Back to Lobby"}
-          </Button>
+          <div className="flex justify-center">
+            <Button
+              variant="secondary"
+              disabled={returning}
+              onClick={() => {
+                setReturning(true);
+                backToLobby();
+              }}
+            >
+              <RotateCcw size={16} /> {returning ? "Returning..." : "Back to Lobby"}
+            </Button>
+          </div>
         )}
       </div>
     </GameFullscreenShell>

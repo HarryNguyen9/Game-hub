@@ -133,7 +133,7 @@ export function YouTubeVideoSearch({ onSelect }: { onSelect: (videoId: string) =
             className={`flex items-center justify-center gap-1.5 rounded-xl py-2 text-sm font-black transition-all ${tab === "url" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
             <Link size={14} /> URL
           </button>
-          <button type="button" onClick={() => { setTab("search"); openSearchModal(); }}
+          <button type="button" onClick={() => setTab("search")}
             className={`flex items-center justify-center gap-1.5 rounded-xl py-2 text-sm font-black transition-all ${tab === "search" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
             <Search size={14} /> Search
           </button>
