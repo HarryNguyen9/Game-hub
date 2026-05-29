@@ -102,10 +102,29 @@ function ChessPreview() {
   );
 }
 
+function WatchTogetherPreview() {
+  return (
+    <div className="relative mb-4 h-28 overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-red-100 via-rose-50 to-rose-200 shadow-inner">
+      <div className="absolute left-4 top-4 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-rose-600 shadow-sm">1-8 Players</div>
+      <div className="absolute right-4 top-4 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-slate-500 shadow-sm">Watch</div>
+      <div className="absolute inset-x-10 bottom-4 top-10 overflow-hidden rounded-xl bg-slate-800 shadow-md">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="grid size-8 place-items-center rounded-full bg-white/90">
+            <div className="ml-0.5 h-0 w-0 border-y-[7px] border-l-[13px] border-y-transparent border-l-rose-500" />
+          </div>
+        </div>
+        <div className="absolute bottom-0 left-0 h-1 w-2/5 bg-rose-400" />
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10" />
+      </div>
+    </div>
+  );
+}
+
 function GamePreview({ gameId }: { gameId: string }) {
   if (gameId === "flappy-rush") return <FlappyRushPreview />;
   if (gameId === "fleet-duel") return <FleetDuelPreview />;
   if (gameId === "o-an-quan") return <OAnQuanPreview />;
+  if (gameId === "watch-together") return <WatchTogetherPreview />;
   return <ChessPreview />;
 }
 
@@ -181,7 +200,7 @@ export function DashboardHub({ activeRoomId }: { activeRoomId: string | null }) 
             <span className="text-xs font-black text-slate-400">{visibleGames.length}/10 shown</span>
           </div>
           {visibleGames.length ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
               {visibleGames.map((game) => (
                 <article key={game.id} className="rounded-[1.75rem] bg-white/86 p-4 shadow-sm ring-1 ring-white">
                   <GamePreview gameId={game.id} />

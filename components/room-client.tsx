@@ -409,7 +409,7 @@ export function RoomClient({
           </div>
         </div>
       </header>
-      <div className="grid min-w-0 gap-5 lg:grid-cols-[1fr_24rem]">
+      <div className="grid min-w-0 gap-5 lg:grid-cols-[1fr_26rem] xl:grid-cols-[1fr_30rem]">
       <section className="min-h-[22rem] min-w-0 overflow-hidden rounded-[2rem] bg-white/88 p-[clamp(12px,4vw,20px)] shadow-sm">
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-sky-100 px-3 py-1 text-sm font-black text-sky-700">

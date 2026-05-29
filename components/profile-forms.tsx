@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
+const inputClass = "w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100";
+const cardClass = "grid gap-3 rounded-[1.75rem] bg-white/86 p-[clamp(12px,4vw,20px)] shadow-sm";
+
 export function ProfileForm({ displayName }: { displayName: string }) {
   const router = useRouter();
   const [message, setMessage] = useState("");
@@ -22,10 +25,10 @@ export function ProfileForm({ displayName }: { displayName: string }) {
   }
 
   return (
-    <form onSubmit={submit} className="grid gap-3 rounded-[1.75rem] bg-white/86 p-5 shadow-sm">
+    <form onSubmit={submit} className={cardClass}>
       <h2 className="text-lg font-black">Display name</h2>
-      <input name="displayName" defaultValue={displayName} className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-rose-300" />
-      <Button>Save profile</Button>
+      <input name="displayName" defaultValue={displayName} className={inputClass} />
+      <Button className="w-full justify-center">Save profile</Button>
       {message && <p className="text-sm font-bold text-slate-500">{message}</p>}
     </form>
   );
@@ -33,6 +36,7 @@ export function ProfileForm({ displayName }: { displayName: string }) {
 
 export function AvatarForm() {
   const router = useRouter();
+  const [fileName, setFileName] = useState<string | null>(null);
   const [message, setMessage] = useState("");
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -45,10 +49,24 @@ export function AvatarForm() {
   }
 
   return (
-    <form onSubmit={submit} className="grid gap-3 rounded-[1.75rem] bg-white/86 p-5 shadow-sm">
+    <form onSubmit={submit} className={cardClass}>
       <h2 className="text-lg font-black">Avatar</h2>
-      <input name="avatar" type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm" />
-      <Button>Upload avatar</Button>
+      <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 transition hover:border-rose-200">
+        <span className="shrink-0 rounded-xl bg-rose-50 px-3 py-1 text-xs font-black text-rose-500">
+          Choose file
+        </span>
+        <span className="min-w-0 truncate text-sm text-slate-400">
+          {fileName ?? "No file chosen"}
+        </span>
+        <input
+          name="avatar"
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          className="hidden"
+          onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
+        />
+      </label>
+      <Button className="w-full justify-center">Upload avatar</Button>
       {message && <p className="text-sm font-bold text-slate-500">{message}</p>}
     </form>
   );
@@ -75,12 +93,12 @@ export function PasswordForm() {
   }
 
   return (
-    <form onSubmit={submit} className="grid gap-3 rounded-[1.75rem] bg-white/86 p-5 shadow-sm">
+    <form onSubmit={submit} className={cardClass}>
       <h2 className="text-lg font-black">Change password</h2>
-      <input name="oldPassword" type="password" placeholder="Old password" className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-rose-300" />
-      <input name="newPassword" type="password" placeholder="New password" className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-rose-300" />
-      <input name="confirmPassword" type="password" placeholder="Confirm new password" className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-rose-300" />
-      <Button>Change password</Button>
+      <input name="oldPassword" type="password" placeholder="Old password" className={inputClass} />
+      <input name="newPassword" type="password" placeholder="New password" className={inputClass} />
+      <input name="confirmPassword" type="password" placeholder="Confirm new password" className={inputClass} />
+      <Button className="w-full justify-center">Change password</Button>
       {message && <p className="text-sm font-bold text-slate-500">{message}</p>}
     </form>
   );

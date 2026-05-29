@@ -50,7 +50,7 @@ export async function AppShell({ user, children }: { user: ShellUser; children: 
           </button>
         </form>
       </aside>
-      <main className="mx-auto max-w-6xl px-4 py-5 md:ml-64 md:px-8 md:py-8">{children}</main>
+      <main className="px-4 py-5 md:ml-64 md:px-8 md:py-8">{children}</main>
       <nav className="fixed bottom-3 left-3 right-3 z-20 grid grid-cols-5 rounded-3xl bg-white/90 p-2 shadow-2xl shadow-slate-200 backdrop-blur md:hidden">
         <MobileBackButton />
         <Link className="grid place-items-center gap-1 rounded-2xl p-2 text-xs font-bold" href="/dashboard">
