@@ -1,7 +1,7 @@
 "use client";
 
-import type { ElementKey, ElementalSnapshot } from "@/lib/games/elemental-duels/types";
 import { Button } from "@/components/ui/button";
+import type { ElementKey, ElementalSnapshot } from "@/lib/games/elemental-duels/types";
 
 export function ElementalOpponentPanel({
   snapshot,
@@ -28,7 +28,7 @@ export function ElementalOpponentPanel({
             type="button"
             variant={you?.selectedSendElement === element.id ? "primary" : "secondary"}
             onClick={() => onSelectElement(element.id)}
-            className="justify-center"
+            className={`min-h-11 justify-center ${you?.selectedSendElement === element.id ? "ring-4 ring-orange-100" : ""}`}
           >
             {element.label}
           </Button>
@@ -40,9 +40,13 @@ export function ElementalOpponentPanel({
             key={monster.id}
             type="button"
             onClick={() => onSelectMonster(monster.id)}
-            className={`rounded-2xl px-3 py-2 text-left text-sm font-black shadow-sm ${you?.selectedMonsterType === monster.id ? "bg-orange-100 text-orange-800" : "bg-slate-50 text-slate-600"}`}
+            className={`rounded-2xl px-3 py-2 text-left text-sm font-black shadow-sm ring-2 transition ${you?.selectedMonsterType === monster.id ? "bg-orange-100 text-orange-800 ring-orange-200" : "bg-slate-50 text-slate-600 ring-transparent"}`}
           >
-            {monster.label} · {monster.sendCost}g
+            <span className="flex items-center justify-between gap-2">
+              <span>{monster.label}</span>
+              <span>{monster.sendCost}g</span>
+            </span>
+            <span className="mt-1 block text-xs font-bold opacity-70">{monster.element} - {monster.hp} HP - {monster.speed.toFixed(2)} speed</span>
           </button>
         ))}
       </div>

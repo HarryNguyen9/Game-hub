@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Check, Search, Link, Play, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ToastPopup } from "@/components/ui/toast-popup";
 import { extractYouTubeVideoId } from "@/lib/games/watch-together/utils";
 
 type Tab = "url" | "search";
@@ -125,9 +126,17 @@ export function YouTubeVideoSearch({ onSelect }: { onSelect: (videoId: string) =
   }
 
   const inputClass = "min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100";
+  const toastError = urlError || searchError;
 
   return (
     <>
+      <ToastPopup
+        message={toastError}
+        onDismiss={() => {
+          setUrlError(null);
+          setSearchError(null);
+        }}
+      />
       {/* Tab switcher */}
       <div className="grid gap-3">
         <div className="grid grid-cols-2 gap-1 rounded-2xl bg-slate-100 p-1">
@@ -155,7 +164,6 @@ export function YouTubeVideoSearch({ onSelect }: { onSelect: (videoId: string) =
                 <Play size={16} /> Load
               </Button>
             </div>
-            {urlError && <p className="text-sm font-bold text-red-500">{urlError}</p>}
             {urlPreviewLoading && <p className="text-xs font-semibold text-slate-400">Loading preview...</p>}
             {urlPreview && urlPreviewVideoId && (
               <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-2">
@@ -223,7 +231,6 @@ export function YouTubeVideoSearch({ onSelect }: { onSelect: (videoId: string) =
 
             {/* Results list */}
             <div className="flex-1 overflow-y-auto p-3">
-              {searchError && <p className="px-2 py-3 text-sm font-bold text-red-500">{searchError}</p>}
               {searchLoading && (
                 <div className="grid gap-2">
                   {Array.from({ length: 6 }).map((_, i) => (

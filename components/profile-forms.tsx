@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { ToastPopup } from "@/components/ui/toast-popup";
+
+type ToastTone = "error" | "success" | "info";
 
 const inputClass = "w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100";
 const cardClass = "grid gap-3 rounded-[1.75rem] bg-white/86 p-[clamp(12px,4vw,20px)] shadow-sm";
@@ -10,6 +13,7 @@ const cardClass = "grid gap-3 rounded-[1.75rem] bg-white/86 p-[clamp(12px,4vw,20
 export function ProfileForm({ displayName }: { displayName: string }) {
   const router = useRouter();
   const [message, setMessage] = useState("");
+  const [tone, setTone] = useState<ToastTone>("success");
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -20,6 +24,7 @@ export function ProfileForm({ displayName }: { displayName: string }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ displayName: form.get("displayName") })
     });
+    setTone(response.ok ? "success" : "error");
     setMessage(response.ok ? "Profile updated." : (await response.json()).error);
     router.refresh();
   }
@@ -29,7 +34,7 @@ export function ProfileForm({ displayName }: { displayName: string }) {
       <h2 className="text-lg font-black">Display name</h2>
       <input name="displayName" defaultValue={displayName} className={inputClass} />
       <Button className="w-full justify-center">Save profile</Button>
-      {message && <p className="text-sm font-bold text-slate-500">{message}</p>}
+      <ToastPopup message={message} tone={tone} onDismiss={() => setMessage("")} />
     </form>
   );
 }
@@ -38,12 +43,14 @@ export function AvatarForm() {
   const router = useRouter();
   const [fileName, setFileName] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  const [tone, setTone] = useState<ToastTone>("success");
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
     const response = await fetch("/api/profile/avatar", { method: "POST", body: form });
+    setTone(response.ok ? "success" : "error");
     setMessage(response.ok ? "Avatar updated." : (await response.json()).error);
     router.refresh();
   }
@@ -67,13 +74,14 @@ export function AvatarForm() {
         />
       </label>
       <Button className="w-full justify-center">Upload avatar</Button>
-      {message && <p className="text-sm font-bold text-slate-500">{message}</p>}
+      <ToastPopup message={message} tone={tone} onDismiss={() => setMessage("")} />
     </form>
   );
 }
 
 export function PasswordForm() {
   const [message, setMessage] = useState("");
+  const [tone, setTone] = useState<ToastTone>("success");
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -88,6 +96,7 @@ export function PasswordForm() {
         confirmPassword: form.get("confirmPassword")
       })
     });
+    setTone(response.ok ? "success" : "error");
     setMessage(response.ok ? "Password changed." : (await response.json()).error);
     if (response.ok) formElement.reset();
   }
@@ -99,7 +108,7 @@ export function PasswordForm() {
       <input name="newPassword" type="password" placeholder="New password" className={inputClass} />
       <input name="confirmPassword" type="password" placeholder="Confirm new password" className={inputClass} />
       <Button className="w-full justify-center">Change password</Button>
-      {message && <p className="text-sm font-bold text-slate-500">{message}</p>}
+      <ToastPopup message={message} tone={tone} onDismiss={() => setMessage("")} />
     </form>
   );
 }

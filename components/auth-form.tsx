@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Gamepad2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ToastPopup } from "@/components/ui/toast-popup";
 
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const router = useRouter();
@@ -62,7 +63,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
             Password
             <input name="password" type="password" required className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-rose-300" />
           </label>
-          {error && <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</p>}
+          <ToastPopup message={error} onDismiss={() => setError("")} />
           <Button disabled={loading}>{loading ? "Loading..." : mode === "login" ? "Login" : "Register"}</Button>
         </form>
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 text-sm font-semibold text-slate-600">

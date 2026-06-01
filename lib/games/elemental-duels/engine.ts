@@ -69,7 +69,7 @@ export function createElementalState(sessionId: string, roomId: string, players:
     countdownEndsAt: startedAt + ELEMENTAL_CONFIG.countdownSeconds * 1000,
     nextWaveAt: startedAt + ELEMENTAL_CONFIG.countdownSeconds * 1000 + 900,
     nextIncomeAt: startedAt + ELEMENTAL_CONFIG.countdownSeconds * 1000 + ELEMENTAL_CONFIG.passiveIncomeMs,
-    nextPathChangeAt: map.variant === "dynamic-path" ? startedAt + ELEMENTAL_CONFIG.countdownSeconds * 1000 + 30000 : null,
+    nextPathChangeAt: map.variant === "dynamic-path" ? startedAt + ELEMENTAL_CONFIG.countdownSeconds * 1000 + ELEMENTAL_CONFIG.dynamicPathChangeMs : null,
     players: Object.fromEntries(players.map((player, index) => [player.userId, asPlayer(player, index)])),
     map,
     events: []
@@ -82,17 +82,18 @@ function opponents(state: ElementalState, userId: string) {
 
 function spawnMonster(player: ElementalPlayerState, definition: MonsterDefinition, element: ElementKey, state: ElementalState, weakened = false) {
   const point = pointAtProgress(state.map.path, 0);
+  const statMultiplier = weakened ? ELEMENTAL_CONFIG.splitChildStatMultiplier : 1;
   const monster: ElementalMonster = {
     id: id("monster", state.tick),
     monsterType: definition.id,
     element,
-    hp: Math.max(8, definition.hp * (weakened ? 0.45 : 1)),
-    maxHp: Math.max(8, definition.hp * (weakened ? 0.45 : 1)),
+    hp: Math.max(8, definition.hp * statMultiplier),
+    maxHp: Math.max(8, definition.hp * statMultiplier),
     pathProgress: 0,
     x: point.x,
     y: point.y,
     speed: definition.speed,
-    reward: Math.max(1, Math.round(definition.reward * (weakened ? 0.45 : 1))),
+    reward: Math.max(1, Math.round(definition.reward * statMultiplier)),
     baseDamage: definition.baseDamage,
     statusEffects: []
   };
@@ -114,7 +115,7 @@ function maybeChangeDynamicPath(state: ElementalState, now: number) {
   if (paths.length <= 1) return;
   state.currentPathIndex = (state.currentPathIndex + 1) % paths.length;
   state.map.path = JSON.parse(JSON.stringify(paths[state.currentPathIndex])) as Point[];
-  state.nextPathChangeAt = now + 30000;
+  state.nextPathChangeAt = now + ELEMENTAL_CONFIG.dynamicPathChangeMs;
   event(state, { type: "map", message: "The monster path shifted." });
 }
 

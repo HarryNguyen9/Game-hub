@@ -6,6 +6,7 @@ import { io, type Socket } from "socket.io-client";
 import { Check, Gamepad2, LogOut, Play, RotateCcw, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { ToastPopup } from "@/components/ui/toast-popup";
 import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
 import { FlappyRushGame } from "@/components/games/flappy-rush/FlappyRushGame";
 import { FleetDuelGame } from "@/components/games/fleet-duel/FleetDuelGame";
@@ -520,7 +521,7 @@ export function RoomClient({
             </div>
           </div>
         )}
-        {message && <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{message}</p>}
+        <ToastPopup message={message} onDismiss={() => setMessage("")} />
         {isLateJoiner && (
           <p className="mt-4 rounded-2xl bg-sky-50 px-4 py-3 text-sm font-bold text-sky-700">
             Game is in progress. You&apos;ll join when the next round starts.

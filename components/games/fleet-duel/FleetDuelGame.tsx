@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { RotateCcw, Shuffle, Trash2, Ship, CheckCircle2 } from "lucide-react";
 import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
 import { Button } from "@/components/ui/button";
+import { ToastPopup } from "@/components/ui/toast-popup";
 import type { FleetCell, FleetShip, FleetShipDefinition, FleetSnapshot } from "@/lib/games/fleet-duel/types";
 import { FleetBoard } from "./FleetBoard";
 import { useFleetDuelSocket } from "./useFleetDuelSocket";
@@ -177,7 +178,7 @@ export function FleetDuelGame({
         </div>
       }
     >
-      {error && <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</p>}
+      <ToastPopup message={error} />
       {turnNotice && (
         <div className="pointer-events-none absolute left-1/2 top-24 z-30 -translate-x-1/2 animate-[fleet-turn_1600ms_ease-out_forwards] rounded-full bg-cyan-500 px-5 py-3 text-sm font-black text-white shadow-xl">
           Your turn

@@ -3,9 +3,9 @@
     "id": "normal",
     "label": "Normal Sprite",
     "element": "earth",
-    "hp": 44,
-    "speed": 0.078,
-    "reward": 8,
+    "hp": 42,
+    "speed": 0.071,
+    "reward": 7,
     "baseDamage": 1,
     "sendCost": 0
   },
@@ -13,42 +13,42 @@
     "id": "fire-runner",
     "label": "Fire Runner",
     "element": "fire",
-    "hp": 36,
-    "speed": 0.115,
-    "reward": 9,
+    "hp": 34,
+    "speed": 0.118,
+    "reward": 8,
     "baseDamage": 1,
-    "sendCost": 10
+    "sendCost": 13
   },
   {
     "id": "ice-armored",
     "label": "Ice Armored",
     "element": "ice",
-    "hp": 72,
-    "speed": 0.057,
-    "reward": 11,
+    "hp": 78,
+    "speed": 0.052,
+    "reward": 10,
     "baseDamage": 2,
-    "sendCost": 14,
+    "sendCost": 18,
     "slowImmune": true
   },
   {
     "id": "lightning-splitter",
     "label": "Lightning Splitter",
     "element": "lightning",
-    "hp": 42,
-    "speed": 0.092,
+    "hp": 46,
+    "speed": 0.086,
     "reward": 10,
     "baseDamage": 1,
-    "sendCost": 16,
+    "sendCost": 20,
     "splitOnDeath": true
   },
   {
     "id": "earth-giant",
     "label": "Earth Giant",
     "element": "earth",
-    "hp": 120,
-    "speed": 0.041,
-    "reward": 15,
+    "hp": 136,
+    "speed": 0.036,
+    "reward": 13,
     "baseDamage": 3,
-    "sendCost": 22
+    "sendCost": 28
   }
 ]

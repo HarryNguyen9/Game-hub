@@ -1,5 +1,6 @@
 "use client";
 
+import { ELEMENTAL_CONFIG } from "@/lib/games/elemental-duels/config";
 import type { ElementalSnapshot } from "@/lib/games/elemental-duels/types";
 
 export function ElementalHud({ snapshot, currentUserId, connected }: { snapshot: ElementalSnapshot; currentUserId: string; connected: boolean }) {
@@ -14,10 +15,24 @@ export function ElementalHud({ snapshot, currentUserId, connected }: { snapshot:
       </span>
       <div className="grid gap-2 sm:grid-cols-2">
         <div className="rounded-2xl bg-white px-3 py-2 text-sm font-black shadow-sm">
-          {you?.displayName || "You"} · {you?.baseHp ?? 0} HP · {you?.gold ?? 0} gold
+          <div className="flex items-center justify-between gap-2">
+            <span className="truncate">{you?.displayName || "You"}</span>
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-700">{you?.gold ?? 0}g</span>
+          </div>
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-rose-100">
+            <div className="h-full rounded-full bg-rose-400" style={{ width: `${Math.max(0, Math.min(100, ((you?.baseHp ?? 0) / ELEMENTAL_CONFIG.baseHp) * 100))}%` }} />
+          </div>
+          <p className="mt-1 text-xs text-slate-500">{you?.baseHp ?? 0} HP</p>
         </div>
         <div className="rounded-2xl bg-white px-3 py-2 text-sm font-black shadow-sm">
-          {opponent?.displayName || "Opponent"} · {opponent?.baseHp ?? 0} HP · {opponent?.monsters.length ?? 0} mobs
+          <div className="flex items-center justify-between gap-2">
+            <span className="truncate">{opponent?.displayName || "Opponent"}</span>
+            <span className="rounded-full bg-cyan-100 px-2 py-0.5 text-cyan-700">{opponent?.monsters.length ?? 0} mobs</span>
+          </div>
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-sky-100">
+            <div className="h-full rounded-full bg-sky-400" style={{ width: `${Math.max(0, Math.min(100, ((opponent?.baseHp ?? 0) / ELEMENTAL_CONFIG.baseHp) * 100))}%` }} />
+          </div>
+          <p className="mt-1 text-xs text-slate-500">{opponent?.baseHp ?? 0} HP</p>
         </div>
       </div>
       <span className="w-fit rounded-full bg-orange-100 px-3 py-1 text-xs font-black text-orange-700">

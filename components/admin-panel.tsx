@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
+import { ToastPopup } from "@/components/ui/toast-popup";
+
+type ToastTone = "error" | "success" | "info";
 
 type AdminUser = {
   id: string;
@@ -16,6 +19,7 @@ export function AdminPanel() {
   const [query, setQuery] = useState("");
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [message, setMessage] = useState("");
+  const [tone, setTone] = useState<ToastTone>("success");
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -35,6 +39,7 @@ export function AdminPanel() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId, newPassword })
     });
+    setTone(response.ok ? "success" : "error");
     setMessage(response.ok ? "Password reset." : (await response.json()).error);
   }
 
@@ -46,7 +51,7 @@ export function AdminPanel() {
         placeholder="Search username or display name"
         className="mb-4 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-rose-300"
       />
-      {message && <p className="mb-3 rounded-2xl bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700">{message}</p>}
+      <ToastPopup message={message} tone={tone} onDismiss={() => setMessage("")} />
       <div className="grid gap-3">
         {users.map((user) => {
           return (

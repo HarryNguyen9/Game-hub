@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { io, type Socket } from "socket.io-client";
 import { Lock, UsersRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ToastPopup } from "@/components/ui/toast-popup";
 import { getGameConfig } from "@/lib/constants";
 
 type Room = {
@@ -169,7 +170,7 @@ export function DashboardRoomList({ searchQuery = "", limit }: DashboardRoomList
             <h3 className="text-lg font-black">Room password</h3>
             <p className="mt-1 text-sm font-semibold text-slate-500">{joiningRoom.name} is locked.</p>
             <input value={password} onChange={(event) => setPassword(event.target.value)} type="password" className="mt-4 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-rose-300" />
-            {error && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</p>}
+            <ToastPopup message={error} onDismiss={() => setError("")} />
             <div className="mt-4 flex gap-2">
               <Button disabled={loadingRoomId === joiningRoom.id}>{loadingRoomId === joiningRoom.id ? "Joining..." : "Join"}</Button>
               <Button type="button" variant="secondary" onClick={() => setJoiningRoom(null)}>Cancel</Button>

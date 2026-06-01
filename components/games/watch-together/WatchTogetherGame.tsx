@@ -4,6 +4,7 @@ import { useState } from "react";
 import { RotateCcw } from "lucide-react";
 import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
 import { Button } from "@/components/ui/button";
+import { ToastPopup } from "@/components/ui/toast-popup";
 import { YouTubeSyncPlayer } from "./YouTubeSyncPlayer";
 import { YouTubeVideoSearch } from "./YouTubeVideoSearch";
 import { useWatchTogetherSocket } from "./useWatchTogetherSocket";
@@ -45,7 +46,7 @@ export function WatchTogetherGame({
   return (
     <GameFullscreenShell expanded={expanded} onToggleExpanded={onToggleExpanded} header={header}>
       <div className="grid gap-4">
-        {error && <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</p>}
+        <ToastPopup message={error} />
         {isHost && (
           <YouTubeVideoSearch onSelect={(videoId) => { setVideo(videoId); }} />
         )}

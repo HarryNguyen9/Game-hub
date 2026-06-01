@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { RotateCcw, Trophy } from "lucide-react";
 import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
 import { Button } from "@/components/ui/button";
+import { ToastPopup } from "@/components/ui/toast-popup";
 import { OAQ_CONFIG } from "@/lib/games/o-an-quan/config";
 import type { OAnQuanDirection, OAnQuanMove, OAnQuanPit, OAnQuanPlayer, OAnQuanSnapshot } from "@/lib/games/o-an-quan/types";
 import { OAnQuanBoard } from "./OAnQuanBoard";
@@ -294,7 +295,7 @@ export function OAnQuanGame({
 
   return (
     <GameFullscreenShell expanded={expanded} onToggleExpanded={onToggleExpanded} header={header}>
-      {error && <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</p>}
+      <ToastPopup message={error} />
       <div className="grid gap-4">
         <style>{`
           @keyframes oaq-turn {

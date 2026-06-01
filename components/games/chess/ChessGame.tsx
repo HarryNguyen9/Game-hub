@@ -5,6 +5,7 @@ import { Chess } from "chess.js";
 import { Flag, RotateCcw, Trophy } from "lucide-react";
 import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
 import { Button } from "@/components/ui/button";
+import { ToastPopup } from "@/components/ui/toast-popup";
 import type { ChessSnapshot } from "@/lib/games/chess/types";
 import { ChessBoard, type BoardPiece } from "./ChessBoard";
 import { useChessSocket } from "./useChessSocket";
@@ -53,7 +54,6 @@ export function ChessGame({
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [returning, setReturning] = useState(false);
   const [turnNotice, setTurnNotice] = useState(false);
-  const [errorToast, setErrorToast] = useState("");
   const lastTurnRef = useRef<string | null>(initialSnapshot?.currentTurnUserId ?? null);
   const now = useNow();
 
@@ -89,16 +89,6 @@ export function ChessGame({
       window.clearTimeout(hideTimer);
     };
   }, [currentUserId, snapshot?.currentTurnUserId, snapshot?.status, snapshot]);
-
-  useEffect(() => {
-    if (!error) return;
-    const showTimer = window.setTimeout(() => setErrorToast(error), 0);
-    const hideTimer = window.setTimeout(() => setErrorToast(""), 2200);
-    return () => {
-      window.clearTimeout(showTimer);
-      window.clearTimeout(hideTimer);
-    };
-  }, [error]);
 
   function handleSquareClick(square: string, piece: BoardPiece | null) {
     if (!snapshot || !currentPlayer || !isMyTurn) return;
@@ -156,14 +146,8 @@ export function ChessGame({
 
   return (
     <GameFullscreenShell expanded={expanded} onToggleExpanded={onToggleExpanded} header={header}>
+      <ToastPopup message={error} />
       <div className="relative grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        {errorToast && (
-          <div className="pointer-events-none absolute inset-x-0 top-4 z-40 flex justify-center px-4">
-            <div className="rounded-full bg-red-50 px-5 py-3 text-sm font-black text-red-600 shadow-xl ring-1 ring-red-100">
-              {errorToast}
-            </div>
-          </div>
-        )}
         {turnNotice && (
           <div className="pointer-events-none absolute inset-x-0 top-3 z-30 flex justify-center px-4">
             <div className="animate-[chess-turn_1600ms_ease-out_forwards] rounded-full bg-[#ff7a90] px-5 py-3 text-sm font-black text-white shadow-xl">

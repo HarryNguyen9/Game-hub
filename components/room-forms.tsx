@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { ToastPopup } from "@/components/ui/toast-popup";
 
 export function CreateRoomForm() {
   const router = useRouter();
@@ -50,7 +51,7 @@ export function CreateRoomForm() {
           <input name="password" type="password" required placeholder="Enter a room password" className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-rose-300" />
         </label>
       )}
-      {error && <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</p>}
+      <ToastPopup message={error} onDismiss={() => setError("")} />
       <Button disabled={creating}>{creating ? "Creating..." : "Create room"}</Button>
     </form>
   );
@@ -160,7 +161,7 @@ export function JoinRoomForm() {
           />
         </label>
       )}
-      {error && <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</p>}
+      <ToastPopup message={error} onDismiss={() => setError("")} />
       <Button disabled={!roomInfo || checking || joining}>{joining ? "Joining..." : roomInfo?.hasPassword ? "Join locked room" : "Join room"}</Button>
     </form>
   );

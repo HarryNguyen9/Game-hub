@@ -5,6 +5,7 @@ import type { PointerEvent } from "react";
 import { RotateCcw, Trophy } from "lucide-react";
 import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
 import { Button } from "@/components/ui/button";
+import { ToastPopup } from "@/components/ui/toast-popup";
 import type { FlappySnapshot } from "@/lib/games/flappy-rush/types";
 import { renderFlappyRush } from "./renderFlappyRush";
 import { useFlappyRushSocket } from "./useFlappyRushSocket";
@@ -145,7 +146,7 @@ export function FlappyRushGame({
       header={header}
       footer={<p className="text-center text-sm font-semibold text-slate-500">Tap / click / Space to flap. Server owns score, death, and pipes.</p>}
     >
-      {error && <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</p>}
+      <ToastPopup message={error} />
       <div
         className={
           expanded
