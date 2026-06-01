@@ -44,8 +44,10 @@ export function YouTubeVideoSearch({ onSelect }: { onSelect: (videoId: string) =
     if (debounceRef.current) clearTimeout(debounceRef.current);
     const videoId = extractYouTubeVideoId(urlInput);
     if (!videoId) {
-      setUrlPreview(null);
-      setUrlPreviewVideoId(null);
+      debounceRef.current = setTimeout(() => {
+        setUrlPreview(null);
+        setUrlPreviewVideoId(null);
+      }, 0);
       return;
     }
     debounceRef.current = setTimeout(async () => {

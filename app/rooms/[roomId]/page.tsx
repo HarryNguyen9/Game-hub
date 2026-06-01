@@ -8,6 +8,7 @@ import type { FleetSnapshot, FleetState } from "@/lib/games/fleet-duel/types";
 import { serializeFleetStateForUser } from "@/lib/games/fleet-duel/serializer";
 import type { OAnQuanSnapshot } from "@/lib/games/o-an-quan/types";
 import type { ChessSnapshot } from "@/lib/games/chess/types";
+import type { ElementalSnapshot } from "@/lib/games/elemental-duels/types";
 
 type PageProps = { params: Promise<{ roomId: string }> };
 type AppUserRecord = { username: string; display_name: string | null; avatar_url: string | null } | null;
@@ -60,6 +61,7 @@ export default async function RoomPage({ params }: PageProps) {
   let initialFleetSnapshot: FleetSnapshot | null = null;
   let initialOAnQuanSnapshot: OAnQuanSnapshot | null = null;
   let initialChessSnapshot: ChessSnapshot | null = null;
+  let initialElementalSnapshot: ElementalSnapshot | null = null;
 
   if (room.status === "ended") {
     const { data: session } = await supabase
@@ -90,10 +92,25 @@ export default async function RoomPage({ params }: PageProps) {
       const snapshot = (session.state as ChessSnapshot | null) ?? null;
       if (snapshot?.roomId === roomId && snapshot.status === "ended" && snapshot.players[user.id]) initialChessSnapshot = snapshot;
     }
+    if (session?.game_key === "elemental-duels") {
+      const snapshot = (session.state as ElementalSnapshot | null) ?? null;
+      if (snapshot?.roomId === roomId && snapshot.status === "ended" && snapshot.players[user.id]) initialElementalSnapshot = snapshot;
+    }
   }
 
   const effectiveGameKey =
-    room.game_key || (initialGameSnapshot ? "flappy-rush" : initialFleetSnapshot ? "fleet-duel" : initialOAnQuanSnapshot ? "o-an-quan" : initialChessSnapshot ? "chess" : null);
+    room.game_key ||
+    (initialGameSnapshot
+      ? "flappy-rush"
+      : initialFleetSnapshot
+        ? "fleet-duel"
+        : initialOAnQuanSnapshot
+          ? "o-an-quan"
+          : initialChessSnapshot
+            ? "chess"
+            : initialElementalSnapshot
+              ? "elemental-duels"
+              : null);
 
   return (
     <AppShell user={user}>
@@ -111,6 +128,7 @@ export default async function RoomPage({ params }: PageProps) {
         initialFleetSnapshot={initialFleetSnapshot}
         initialOAnQuanSnapshot={initialOAnQuanSnapshot}
         initialChessSnapshot={initialChessSnapshot}
+        initialElementalSnapshot={initialElementalSnapshot}
         initialMinPlayers={room.min_players}
         initialMaxPlayers={room.max_players}
       />

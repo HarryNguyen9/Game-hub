@@ -57,6 +57,19 @@ export const GAME_CATALOG = [
     accent: "from-indigo-100 to-amber-100"
   },
   {
+    id: "elemental-duels",
+    name: "Elemental Duels 2D",
+    displayName: "Elemental Duels 2D",
+    shortLabel: "Elemental",
+    description: "1v1 elemental tower defense duel.",
+    minPlayers: 2,
+    maxPlayers: 2,
+    gameType: "realtime-strategy",
+    supportsLateJoin: false,
+    icon: "🔥",
+    accent: "from-orange-100 to-cyan-200"
+  },
+  {
     id: "watch-together",
     name: "Watch Together",
     displayName: "Watch Together",

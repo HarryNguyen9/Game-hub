@@ -148,19 +148,23 @@ export function OAnQuanGame({
   }, [snapshot]);
 
   useEffect(() => {
-    setSelectedPit(null);
+    const timer = window.setTimeout(() => setSelectedPit(null), 0);
+    return () => window.clearTimeout(timer);
   }, [snapshot?.currentTurnUserId]);
 
   useEffect(() => {
     if (!snapshot) return;
     const delay = snapshot.turnStartedAt - snapshot.serverTime;
     if (delay <= 0) {
-      setTurnReady(true);
-      return;
+      const timer = window.setTimeout(() => setTurnReady(true), 0);
+      return () => window.clearTimeout(timer);
     }
-    setTurnReady(false);
+    const resetTimer = window.setTimeout(() => setTurnReady(false), 0);
     const timer = window.setTimeout(() => setTurnReady(true), delay);
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(resetTimer);
+      window.clearTimeout(timer);
+    };
   }, [snapshot?.turnStartedAt]);
 
   useEffect(() => {

@@ -1,0 +1,30 @@
+[
+  {
+    "id": "fire",
+    "label": "Fire",
+    "color": "#fb7185",
+    "strongAgainst": "lightning",
+    "weakAgainst": "ice"
+  },
+  {
+    "id": "lightning",
+    "label": "Lightning",
+    "color": "#facc15",
+    "strongAgainst": "earth",
+    "weakAgainst": "fire"
+  },
+  {
+    "id": "earth",
+    "label": "Earth",
+    "color": "#84cc16",
+    "strongAgainst": "ice",
+    "weakAgainst": "lightning"
+  },
+  {
+    "id": "ice",
+    "label": "Ice",
+    "color": "#38bdf8",
+    "strongAgainst": "fire",
+    "weakAgainst": "earth"
+  }
+]

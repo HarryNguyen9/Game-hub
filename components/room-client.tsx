@@ -11,12 +11,14 @@ import { FlappyRushGame } from "@/components/games/flappy-rush/FlappyRushGame";
 import { FleetDuelGame } from "@/components/games/fleet-duel/FleetDuelGame";
 import { OAnQuanGame } from "@/components/games/o-an-quan/OAnQuanGame";
 import { ChessGame } from "@/components/games/chess/ChessGame";
+import { ElementalDuelsGame } from "@/components/games/elemental-duels/ElementalDuelsGame";
 import { WatchTogetherGame } from "@/components/games/watch-together/WatchTogetherGame";
 import { GAME_CATALOG } from "@/lib/constants";
 import type { FlappySnapshot } from "@/lib/games/flappy-rush/types";
 import type { FleetSnapshot } from "@/lib/games/fleet-duel/types";
 import type { OAnQuanSnapshot } from "@/lib/games/o-an-quan/types";
 import type { ChessSnapshot } from "@/lib/games/chess/types";
+import type { ElementalSnapshot } from "@/lib/games/elemental-duels/types";
 
 type RoomStatus = "waiting" | "playing" | "ended" | "closed";
 type Member = {
@@ -109,6 +111,25 @@ function GameOptionVisual({ gameId }: { gameId: string }) {
     );
   }
 
+  if (gameId === "elemental-duels") {
+    return (
+      <div className="relative h-24 overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-orange-100 via-cyan-100 to-emerald-100 shadow-inner">
+        <div className="absolute left-3 top-3 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-orange-700 shadow-sm">2 players</div>
+        <div className="absolute right-3 top-3 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-cyan-700 shadow-sm">Strategy</div>
+        <div className="absolute inset-x-0 top-1/2 h-1 bg-white/70" />
+        <div className="absolute left-8 bottom-5 grid size-10 place-items-center rounded-xl border-2 border-orange-400 bg-orange-200 shadow-sm">
+          <span className="text-lg">🔥</span>
+        </div>
+        <div className="absolute right-8 top-8 grid size-10 place-items-center rounded-xl border-2 border-cyan-400 bg-cyan-200 shadow-sm">
+          <span className="text-lg">❄️</span>
+        </div>
+        <div className="absolute left-[44%] top-[46%] grid size-8 place-items-center rounded-full border-2 border-slate-700 bg-lime-200 shadow-md">
+          <span className="text-xs font-black">TD</span>
+        </div>
+      </div>
+    );
+  }
+
   if (gameId === "watch-together") {
     return (
       <div className="relative h-24 overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-red-100 via-rose-50 to-rose-200 shadow-inner">
@@ -159,6 +180,7 @@ export function RoomClient({
   initialFleetSnapshot,
   initialOAnQuanSnapshot,
   initialChessSnapshot,
+  initialElementalSnapshot,
   initialMinPlayers,
   initialMaxPlayers
 }: {
@@ -175,6 +197,7 @@ export function RoomClient({
   initialFleetSnapshot: FleetSnapshot | null;
   initialOAnQuanSnapshot: OAnQuanSnapshot | null;
   initialChessSnapshot: ChessSnapshot | null;
+  initialElementalSnapshot: ElementalSnapshot | null;
   initialMinPlayers: number;
   initialMaxPlayers: number;
 }) {
@@ -191,6 +214,7 @@ export function RoomClient({
   const [endedFleetSnapshot, setEndedFleetSnapshot] = useState<FleetSnapshot | null>(initialFleetSnapshot);
   const [endedOAnQuanSnapshot, setEndedOAnQuanSnapshot] = useState<OAnQuanSnapshot | null>(initialOAnQuanSnapshot);
   const [endedChessSnapshot, setEndedChessSnapshot] = useState<ChessSnapshot | null>(initialChessSnapshot);
+  const [endedElementalSnapshot, setEndedElementalSnapshot] = useState<ElementalSnapshot | null>(initialElementalSnapshot);
   const [minPlayers, setMinPlayers] = useState(initialMinPlayers);
   const [maxPlayers, setMaxPlayers] = useState(initialMaxPlayers);
   const [gamePickerOpen, setGamePickerOpen] = useState(false);
@@ -253,6 +277,7 @@ export function RoomClient({
           setEndedFleetSnapshot(null);
           setEndedOAnQuanSnapshot(null);
           setEndedChessSnapshot(null);
+          setEndedElementalSnapshot(null);
         }
         setPendingAction(null);
       };
@@ -364,6 +389,7 @@ export function RoomClient({
   const isFleetActivePlayer = (status === "playing" || status === "ended") && gameKey === "fleet-duel" && currentMember?.participationStatus === "active_game";
   const isOAnQuanActivePlayer = (status === "playing" || status === "ended") && gameKey === "o-an-quan" && currentMember?.participationStatus === "active_game";
   const isChessActivePlayer = (status === "playing" || status === "ended") && gameKey === "chess" && currentMember?.participationStatus === "active_game";
+  const isElementalActivePlayer = (status === "playing" || status === "ended") && gameKey === "elemental-duels" && currentMember?.participationStatus === "active_game";
   const isWatchTogetherActivePlayer = status === "playing" && gameKey === "watch-together" && currentMember?.participationStatus === "active_game";
   const isGameLobby = status === "waiting" && Boolean(gameKey);
   const startButton = isHost && status === "waiting" && Boolean(gameKey) ? (
@@ -564,6 +590,17 @@ export function RoomClient({
             initialSnapshot={endedChessSnapshot}
             roomStatus={status === "ended" ? "ended" : "playing"}
           />
+        ) : isElementalActivePlayer ? (
+          <ElementalDuelsGame
+            roomId={roomId}
+            currentUserId={currentUserId}
+            isHost={isHost}
+            onGameEnd={markGameEnded}
+            expanded={gameExpanded}
+            onToggleExpanded={() => setGameExpanded((value) => !value)}
+            initialSnapshot={endedElementalSnapshot}
+            roomStatus={status === "ended" ? "ended" : "playing"}
+          />
         ) : isWatchTogetherActivePlayer ? (
           <WatchTogetherGame
             roomId={roomId}
@@ -656,5 +693,3 @@ export function RoomClient({
     </div>
   );
 }
-
-

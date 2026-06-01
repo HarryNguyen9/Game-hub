@@ -1,0 +1,54 @@
+[
+  {
+    "id": "normal",
+    "label": "Normal Sprite",
+    "element": "earth",
+    "hp": 44,
+    "speed": 0.078,
+    "reward": 8,
+    "baseDamage": 1,
+    "sendCost": 0
+  },
+  {
+    "id": "fire-runner",
+    "label": "Fire Runner",
+    "element": "fire",
+    "hp": 36,
+    "speed": 0.115,
+    "reward": 9,
+    "baseDamage": 1,
+    "sendCost": 10
+  },
+  {
+    "id": "ice-armored",
+    "label": "Ice Armored",
+    "element": "ice",
+    "hp": 72,
+    "speed": 0.057,
+    "reward": 11,
+    "baseDamage": 2,
+    "sendCost": 14,
+    "slowImmune": true
+  },
+  {
+    "id": "lightning-splitter",
+    "label": "Lightning Splitter",
+    "element": "lightning",
+    "hp": 42,
+    "speed": 0.092,
+    "reward": 10,
+    "baseDamage": 1,
+    "sendCost": 16,
+    "splitOnDeath": true
+  },
+  {
+    "id": "earth-giant",
+    "label": "Earth Giant",
+    "element": "earth",
+    "hp": 120,
+    "speed": 0.041,
+    "reward": 15,
+    "baseDamage": 3,
+    "sendCost": 22
+  }
+]

@@ -1,0 +1,142 @@
+[
+  {
+    "id": "classic",
+    "label": "Classic Grove",
+    "variant": "classic",
+    "path": [
+      { "x": 20, "y": 130 },
+      { "x": 130, "y": 130 },
+      { "x": 130, "y": 56 },
+      { "x": 270, "y": 56 },
+      { "x": 270, "y": 170 },
+      { "x": 420, "y": 170 }
+    ],
+    "buildTiles": [
+      { "x": 74, "y": 60 },
+      { "x": 74, "y": 198 },
+      { "x": 174, "y": 114 },
+      { "x": 226, "y": 210 },
+      { "x": 332, "y": 96 },
+      { "x": 354, "y": 224 }
+    ],
+    "specialTiles": [],
+    "obstacles": []
+  },
+  {
+    "id": "buff-tiles",
+    "label": "Rune Meadows",
+    "variant": "buff-tiles",
+    "path": [
+      { "x": 20, "y": 170 },
+      { "x": 112, "y": 170 },
+      { "x": 112, "y": 78 },
+      { "x": 228, "y": 78 },
+      { "x": 228, "y": 208 },
+      { "x": 420, "y": 208 }
+    ],
+    "buildTiles": [
+      { "x": 68, "y": 92, "affinity": "ice" },
+      { "x": 164, "y": 164, "affinity": "fire" },
+      { "x": 270, "y": 126, "affinity": "lightning" },
+      { "x": 330, "y": 62, "affinity": "earth" },
+      { "x": 346, "y": 240 }
+    ],
+    "specialTiles": [
+      { "x": 68, "y": 92, "type": "affinity", "element": "ice" },
+      { "x": 164, "y": 164, "type": "affinity", "element": "fire" },
+      { "x": 270, "y": 126, "type": "affinity", "element": "lightning" },
+      { "x": 330, "y": 62, "type": "affinity", "element": "earth" }
+    ],
+    "obstacles": []
+  },
+  {
+    "id": "obstacles",
+    "label": "Stonefield",
+    "variant": "obstacles",
+    "path": [
+      { "x": 20, "y": 92 },
+      { "x": 190, "y": 92 },
+      { "x": 190, "y": 206 },
+      { "x": 314, "y": 206 },
+      { "x": 314, "y": 118 },
+      { "x": 420, "y": 118 }
+    ],
+    "buildTiles": [
+      { "x": 82, "y": 156 },
+      { "x": 132, "y": 226 },
+      { "x": 246, "y": 78 },
+      { "x": 254, "y": 150 },
+      { "x": 354, "y": 196 }
+    ],
+    "specialTiles": [],
+    "obstacles": [
+      { "id": "rock-1", "x": 132, "y": 226, "hp": 1, "clearCost": 20 },
+      { "id": "rock-2", "x": 254, "y": 150, "hp": 1, "clearCost": 20 }
+    ]
+  },
+  {
+    "id": "portal",
+    "label": "Portal Crossing",
+    "variant": "portal",
+    "path": [
+      { "x": 20, "y": 78 },
+      { "x": 116, "y": 78 },
+      { "x": 116, "y": 206 },
+      { "x": 286, "y": 206 },
+      { "x": 286, "y": 82 },
+      { "x": 420, "y": 82 }
+    ],
+    "buildTiles": [
+      { "x": 70, "y": 154 },
+      { "x": 166, "y": 48 },
+      { "x": 188, "y": 150 },
+      { "x": 244, "y": 246 },
+      { "x": 340, "y": 154 }
+    ],
+    "specialTiles": [
+      { "x": 116, "y": 206, "type": "portal" },
+      { "x": 286, "y": 206, "type": "portal" }
+    ],
+    "obstacles": []
+  },
+  {
+    "id": "dynamic-path",
+    "label": "Shifting Creek",
+    "variant": "dynamic-path",
+    "path": [
+      { "x": 20, "y": 142 },
+      { "x": 150, "y": 142 },
+      { "x": 150, "y": 64 },
+      { "x": 320, "y": 64 },
+      { "x": 320, "y": 196 },
+      { "x": 420, "y": 196 }
+    ],
+    "alternatePaths": [
+      [
+        { "x": 20, "y": 206 },
+        { "x": 104, "y": 206 },
+        { "x": 104, "y": 86 },
+        { "x": 248, "y": 86 },
+        { "x": 248, "y": 174 },
+        { "x": 420, "y": 174 }
+      ],
+      [
+        { "x": 20, "y": 86 },
+        { "x": 180, "y": 86 },
+        { "x": 180, "y": 218 },
+        { "x": 330, "y": 218 },
+        { "x": 330, "y": 116 },
+        { "x": 420, "y": 116 }
+      ]
+    ],
+    "buildTiles": [
+      { "x": 74, "y": 122 },
+      { "x": 128, "y": 242 },
+      { "x": 216, "y": 142 },
+      { "x": 278, "y": 36 },
+      { "x": 360, "y": 242 }
+    ],
+    "specialTiles": [],
+    "obstacles": []
+  }
+]

@@ -1,0 +1,60 @@
+[
+  {
+    "id": "fire-tower",
+    "label": "Fire Tower",
+    "element": "fire",
+    "cost": 45,
+    "sellRefund": 24,
+    "range": 145,
+    "damage": 16,
+    "fireRateMs": 760,
+    "splashRadius": 38,
+    "burnDps": 3,
+    "burnDurationMs": 2200,
+    "upgradeCost": [55, 85],
+    "levelScale": [1, 1.45, 2.05]
+  },
+  {
+    "id": "ice-tower",
+    "label": "Ice Tower",
+    "element": "ice",
+    "cost": 40,
+    "sellRefund": 22,
+    "range": 135,
+    "damage": 9,
+    "fireRateMs": 880,
+    "slowPercent": 0.34,
+    "slowDurationMs": 1700,
+    "stunDurationMs": 650,
+    "upgradeCost": [50, 80],
+    "levelScale": [1, 1.35, 1.9]
+  },
+  {
+    "id": "lightning-tower",
+    "label": "Lightning Tower",
+    "element": "lightning",
+    "cost": 48,
+    "sellRefund": 25,
+    "range": 130,
+    "damage": 11,
+    "fireRateMs": 520,
+    "chainTargets": 3,
+    "chainFalloff": 0.72,
+    "upgradeCost": [58, 90],
+    "levelScale": [1, 1.38, 2]
+  },
+  {
+    "id": "earth-tower",
+    "label": "Earth Tower",
+    "element": "earth",
+    "cost": 55,
+    "sellRefund": 30,
+    "range": 120,
+    "damage": 27,
+    "fireRateMs": 1150,
+    "knockback": 0.055,
+    "knockbackChance": 0.42,
+    "upgradeCost": [65, 105],
+    "levelScale": [1, 1.5, 2.2]
+  }
+]

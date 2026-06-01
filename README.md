@@ -233,6 +233,17 @@ RLS is enabled in `supabase/schema.sql`. Direct browser writes to sensitive tabl
 - `chess:turn_changed`
 - `chess:turn_timeout`
 - `chess:end`
+- `elemental:sync`
+- `elemental:select_send_element`
+- `elemental:select_monster_type`
+- `elemental:build_tower`
+- `elemental:upgrade_tower`
+- `elemental:sell_tower`
+- `elemental:set_tower_target_mode`
+- `elemental:snapshot`
+- `elemental:event`
+- `elemental:error`
+- `elemental:end`
 
 The Socket.IO server runs as a separate long-running Node process in `server/index.ts`. The web app gets a short-lived socket token from `/api/socket-token`; the socket server verifies that token with `SESSION_SECRET`.
 
@@ -243,11 +254,39 @@ Game metadata lives in `lib/constants.ts`. Each game declares `minPlayers` and `
 - `Flappy Rush`: 1-4 active players.
 - `Fleet Duel`: exactly 2 active players.
 - `Chess`: exactly 2 active players.
+- `Elemental Duels 2D`: exactly 2 active players.
 - `Ô Ăn Quan`: exactly 2 active players.
 
 Turn-based games use a server-owned 30 second turn timer. The client only renders the countdown from server timestamps; if a player does not move in time, the socket server skips their turn and broadcasts the next snapshot. This applies to `Fleet Duel`, `Ô Ăn Quan`, and future turn-based games.
 
 For timeout behavior, `Fleet Duel` and `Ô Ăn Quan` skip the player on timeout. `Chess` ends immediately and the timed-out player loses. Turn-based clients also show a short `Your turn` popup when the server switches the turn to the current user.
+
+## Elemental Duels 2D
+
+`Elemental Duels 2D` is a server-authoritative 1v1 tower defense duel rendered with Phaser on the client. The client only sends actions like selected send element, selected monster type, build tower, upgrade tower, sell tower, and tower target mode. The Socket.IO server owns monster movement, tower cooldowns, damage, status effects, monster death, gold, base HP, and winner.
+
+Rules and systems:
+
+- Each player starts with 20 base HP and 120 gold.
+- Neutral waves enter both fields, and passive income grants gold over time.
+- Build towers on valid build tiles only; the server rejects path, occupied, obstacle, and no-gold builds.
+- Element cycle: Fire beats Lightning, Lightning beats Earth, Earth beats Ice, Ice beats Fire.
+- Advantage damage is 1.5x; disadvantage damage is 0.5x.
+- Fire applies burn, Ice applies slow/stun, Lightning chains, and Earth can knock monsters back.
+- When you kill a monster, the server sends a new monster to the opponent using your selected element and monster profile.
+- Maps are selected from data-driven map definitions, including classic, buff tiles, and obstacle variants.
+
+Manual QA:
+
+1. Account A creates a room, chooses `Elemental Duels 2D`, and sees `1/2` players.
+2. Account B joins, clicks Ready, then A starts.
+3. Both players enter a Phaser game screen with base HP, gold, map name, build panel, and send profile panel.
+4. Build a tower on a valid tile and confirm gold decreases.
+5. Try building on a path, occupied tile, obstacle tile, or without enough gold; the server should reject it.
+6. Wait for waves; monsters move and tower attacks come from server snapshots.
+7. Change selected send element/type, kill monsters, and verify sent monsters appear on the opponent field.
+8. Let one base reach 0 HP; the winner overlay appears and the host can Back to Lobby.
+9. Refresh during play; the client requests the latest `elemental:snapshot` and resumes rendering.
 
 ## Testing Flappy Rush Locally
 
