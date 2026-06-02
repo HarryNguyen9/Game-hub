@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
 import { GameResultDialog } from "@/components/games/game-result-dialog";
-import { Button } from "@/components/ui/button";
 import { ToastPopup } from "@/components/ui/toast-popup";
 import { ELEMENTAL_CONFIG } from "@/lib/games/elemental-duels/config";
 import type { ElementalSnapshot } from "@/lib/games/elemental-duels/types";
@@ -45,6 +44,7 @@ export function ElementalDuelsGame({
   const winner = useMemo(() => (snapshot?.winnerUserId ? snapshot.players[snapshot.winnerUserId] : null), [snapshot]);
   const you = snapshot?.players[currentUserId] || null;
   const opponent = snapshot ? Object.values(snapshot.players).find((player) => player.userId !== currentUserId) || null : null;
+  const showDebugStats = process.env.NODE_ENV !== "production";
   const debugStats = useMemo(() => {
     if (!snapshot || !you) return null;
     const totalMonsters = Object.values(snapshot.players).reduce((sum, player) => sum + player.monsters.length, 0);
@@ -152,14 +152,17 @@ export function ElementalDuelsGame({
       onToggleExpanded={onToggleExpanded}
       header={
         <div className="min-w-0">
-          <p className="text-sm font-black text-orange-600">{connected ? "Elemental server connected" : "Reconnecting"}</p>
           <h3 className="truncate text-2xl font-black">Elemental Duels 2D</h3>
+          <button
+            type="button"
+            className="mt-2 inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-black text-slate-600 shadow-sm ring-1 ring-slate-100"
+            onClick={() => setMuted((value) => !value)}
+            aria-label={muted ? "Unmute Elemental Duels" : "Mute Elemental Duels"}
+          >
+            {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+            {muted ? "Muted" : "Sound"}
+          </button>
           <p className="text-sm font-bold text-slate-500">{snapshot.map.label} · {snapshot.status}</p>
-        </div>
-      }
-      footer={
-        <div className="grid justify-items-center gap-3">
-          <p className="text-center text-sm font-bold text-slate-500">Build towers, counter elements, and send defeated monsters to your rival.</p>
         </div>
       }
     >
@@ -181,22 +184,10 @@ export function ElementalDuelsGame({
         icon={<span className="text-2xl">🔥</span>}
       />
       <ElementalHud snapshot={snapshot} currentUserId={currentUserId} connected={connected} />
-      <div className="grid gap-3 rounded-3xl bg-orange-50/80 p-4 text-sm font-bold text-slate-600 md:grid-cols-3">
-        <p><span className="font-black text-orange-700">Build towers:</span> tap a glowing tile, then choose a tower.</p>
-        <p><span className="font-black text-cyan-700">Send monsters:</span> pick an element/profile before kills.</p>
-        <p><span className="font-black text-emerald-700">Counters:</span> Fire → Lightning → Earth → Ice → Fire.</p>
-      </div>
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-3xl bg-white px-4 py-3 shadow-sm">
-        <div className="text-sm font-black text-slate-600">
-          Enemy preview: {opponent?.displayName || "Opponent"} · {opponent?.baseHp ?? 0} HP · {opponent?.monsters.length ?? 0} monsters · {opponent?.towers.length ?? 0} towers
-        </div>
-        <Button type="button" variant="secondary" className="px-3" onClick={() => setMuted((value) => !value)} aria-label={muted ? "Unmute Elemental Duels" : "Mute Elemental Duels"}>
-          {muted ? <VolumeX size={16} /> : <Volume2 size={16} />} {muted ? "Muted" : "Sound"}
-        </Button>
-      </div>
-      <div className="grid gap-4 xl:grid-cols-[1fr_19rem]">
+      <div className={`grid gap-4 ${showDebugStats && debugStats ? "xl:grid-cols-[1fr_19rem]" : ""}`}>
         <div ref={fieldRef} className="relative">
           <ElementalDuelsPhaser snapshot={snapshot} currentUserId={currentUserId} onSelect={setSelection} />
+          <ElementalOpponentPanel snapshot={snapshot} currentUserId={currentUserId} onSelectElement={selectSendElement} onSelectMonster={selectMonsterType} />
           <ElementalContextMenu
             snapshot={snapshot}
             currentUserId={currentUserId}
@@ -209,9 +200,8 @@ export function ElementalDuelsGame({
             onClose={() => setSelection(null)}
           />
         </div>
-        <div className="grid content-start gap-4">
-          <ElementalOpponentPanel snapshot={snapshot} currentUserId={currentUserId} onSelectElement={selectSendElement} onSelectMonster={selectMonsterType} />
-          {process.env.NODE_ENV !== "production" && debugStats && (
+        {showDebugStats && debugStats && (
+          <div className="grid content-start gap-4">
             <div className="rounded-3xl bg-slate-900 p-4 text-xs font-bold text-slate-100">
               <p className="mb-2 text-sm font-black text-white">Dev balance</p>
               <p>Monsters: {debugStats.totalMonsters}</p>
@@ -220,8 +210,8 @@ export function ElementalDuelsGame({
               <p>Income: {ELEMENTAL_CONFIG.passiveIncome}g / {(ELEMENTAL_CONFIG.passiveIncomeMs / 1000).toFixed(1)}s</p>
               <p>Base HP: {you?.baseHp ?? 0} / {opponent?.baseHp ?? 0}</p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </GameFullscreenShell>
   );

@@ -5,7 +5,7 @@ import { ELEMENTAL_CONFIG } from "@/lib/games/elemental-duels/config";
 import type { ElementalMonster, ElementalSnapshot, Point } from "@/lib/games/elemental-duels/types";
 import type { ElementalSelection } from "./ElementalContextMenu";
 import { drawMonsterShadow, drawMonsterStatusEffects } from "./render/effects";
-import { loadElementalAssets, projectileTextureKey, towerTextureKey } from "./render/loadElementalAssets";
+import { elementalAssetTextureKeys, loadElementalAssets, projectileTextureKey, towerTextureKey, trimmedTextureKey } from "./render/loadElementalAssets";
 import { ensureMonsterTextures, monsterTextureKey, monsterVisualScale } from "./render/monsterTextures";
 import { drawProjectile, drawProjectileImpact, projectileFromEvent, projectilePosition, type ElementalProjectile } from "./render/projectileRenderer";
 
@@ -27,6 +27,23 @@ type DisplayPoint = {
   y: number;
 };
 
+type TextureLike = {
+  getSourceImage: () => unknown;
+};
+
+type CanvasTextureLike = {
+  getContext: () => CanvasRenderingContext2D;
+  refresh: () => void;
+};
+
+type TextureSceneLike = {
+  textures: {
+    exists: (key: string) => boolean;
+    get: (key: string) => TextureLike;
+    createCanvas: (key: string, width: number, height: number) => CanvasTextureLike | null;
+  };
+};
+
 function elementColor(element: string) {
   if (element === "fire") return 0xfb7185;
   if (element === "ice") return 0x38bdf8;
@@ -43,6 +60,142 @@ function bob(monster: ElementalMonster, now: number) {
   if (monster.monsterType === "fire-runner") return Math.sin(now / 120 + monster.x) * 2.4;
   if (monster.element === "lightning") return Math.sin(now / 80 + monster.y) * 1.8;
   return Math.sin(now / 260 + monster.x) * 1.4;
+}
+
+function getSourceSize(source: unknown) {
+  const image = source as { width?: number; height?: number; naturalWidth?: number; naturalHeight?: number };
+  return {
+    width: image.naturalWidth || image.width || 0,
+    height: image.naturalHeight || image.height || 0
+  };
+}
+
+function colorDistanceSquared(data: Uint8ClampedArray, offset: number, color: [number, number, number]) {
+  const red = data[offset] - color[0];
+  const green = data[offset + 1] - color[1];
+  const blue = data[offset + 2] - color[2];
+  return red * red + green * green + blue * blue;
+}
+
+function createTrimmedTexture(scene: TextureSceneLike, textureKey: string) {
+  const outputKey = trimmedTextureKey(textureKey);
+  if (!scene.textures.exists(textureKey) || scene.textures.exists(outputKey)) return;
+
+  const source = scene.textures.get(textureKey).getSourceImage();
+  const { width, height } = getSourceSize(source);
+  if (!width || !height || typeof document === "undefined") return;
+
+  const probe = document.createElement("canvas");
+  probe.width = width;
+  probe.height = height;
+  const probeContext = probe.getContext("2d");
+  if (!probeContext) return;
+
+  probeContext.drawImage(source as CanvasImageSource, 0, 0, width, height);
+  let imageData: ImageData;
+  try {
+    imageData = probeContext.getImageData(0, 0, width, height);
+  } catch {
+    return;
+  }
+
+  const data = imageData.data;
+  const cornerOffsets = [
+    0,
+    (width - 1) * 4,
+    (height - 1) * width * 4,
+    ((height - 1) * width + width - 1) * 4
+  ];
+  const backgroundColors = cornerOffsets
+    .filter((offset) => data[offset + 3] > 12)
+    .map((offset) => [data[offset], data[offset + 1], data[offset + 2]] as [number, number, number]);
+  const backgroundToleranceSquared = 34 * 34;
+  const isBackgroundCandidate = (offset: number) => {
+    const transparent = data[offset + 3] <= 12;
+    const cornerBackground = backgroundColors.length > 0 && backgroundColors.some((color) => colorDistanceSquared(data, offset, color) <= backgroundToleranceSquared);
+    return transparent || cornerBackground;
+  };
+  const backgroundMask = new Uint8Array(width * height);
+  const queue: number[] = [];
+  const enqueue = (x: number, y: number) => {
+    if (x < 0 || y < 0 || x >= width || y >= height) return;
+    const index = y * width + x;
+    if (backgroundMask[index]) return;
+    if (!isBackgroundCandidate(index * 4)) return;
+    backgroundMask[index] = 1;
+    queue.push(index);
+  };
+
+  for (let x = 0; x < width; x += 1) {
+    enqueue(x, 0);
+    enqueue(x, height - 1);
+  }
+  for (let y = 1; y < height - 1; y += 1) {
+    enqueue(0, y);
+    enqueue(width - 1, y);
+  }
+
+  for (let cursor = 0; cursor < queue.length; cursor += 1) {
+    const index = queue[cursor];
+    const x = index % width;
+    const y = Math.floor(index / width);
+    enqueue(x + 1, y);
+    enqueue(x - 1, y);
+    enqueue(x, y + 1);
+    enqueue(x, y - 1);
+  }
+
+  let left = width;
+  let right = -1;
+  let top = height;
+  let bottom = -1;
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const index = y * width + x;
+      if (backgroundMask[index] || data[index * 4 + 3] <= 12) continue;
+      left = Math.min(left, x);
+      right = Math.max(right, x);
+      top = Math.min(top, y);
+      bottom = Math.max(bottom, y);
+    }
+  }
+
+  if (right < left || bottom < top) return;
+
+  const padding = 2;
+  left = Math.max(0, left - padding);
+  top = Math.max(0, top - padding);
+  right = Math.min(width - 1, right + padding);
+  bottom = Math.min(height - 1, bottom + padding);
+
+  const trimmedWidth = right - left + 1;
+  const trimmedHeight = bottom - top + 1;
+  if (trimmedWidth === width && trimmedHeight === height) return;
+
+  const texture = scene.textures.createCanvas(outputKey, trimmedWidth, trimmedHeight);
+  if (!texture) return;
+  const context = texture.getContext();
+  const trimmedData = context.createImageData(trimmedWidth, trimmedHeight);
+  for (let y = 0; y < trimmedHeight; y += 1) {
+    for (let x = 0; x < trimmedWidth; x += 1) {
+      const sourceIndex = (top + y) * width + left + x;
+      const sourceOffset = sourceIndex * 4;
+      const targetOffset = (y * trimmedWidth + x) * 4;
+      trimmedData.data[targetOffset] = data[sourceOffset];
+      trimmedData.data[targetOffset + 1] = data[sourceOffset + 1];
+      trimmedData.data[targetOffset + 2] = data[sourceOffset + 2];
+      trimmedData.data[targetOffset + 3] = backgroundMask[sourceIndex] ? 0 : data[sourceOffset + 3];
+    }
+  }
+  context.putImageData(trimmedData, 0, 0);
+  texture.refresh();
+}
+
+function createTrimmedElementalTextures(scene: TextureSceneLike) {
+  for (const textureKey of elementalAssetTextureKeys()) {
+    createTrimmedTexture(scene, textureKey);
+  }
 }
 
 export function ElementalDuelsPhaser({
@@ -92,6 +245,7 @@ export function ElementalDuelsPhaser({
         }
 
         create() {
+          createTrimmedElementalTextures(this);
           ensureMonsterTextures(this);
           this.field = this.add.graphics();
           this.field.setDepth(0);
@@ -167,7 +321,7 @@ export function ElementalDuelsPhaser({
           const liveTowerIds = new Set<string>();
           for (const tower of you.towers) {
             liveTowerIds.add(tower.id);
-            const key = towerTextureKey(tower.element);
+            const key = this.assetTextureKey(towerTextureKey(tower.element));
             if (this.textures.exists(key)) {
               const sprite = this.towerSprites.get(tower.id) || this.add.image(tower.x, tower.y - 2, key);
               if (!this.towerSprites.has(tower.id)) {
@@ -221,6 +375,11 @@ export function ElementalDuelsPhaser({
           sprite.setDisplaySize(width * ratio, height * ratio);
         }
 
+        assetTextureKey(textureKey: string) {
+          const trimmed = trimmedTextureKey(textureKey);
+          return this.textures.exists(trimmed) ? trimmed : textureKey;
+        }
+
         drawMonsters(current: ElementalSnapshot, now: number) {
           const you = current.players[currentUserId];
           if (!you) return;
@@ -240,7 +399,7 @@ export function ElementalDuelsPhaser({
             drawMonsterShadow(this.field, { x: display.x, y }, scale);
             drawMonsterStatusEffects(this.effects, monster, { x: display.x, y }, now, scale);
 
-            const key = monsterTextureKey(monster);
+            const key = this.assetTextureKey(monsterTextureKey(monster));
             const sprite = this.monsterSprites.get(monster.id) || this.add.image(display.x, y, key);
             if (!this.monsterSprites.has(monster.id)) {
               sprite.setDepth(5);
@@ -276,14 +435,15 @@ export function ElementalDuelsPhaser({
           for (const projectile of this.projectiles) {
             liveProjectileIds.add(projectile.id);
             const key = projectileTextureKey(projectile.element);
+            const displayKey = this.assetTextureKey(key);
             if (this.textures.exists(key)) {
               const point = projectilePosition(projectile, now);
-              const sprite = this.projectileSprites.get(projectile.id) || this.add.image(point.x, point.y, key);
+              const sprite = this.projectileSprites.get(projectile.id) || this.add.image(point.x, point.y, displayKey);
               if (!this.projectileSprites.has(projectile.id)) {
                 sprite.setDepth(7);
                 this.projectileSprites.set(projectile.id, sprite);
               }
-              sprite.setTexture(key);
+              sprite.setTexture(displayKey);
               sprite.setPosition(point.x, point.y);
               sprite.setAlpha(Math.max(0, 1 - point.progress * 0.35));
               this.fitImage(sprite, projectile.element === "earth" ? 36 : 30, projectile.element === "earth" ? 36 : 30);

@@ -14,6 +14,19 @@ type AssetScene = {
   };
 };
 
+export function trimmedTextureKey(textureKey: string) {
+  return `${textureKey}-trimmed`;
+}
+
+export function elementalAssetTextureKeys() {
+  return [
+    ...ELEMENTAL_MONSTER_ASSETS.map((asset) => asset.textureKey),
+    ...Object.values(ELEMENTAL_TOWER_ASSETS).map((asset) => asset.textureKey),
+    ...Object.values(ELEMENTAL_PROJECTILE_ASSETS).map((asset) => asset.textureKey),
+    ...ELEMENTAL_EFFECT_ASSETS.map((asset) => asset.textureKey)
+  ];
+}
+
 export const ELEMENTAL_MONSTER_ASSETS: AssetEntry[] = [
   { textureKey: "monster-fire-normal", path: "/games/elemental-duels/monsters/fire-normal.png" },
   { textureKey: "monster-ice-normal", path: "/games/elemental-duels/monsters/ice-normal.png" },
