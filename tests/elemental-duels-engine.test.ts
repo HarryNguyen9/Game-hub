@@ -85,7 +85,10 @@ describe("elemental duels engine", () => {
       targetMonsterId: "m1"
     });
     expect(attackEvent?.from).toEqual({ x: tile.x, y: tile.y });
-    expect(attackEvent?.to.x).toBeGreaterThan(tile.x);
+    expect(attackEvent?.to).toEqual({
+      x: state.players.u1.monsters[0].x,
+      y: state.players.u1.monsters[0].y
+    });
     expect(state.players.u1.monsters[0].hp).toBeLessThan(100);
   });
 });

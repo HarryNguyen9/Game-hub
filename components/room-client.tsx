@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { io, type Socket } from "socket.io-client";
-import { Check, Gamepad2, LogOut, Play, RotateCcw, X } from "lucide-react";
+import { Check, Gamepad2, LogOut, Play, RotateCcw, UserMinus, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ToastPopup } from "@/components/ui/toast-popup";
@@ -223,6 +223,8 @@ export function RoomClient({
   const [pendingGameKey, setPendingGameKey] = useState<string | null>(null);
   const [gamePickerConfirming, setGamePickerConfirming] = useState(false);
   const [opponentLeftNotice, setOpponentLeftNotice] = useState<OpponentLeftNotice | null>(null);
+  const [kickTarget, setKickTarget] = useState<Member | null>(null);
+  const [kickedNotice, setKickedNotice] = useState<string | null>(null);
 
   useEffect(() => {
     if (!gamePickerOpen) return;
@@ -300,6 +302,12 @@ export function RoomClient({
         setGameExpanded(false);
         setOpponentLeftNotice({ message, action });
       });
+      nextSocket.on("room:kicked", ({ roomId: kickedRoomId, message }: { roomId: string; message: string }) => {
+        if (kickedRoomId !== roomId) return;
+        setPendingAction(null);
+        setGameExpanded(false);
+        setKickedNotice(message || "Bạn đã bị host mời ra khỏi phòng.");
+      });
     }
 
     connectSocket();
@@ -329,6 +337,24 @@ export function RoomClient({
       router.push("/dashboard");
     }
     router.refresh();
+  }
+
+  function acknowledgeKicked() {
+    setKickedNotice(null);
+    router.push("/dashboard");
+    router.refresh();
+  }
+
+  function confirmKickPlayer() {
+    if (!kickTarget || pendingAction) return;
+    if (!socket?.connected) {
+      setMessage("Realtime server is not connected.");
+      setKickTarget(null);
+      return;
+    }
+    setPendingAction(`kick:${kickTarget.userId}`);
+    socket.emit("room:kick_player", { roomId, targetUserId: kickTarget.userId });
+    setKickTarget(null);
   }
 
   function closeGamePicker() {
@@ -532,6 +558,41 @@ export function RoomClient({
             </div>
           </div>
         )}
+        {kickTarget && (
+          <div className="fixed inset-0 z-[60] grid place-items-center bg-slate-950/40 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Kick player confirmation">
+            <div className="w-full max-w-sm rounded-[2rem] bg-white p-6 text-center shadow-2xl">
+              <div className="mx-auto grid size-14 place-items-center rounded-3xl bg-rose-100 text-rose-600">
+                <UserMinus size={26} />
+              </div>
+              <p className="mt-4 text-2xl font-black text-slate-900">Kick player?</p>
+              <p className="mt-3 text-sm font-bold leading-6 text-slate-500">
+                Bạn có chắc muốn mời <span className="text-slate-900">{kickTarget.displayName}</span> ra khỏi phòng không?
+              </p>
+              <div className="mt-5 grid grid-cols-2 gap-2">
+                <Button type="button" variant="secondary" onClick={() => setKickTarget(null)}>
+                  Hủy
+                </Button>
+                <Button type="button" variant="danger" onClick={confirmKickPlayer}>
+                  Xác nhận
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        {kickedNotice && (
+          <div className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/40 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Kicked from room">
+            <div className="w-full max-w-sm rounded-[2rem] bg-white p-6 text-center shadow-2xl">
+              <div className="mx-auto grid size-14 place-items-center rounded-3xl bg-amber-100 text-amber-700">
+                <UserMinus size={26} />
+              </div>
+              <p className="mt-4 text-2xl font-black text-slate-900">Bạn đã bị kick</p>
+              <p className="mt-3 text-sm font-bold leading-6 text-slate-500">{kickedNotice}</p>
+              <Button className="mt-5 w-full" type="button" onClick={acknowledgeKicked}>
+                OK
+              </Button>
+            </div>
+          </div>
+        )}
         <ToastPopup message={message} onDismiss={() => setMessage("")} />
         {gameExpanded && selectedGame && (
           <div className="fixed right-16 top-5 z-[70]">
@@ -695,24 +756,40 @@ export function RoomClient({
       <aside className="rounded-[2rem] bg-white/88 p-[clamp(12px,4vw,20px)] shadow-sm">
         <h2 className="mb-4 text-lg font-black">Room members</h2>
         <div className="grid gap-3">
-          {members.map((member) => (
-            <div key={member.userId} className="grid grid-cols-[auto_1fr] gap-3 rounded-3xl bg-slate-50 p-3 sm:flex sm:items-center">
-              <Avatar displayName={member.displayName} username={member.username} avatarUrl={member.avatarUrl} />
-              <div className="min-w-0">
-                <p className="break-words font-black leading-tight">{member.displayName}</p>
-                <p className="mt-1 flex flex-wrap gap-x-1 gap-y-0.5 text-sm font-bold leading-snug text-slate-500">
-                  <span>@{member.username}</span>
-                  <span>·</span>
-                  <span>{titleLabel(member.role)}</span>
-                  <span>·</span>
-                  <span>{titleLabel(member.participationStatus)}</span>
-                </p>
+          {members.map((member) => {
+            const canKick = isHost && status === "waiting" && member.role === "player" && member.userId !== currentUserId;
+            return (
+              <div key={member.userId} className="grid grid-cols-[auto_1fr] gap-3 rounded-3xl bg-slate-50 p-3 sm:flex sm:items-center">
+                <Avatar displayName={member.displayName} username={member.username} avatarUrl={member.avatarUrl} />
+                <div className="min-w-0">
+                  <p className="break-words font-black leading-tight">{member.displayName}</p>
+                  <p className="mt-1 flex flex-wrap gap-x-1 gap-y-0.5 text-sm font-bold leading-snug text-slate-500">
+                    <span>@{member.username}</span>
+                    <span>·</span>
+                    <span>{titleLabel(member.role)}</span>
+                    <span>·</span>
+                    <span>{titleLabel(member.participationStatus)}</span>
+                  </p>
+                </div>
+                <div className="col-span-2 flex flex-wrap items-center gap-2 sm:col-span-1 sm:ml-auto sm:justify-end">
+                  <span className={`w-fit rounded-full px-3 py-1 text-xs font-black ${status === "waiting" && displayReady(member) ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-600"}`}>
+                    {status === "waiting" ? (member.role === "host" ? (displayReady(member) ? "Host Ready" : "Host Not Ready") : displayReady(member) ? "Ready" : "Not Ready") : titleLabel(status)}
+                  </span>
+                  {canKick && (
+                    <Button
+                      type="button"
+                      variant="danger"
+                      disabled={Boolean(pendingAction)}
+                      onClick={() => setKickTarget(member)}
+                      className="min-h-8 rounded-full px-3 py-1 text-xs"
+                    >
+                      <UserMinus size={14} /> Kick
+                    </Button>
+                  )}
+                </div>
               </div>
-              <span className={`col-span-2 w-fit rounded-full px-3 py-1 text-xs font-black sm:col-span-1 sm:ml-auto ${status === "waiting" && displayReady(member) ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-600"}`}>
-                {status === "waiting" ? (member.role === "host" ? (displayReady(member) ? "Host Ready" : "Host Not Ready") : displayReady(member) ? "Ready" : "Not Ready") : titleLabel(status)}
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </aside>
     </div>

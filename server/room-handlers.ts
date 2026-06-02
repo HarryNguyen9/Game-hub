@@ -347,6 +347,55 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
     }
   });
 
+  socket.on("room:kick_player", async ({ roomId, targetUserId }: { roomId?: string; targetUserId?: string }) => {
+    if (!roomId) return roomError(socket, "Room id is required.");
+    if (!targetUserId) return roomError(socket, "Player id is required.");
+    if (targetUserId === user.userId) return roomError(socket, "You cannot kick yourself.");
+
+    const supabase = serviceClient();
+    const { data: room, error: roomErrorResult } = await supabase
+      .from("rooms")
+      .select("host_user_id, status")
+      .eq("id", roomId)
+      .single();
+    if (roomErrorResult || !room) return roomError(socket, roomErrorResult?.message || "Room not found.");
+
+    const requester = await ensureMember(roomId, user.userId);
+    if (!requester || requester.role !== "host" || room.host_user_id !== user.userId) {
+      return roomError(socket, "Only the host can kick players.");
+    }
+    if (room.status !== "waiting") {
+      return roomError(socket, "Players can only be kicked before the game starts.");
+    }
+
+    const { data: targetMember, error: targetError } = await supabase
+      .from("room_members")
+      .select("role, app_users(username, display_name)")
+      .match({ room_id: roomId, user_id: targetUserId })
+      .maybeSingle();
+    if (targetError) return roomError(socket, `Could not load player: ${targetError.message}`);
+    if (!targetMember) return roomError(socket, "Player is no longer in this room.");
+    if (targetMember.role === "host") return roomError(socket, "Host cannot be kicked.");
+
+    const { error } = await supabase.from("room_members").delete().match({ room_id: roomId, user_id: targetUserId });
+    if (error) return roomError(socket, `Could not kick player: ${error.message}`);
+
+    const channel = `room:${roomId}`;
+    const targetUser = Array.isArray(targetMember.app_users) ? targetMember.app_users[0] : targetMember.app_users;
+    io.to(`user:${targetUserId}`).emit("room:kicked", {
+      roomId,
+      message: "Bạn đã bị host mời ra khỏi phòng."
+    });
+    io.in(`user:${targetUserId}`).socketsLeave(channel);
+    await emitRoom(io, roomId);
+    console.log("[room:kick_player]", {
+      roomId,
+      hostUserId: user.userId,
+      targetUserId,
+      targetUsername: targetUser?.username || null
+    });
+  });
+
   socket.on("room:leave", async ({ roomId }: { roomId?: string }) => {
     if (!roomId) return roomError(socket, "Room id is required.");
     const supabase = serviceClient();
