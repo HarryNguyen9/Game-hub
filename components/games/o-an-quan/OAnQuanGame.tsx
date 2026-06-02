@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { RotateCcw, Trophy } from "lucide-react";
 import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
+import { GameMuteButton, useGameAudio } from "@/components/games/use-game-audio";
 import { Button } from "@/components/ui/button";
 import { ToastPopup } from "@/components/ui/toast-popup";
 import { OAQ_CONFIG } from "@/lib/games/o-an-quan/config";
@@ -152,6 +153,8 @@ export function OAnQuanGame({
   const lastTurnRef = useRef<string | null>(initialSnapshot?.currentTurnUserId ?? null);
   const previousBoardRef = useRef<OAnQuanPit[] | null>(initialSnapshot ? cloneBoard(initialSnapshot.board) : null);
   const snapshotRef = useRef<OAnQuanSnapshot | null>(initialSnapshot ?? null);
+  const previousStatusRef = useRef<string | null>(initialSnapshot?.status ?? null);
+  const { muted, setMuted, playTone } = useGameAudio("o-an-quan-muted");
   const [turnReady, setTurnReady] = useState(() => {
     if (!initialSnapshot) return false;
     return initialSnapshot.turnStartedAt <= initialSnapshot.serverTime;
@@ -180,6 +183,7 @@ export function OAnQuanGame({
 
   function submit(direction: OAnQuanDirection) {
     if (!snapshot || selectedPit === null || !isMyTurn || isAnimating) return;
+    playTone("move");
     move(snapshot.sessionId, selectedPit, direction);
     setSelectedPit(null);
   }
@@ -248,7 +252,10 @@ export function OAnQuanGame({
     let clearCaptureTimer: number | null = null;
     if (lastMove?.captured && lastMove.captured > 0) {
       const captureDelay = Math.max(0, (frames.length - 1) * OAQ_CONFIG.moveAnimationFrameMs - OAQ_CONFIG.moveAnimationFrameMs);
-      captureTimer = window.setTimeout(() => setCapturePopup(`+${lastMove.captured} pts`), captureDelay);
+      captureTimer = window.setTimeout(() => {
+        playTone("score");
+        setCapturePopup(`+${lastMove.captured} pts`);
+      }, captureDelay);
       clearCaptureTimer = window.setTimeout(() => setCapturePopup(null), captureDelay + 1700);
     }
     const timer = window.setInterval(() => {
@@ -268,6 +275,7 @@ export function OAnQuanGame({
         if (captureTimer) { window.clearTimeout(captureTimer); captureTimer = null; }
         if (clearCaptureTimer) { window.clearTimeout(clearCaptureTimer); clearCaptureTimer = null; }
         if (lastMove?.captured && lastMove.captured > 0) {
+          playTone("score");
           setCapturePopup(`+${lastMove.captured} pts`);
           clearCaptureTimer = window.setTimeout(() => setCapturePopup(null), 1700);
         }
@@ -288,7 +296,7 @@ export function OAnQuanGame({
       if (clearCaptureTimer) window.clearTimeout(clearCaptureTimer);
       window.clearInterval(timer);
     };
-  }, [moveId]);
+  }, [moveId, playTone]);
 
   useEffect(() => {
     if (!hasSnapshot) return;
@@ -296,17 +304,29 @@ export function OAnQuanGame({
     lastTurnRef.current = snapshotCurrentTurnUserId;
     if (snapshotStatus !== "playing" || snapshotCurrentTurnUserId !== currentUserId || previousTurn === currentUserId) return;
     const delay = Math.max(0, snapshotTurnStartedAt - snapshotServerTime);
-    const showTimer = window.setTimeout(() => setTurnNotice(true), delay);
+    const showTimer = window.setTimeout(() => {
+      playTone("turn");
+      setTurnNotice(true);
+    }, delay);
     const hideTimer = window.setTimeout(() => setTurnNotice(false), delay + 1700);
     return () => {
       window.clearTimeout(showTimer);
       window.clearTimeout(hideTimer);
     };
-  }, [currentUserId, hasSnapshot, snapshotCurrentTurnUserId, snapshotServerTime, snapshotStatus, snapshotTurnStartedAt]);
+  }, [currentUserId, hasSnapshot, playTone, snapshotCurrentTurnUserId, snapshotServerTime, snapshotStatus, snapshotTurnStartedAt]);
+
+  useEffect(() => {
+    if (!snapshot) return;
+    if (previousStatusRef.current !== "ended" && snapshot.status === "ended") playTone("end");
+    previousStatusRef.current = snapshot.status;
+  }, [playTone, snapshot]);
 
   const header = (
     <div className="grid gap-3 sm:grid-cols-[auto_1fr] sm:items-center">
-      <span className={`w-fit rounded-full px-3 py-1 text-xs font-black ${connected ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>{connected ? "Connected" : "Reconnecting"}</span>
+      <div className="flex items-center gap-2">
+        <span className={`w-fit rounded-full px-3 py-1 text-xs font-black ${connected ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>{connected ? "Connected" : "Reconnecting"}</span>
+        <GameMuteButton muted={muted} onToggle={() => setMuted((value) => !value)} label="Ô Ăn Quan" />
+      </div>
       {snapshot && (
         <div className="min-w-0">
           <div className="mb-1 flex items-center justify-between gap-3 text-xs font-black text-slate-500">

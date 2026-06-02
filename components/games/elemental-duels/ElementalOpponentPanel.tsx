@@ -16,7 +16,7 @@ export function ElementalOpponentPanel({
 }) {
   const you = snapshot.players[currentUserId];
   return (
-    <div className="grid gap-3 rounded-3xl bg-white p-4 shadow-sm">
+    <div className="grid max-h-[min(42vh,26rem)] gap-3 overflow-y-auto overscroll-contain rounded-3xl bg-white p-4 pb-24 shadow-sm md:pb-4 xl:max-h-none">
       <div>
         <p className="font-black">Send profile</p>
         <p className="text-sm font-bold text-slate-500">Killed monsters revive on the rival field.</p>

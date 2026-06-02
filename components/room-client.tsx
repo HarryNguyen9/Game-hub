@@ -595,8 +595,8 @@ export function RoomClient({
         )}
         <ToastPopup message={message} onDismiss={() => setMessage("")} />
         {gameExpanded && selectedGame && (
-          <div className="fixed right-16 top-5 z-[70]">
-            <GameRulesInfoButton game={selectedGame} className="size-10" />
+          <div className="fixed right-24 top-5 z-[70] sm:right-28">
+            <GameRulesInfoButton game={selectedGame} className="size-9" />
           </div>
         )}
         {isLateJoiner && (

@@ -7,7 +7,7 @@ import type { GameConfig } from "@/lib/constants";
 function gameTypeLabel(game: GameConfig) {
   if (game.gameType === "turn-based") return "Turn-based";
   if (game.gameType === "realtime") return "Realtime";
-  if (game.gameType === "realtime-strategy") return "Realtime strategy";
+  if (game.gameType === "realtime-strategy") return "Strategy";
   return "Watch room";
 }
 
@@ -35,12 +35,14 @@ export function GameRulesModal({
     <div className="fixed inset-0 z-[80] grid place-items-center bg-slate-950/40 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={`${game.name} rules`}>
       <div className="flex max-h-[90dvh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] bg-white shadow-2xl">
         <div className={`shrink-0 bg-gradient-to-br ${game.accent} p-5`}>
-          <div className="flex items-start justify-between gap-3">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
             <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="grid size-11 place-items-center rounded-2xl bg-white/80 text-xl shadow-sm">{game.icon}</span>
-                <span className="rounded-full bg-white/85 px-3 py-1 text-xs font-black uppercase text-slate-700 shadow-sm">{gameTypeLabel(game)}</span>
-                <span className="rounded-full bg-white/85 px-3 py-1 text-xs font-black uppercase text-slate-700 shadow-sm">{game.minPlayers}-{game.maxPlayers} players</span>
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-white/80 text-xl shadow-sm">{game.icon}</span>
+                <div className="flex min-w-0 flex-nowrap items-center gap-2">
+                  <span className="whitespace-nowrap rounded-full bg-white/85 px-2.5 py-1 text-[11px] font-black uppercase text-slate-700 shadow-sm sm:px-3 sm:text-xs">{game.minPlayers}-{game.maxPlayers} players</span>
+                  <span className="whitespace-nowrap rounded-full bg-white/85 px-2.5 py-1 text-[11px] font-black uppercase text-slate-700 shadow-sm sm:px-3 sm:text-xs">{gameTypeLabel(game)}</span>
+                </div>
               </div>
               <h2 className="mt-4 text-2xl font-black text-slate-950">{game.name}</h2>
               <p className="mt-1 text-sm font-semibold leading-6 text-slate-700">{game.description}</p>

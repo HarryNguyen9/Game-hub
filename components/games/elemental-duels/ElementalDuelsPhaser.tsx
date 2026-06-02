@@ -381,5 +381,10 @@ export function ElementalDuelsPhaser({
     };
   }, [currentUserId]);
 
-  return <div ref={containerRef} className="aspect-[11/7] min-h-[18rem] w-full overflow-hidden rounded-[1.5rem] bg-sky-50 shadow-inner" />;
+  return (
+    <div
+      ref={containerRef}
+      className="h-[clamp(13rem,42vh,23rem)] w-full overflow-hidden rounded-[1.5rem] bg-sky-50 shadow-inner md:aspect-[11/7] md:h-auto [&>canvas]:!block [&>canvas]:!h-full [&>canvas]:!w-full"
+    />
+  );
 }

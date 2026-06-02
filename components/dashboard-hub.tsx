@@ -107,8 +107,7 @@ function ElementalDuelsPreview() {
   return (
     <div className="relative mb-4 h-28 overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-orange-100 via-cyan-100 to-emerald-100 shadow-inner">
       <div className="absolute left-4 top-4 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-orange-700 shadow-sm">2 Players</div>
-      <div className="absolute right-4 top-4 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-cyan-700 shadow-sm">Realtime</div>
-      <div className="absolute right-4 bottom-4 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-emerald-700 shadow-sm">Strategy</div>
+      <div className="absolute right-4 top-4 z-20 whitespace-nowrap rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-emerald-700 shadow-sm">Strategy</div>
       <div className="absolute inset-x-0 top-1/2 h-1.5 bg-white/70" />
       <div className="absolute left-8 bottom-6 grid size-11 place-items-center rounded-xl border-2 border-orange-400 bg-orange-200 shadow-md">
         <span className="text-xl">🔥</span>

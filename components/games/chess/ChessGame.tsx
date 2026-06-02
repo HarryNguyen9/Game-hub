@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import { Flag, RotateCcw, Trophy } from "lucide-react";
 import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
+import { GameMuteButton, useGameAudio } from "@/components/games/use-game-audio";
 import { Button } from "@/components/ui/button";
 import { ToastPopup } from "@/components/ui/toast-popup";
 import type { ChessSnapshot } from "@/lib/games/chess/types";
@@ -93,6 +94,9 @@ export function ChessGame({
   const [returning, setReturning] = useState(false);
   const [turnNotice, setTurnNotice] = useState(false);
   const lastTurnRef = useRef<string | null>(initialSnapshot?.currentTurnUserId ?? null);
+  const previousStatusRef = useRef<string | null>(initialSnapshot?.status ?? null);
+  const previousMoveCountRef = useRef(initialSnapshot?.moveHistory.length ?? 0);
+  const { muted, setMuted, playTone } = useGameAudio("chess-muted");
   const now = useNow();
 
   const currentPlayer = snapshot?.players[currentUserId];
@@ -121,13 +125,22 @@ export function ChessGame({
     const previousTurn = lastTurnRef.current;
     lastTurnRef.current = snapshot.currentTurnUserId;
     if (snapshot.status !== "playing" || snapshot.currentTurnUserId !== currentUserId || previousTurn === currentUserId) return;
+    playTone("turn");
     const showTimer = window.setTimeout(() => setTurnNotice(true), 0);
     const hideTimer = window.setTimeout(() => setTurnNotice(false), 1700);
     return () => {
       window.clearTimeout(showTimer);
       window.clearTimeout(hideTimer);
     };
-  }, [currentUserId, snapshot?.currentTurnUserId, snapshot?.status, snapshot]);
+  }, [currentUserId, playTone, snapshot?.currentTurnUserId, snapshot?.status, snapshot]);
+
+  useEffect(() => {
+    if (!snapshot) return;
+    if (snapshot.moveHistory.length > previousMoveCountRef.current) playTone("move");
+    previousMoveCountRef.current = snapshot.moveHistory.length;
+    if (previousStatusRef.current !== "ended" && snapshot.status === "ended") playTone("end");
+    previousStatusRef.current = snapshot.status;
+  }, [playTone, snapshot]);
 
   function handleSquareClick(square: string, piece: BoardPiece | null) {
     if (!snapshot || !currentPlayer || !isMyTurn) return;
@@ -151,9 +164,12 @@ export function ChessGame({
 
   const header = (
     <div className="grid gap-3 sm:grid-cols-[auto_1fr] sm:items-center">
-      <span className={`w-fit rounded-full px-3 py-1 text-xs font-black ${connected ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
-        {connected ? "Connected" : "Reconnecting"}
-      </span>
+      <div className="flex items-center gap-2">
+        <span className={`w-fit rounded-full px-3 py-1 text-xs font-black ${connected ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+          {connected ? "Connected" : "Reconnecting"}
+        </span>
+        <GameMuteButton muted={muted} onToggle={() => setMuted((value) => !value)} label="Chess" />
+      </div>
       {snapshot && (
         <div className="min-w-0">
           <div className="mb-1 flex items-center justify-between gap-3 text-xs font-black text-slate-500">

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RotateCcw, Shuffle, Trash2, Ship, CheckCircle2 } from "lucide-react";
 import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
+import { GameMuteButton, useGameAudio } from "@/components/games/use-game-audio";
 import { Button } from "@/components/ui/button";
 import { ToastPopup } from "@/components/ui/toast-popup";
 import type { FleetCell, FleetShip, FleetShipDefinition, FleetSnapshot } from "@/lib/games/fleet-duel/types";
@@ -101,6 +102,9 @@ export function FleetDuelGame({
   const [returning, setReturning] = useState(false);
   const [turnNotice, setTurnNotice] = useState(false);
   const lastTurnRef = useRef<string | null>(initialSnapshot?.currentTurnUserId ?? null);
+  const previousStatusRef = useRef<string | null>(initialSnapshot?.status ?? null);
+  const previousShotsRef = useRef(0);
+  const { muted, setMuted, playTone } = useGameAudio("fleet-duel-muted");
   const selectedShip = nextUnplaced(localShips, snapshot?.shipDefinitions || []);
   const now = useNow();
   const enemyShotsOnMe = useMemo(() => snapshot?.opponent?.shots.filter((shot) => shot.targetUserId === currentUserId) || [], [currentUserId, snapshot]);
@@ -132,13 +136,23 @@ export function FleetDuelGame({
     const previousTurn = lastTurnRef.current;
     lastTurnRef.current = snapshot.currentTurnUserId;
     if (snapshot.status !== "battle" || snapshot.currentTurnUserId !== currentUserId || previousTurn === currentUserId) return;
+    playTone("turn");
     const showTimer = window.setTimeout(() => setTurnNotice(true), 0);
     const hideTimer = window.setTimeout(() => setTurnNotice(false), 1700);
     return () => {
       window.clearTimeout(showTimer);
       window.clearTimeout(hideTimer);
     };
-  }, [currentUserId, snapshot?.currentTurnUserId, snapshot?.status, snapshot]);
+  }, [currentUserId, playTone, snapshot?.currentTurnUserId, snapshot?.status, snapshot]);
+
+  useEffect(() => {
+    if (!snapshot) return;
+    const shotCount = snapshot.you.shots.length + (snapshot.opponent?.shots.length ?? 0);
+    if (shotCount > previousShotsRef.current) playTone("hit");
+    previousShotsRef.current = shotCount;
+    if (previousStatusRef.current !== "ended" && snapshot.status === "ended") playTone("end");
+    previousStatusRef.current = snapshot.status;
+  }, [playTone, snapshot]);
 
   if (!snapshot) {
     return (
@@ -174,7 +188,10 @@ export function FleetDuelGame({
               </div>
             )}
           </div>
-          <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-cyan-700 shadow-sm">{snapshot.status.toUpperCase()}</span>
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-cyan-700 shadow-sm">{snapshot.status.toUpperCase()}</span>
+            <GameMuteButton muted={muted} onToggle={() => setMuted((value) => !value)} label="Fleet Duel" />
+          </div>
         </div>
       }
     >

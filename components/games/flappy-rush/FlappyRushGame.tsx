@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { PointerEvent } from "react";
 import { RotateCcw, Trophy } from "lucide-react";
 import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
+import { GameMuteButton, useGameAudio } from "@/components/games/use-game-audio";
 import { Button } from "@/components/ui/button";
 import { ToastPopup } from "@/components/ui/toast-popup";
 import type { FlappySnapshot } from "@/lib/games/flappy-rush/types";
@@ -36,8 +37,11 @@ export function FlappyRushGame({
   const predictedSelfYRef = useRef<number | null>(null);
   const lastCrashAtRef = useRef<number | null>(null);
   const lastPointerFlapAtRef = useRef(0);
+  const previousAliveRef = useRef<boolean | null>(null);
+  const previousStatusRef = useRef<string | null>(initialSnapshot?.status ?? null);
   const roomEnded = roomStatus === "ended";
   const { snapshot, countdown, error, connected, flap, backToLobby, lastFlapAtRef } = useFlappyRushSocket(roomId, currentUserId, onGameEnd, initialSnapshot, roomEnded);
+  const { muted, setMuted, playTone } = useGameAudio("flappy-rush-muted");
   const [returning, setReturning] = useState(false);
   const currentPlayer = snapshot?.players[currentUserId];
   const ended = snapshot?.status === "ended";
@@ -55,6 +59,15 @@ export function FlappyRushGame({
     if (!snapshot || currentPlayer?.alive !== false || ended) return;
     if (!lastCrashAtRef.current) lastCrashAtRef.current = performance.now();
   }, [currentPlayer?.alive, ended, snapshot]);
+
+  useEffect(() => {
+    if (!snapshot) return;
+    const alive = snapshot.players[currentUserId]?.alive ?? null;
+    if (previousAliveRef.current === true && alive === false) playTone("crash");
+    previousAliveRef.current = alive;
+    if (previousStatusRef.current !== "ended" && snapshot.status === "ended") playTone("end");
+    previousStatusRef.current = snapshot.status;
+  }, [currentUserId, playTone, snapshot]);
 
   useEffect(() => {
     let frame = 0;
@@ -95,18 +108,20 @@ export function FlappyRushGame({
     function onKeyDown(event: KeyboardEvent) {
       if (event.code !== "Space" || event.repeat) return;
       event.preventDefault();
+      playTone("flap");
       flap();
     }
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [flap]);
+  }, [flap, playTone]);
 
   function handlePointerDown(event: PointerEvent<HTMLCanvasElement>) {
     event.preventDefault();
     const now = performance.now();
     if (now - lastPointerFlapAtRef.current < 70) return;
     lastPointerFlapAtRef.current = now;
+    playTone("flap");
     flap();
   }
 
@@ -118,9 +133,12 @@ export function FlappyRushGame({
 
   const header = (
     <div className="grid gap-2 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
-      <span className={`w-fit rounded-full px-3 py-1 text-xs font-black ${connected ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
-        {connected ? "Connected" : "Reconnecting"}
-      </span>
+      <div className="flex items-center gap-2">
+        <span className={`w-fit rounded-full px-3 py-1 text-xs font-black ${connected ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+          {connected ? "Connected" : "Reconnecting"}
+        </span>
+        <GameMuteButton muted={muted} onToggle={() => setMuted((value) => !value)} label="Flappy Rush" />
+      </div>
       <div className="flex min-w-0 items-center gap-2 overflow-x-auto py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {leaderboard.map((player) => (
           <span
