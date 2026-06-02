@@ -8,6 +8,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ToastPopup } from "@/components/ui/toast-popup";
 import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
+import { GameRulesInfoButton } from "@/components/games/game-rules-modal";
 import { FlappyRushGame } from "@/components/games/flappy-rush/FlappyRushGame";
 import { FleetDuelGame } from "@/components/games/fleet-duel/FleetDuelGame";
 import { OAnQuanGame } from "@/components/games/o-an-quan/OAnQuanGame";
@@ -479,18 +480,25 @@ export function RoomClient({
                   {GAME_CATALOG.map((game) => {
                     const selected = game.id === pendingGameKey;
                     return (
-                      <button
+                      <article
                         key={game.id}
-                        type="button"
-                        disabled={Boolean(pendingAction)}
+                        role="button"
+                        tabIndex={pendingAction ? -1 : 0}
                         onClick={() => setPendingGameKey(game.id)}
+                        onKeyDown={(event) => {
+                          if (pendingAction) return;
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            setPendingGameKey(game.id);
+                          }
+                        }}
                         className={`rounded-[1.75rem] p-3 text-left shadow-sm ring-1 transition hover:-translate-y-0.5 hover:shadow-md ${
                           selected ? "bg-rose-50 ring-rose-200" : "bg-white ring-slate-100"
-                        }`}
+                        } ${pendingAction ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
                       >
                         <GameOptionVisual gameId={game.id} />
                         <div className="mt-3 flex items-start justify-between gap-3">
-                          <div>
+                          <div className="min-w-0">
                             <p className="font-black text-slate-900">{game.name}</p>
                             <p className="mt-1 text-sm font-semibold text-slate-500">{game.description}</p>
                             {"turnDurationLabel" in game && <p className="mt-1 text-xs font-bold text-slate-400">{game.turnDurationLabel}</p>}
@@ -498,11 +506,14 @@ export function RoomClient({
                               {game.minPlayers}-{game.maxPlayers} players
                             </p>
                           </div>
-                          <span className={`grid size-8 shrink-0 place-items-center rounded-full ${selected ? "bg-[#ff7a90] text-white" : "bg-slate-100 text-slate-400"}`}>
-                            {selected ? <Check size={16} /> : <Gamepad2 size={16} />}
-                          </span>
+                          <div className="grid shrink-0 gap-2">
+                            <GameRulesInfoButton game={game} />
+                            <span className={`grid size-8 place-items-center rounded-full ${selected ? "bg-[#ff7a90] text-white" : "bg-slate-100 text-slate-400"}`}>
+                              {selected ? <Check size={16} /> : <Gamepad2 size={16} />}
+                            </span>
+                          </div>
                         </div>
-                      </button>
+                      </article>
                     );
                   })}
                 </div>
@@ -522,6 +533,11 @@ export function RoomClient({
           </div>
         )}
         <ToastPopup message={message} onDismiss={() => setMessage("")} />
+        {gameExpanded && selectedGame && (
+          <div className="fixed right-16 top-5 z-[70]">
+            <GameRulesInfoButton game={selectedGame} className="size-10" />
+          </div>
+        )}
         {isLateJoiner && (
           <p className="mt-4 rounded-2xl bg-sky-50 px-4 py-3 text-sm font-bold text-sky-700">
             Game is in progress. You&apos;ll join when the next round starts.
@@ -530,20 +546,26 @@ export function RoomClient({
         <div className="mt-4 rounded-[1.5rem] bg-slate-50 p-4">
           <p className="text-sm font-black text-slate-500">Selected game · Players {playerCountValue}</p>
           {isHost && status === "waiting" ? (
-            <button
-              type="button"
-              disabled={Boolean(pendingAction)}
-              onClick={() => { setGamePickerOpen(true); setPendingGameKey(gameKey); }}
-              className="mt-2 flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left font-bold outline-none transition hover:border-rose-300 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-sky-50 text-xl">{selectedGame?.icon || "🎮"}</span>
-              <span className="min-w-0">
-                <span className="block truncate text-slate-900">{selectedGame?.name || "Choose a game"}</span>
-                <span className="block truncate text-xs text-slate-500">{selectedGame?.description || "Open game catalog"}</span>
-              </span>
-            </button>
+            <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+              <button
+                type="button"
+                disabled={Boolean(pendingAction)}
+                onClick={() => { setGamePickerOpen(true); setPendingGameKey(gameKey); }}
+                className="flex min-w-0 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left font-bold outline-none transition hover:border-rose-300 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-sky-50 text-xl">{selectedGame?.icon || "🎮"}</span>
+                <span className="min-w-0">
+                  <span className="block truncate text-slate-900">{selectedGame?.name || "Choose a game"}</span>
+                  <span className="block truncate text-xs text-slate-500">{selectedGame?.description || "Open game catalog"}</span>
+                </span>
+              </button>
+              {selectedGame && <GameRulesInfoButton game={selectedGame} className="size-11 rounded-2xl" />}
+            </div>
           ) : (
-            <p className="mt-1 text-xl font-black text-slate-900">{selectedGame?.name || "No game selected yet"}</p>
+            <div className="mt-1 flex items-center justify-between gap-3">
+              <p className="min-w-0 truncate text-xl font-black text-slate-900">{selectedGame?.name || "No game selected yet"}</p>
+              {selectedGame && <GameRulesInfoButton game={selectedGame} className="size-9" />}
+            </div>
           )}
         </div>
         <div className="flex flex-1 flex-col">
@@ -615,9 +637,12 @@ export function RoomClient({
             expanded={gameExpanded}
             onToggleExpanded={() => setGameExpanded((value) => !value)}
             header={
-              <div className="min-w-0">
-                <p className="text-sm font-black text-slate-500">Game stage</p>
-                <p className="truncate text-lg font-black text-slate-900">{selectedGame?.name || "Selected game"}</p>
+              <div className="flex min-w-0 items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-black text-slate-500">Game stage</p>
+                  <p className="truncate text-lg font-black text-slate-900">{selectedGame?.name || "Selected game"}</p>
+                </div>
+                {selectedGame && <GameRulesInfoButton game={selectedGame} className="size-9" />}
               </div>
             }
             footer={

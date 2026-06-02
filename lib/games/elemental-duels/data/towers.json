@@ -12,7 +12,12 @@
     "burnDps": 3.8,
     "burnDurationMs": 2500,
     "upgradeCost": [60, 92],
-    "levelScale": [1, 1.42, 1.95]
+    "levelScale": [1, 1.42, 1.95],
+    "asset": {
+      "textureKey": "tower-fire",
+      "path": "/games/elemental-duels/towers/fire-tower.png",
+      "type": "image"
+    }
   },
   {
     "id": "ice-tower",
@@ -27,7 +32,12 @@
     "slowDurationMs": 1900,
     "stunDurationMs": 700,
     "upgradeCost": [52, 86],
-    "levelScale": [1, 1.3, 1.76]
+    "levelScale": [1, 1.3, 1.76],
+    "asset": {
+      "textureKey": "tower-ice",
+      "path": "/games/elemental-duels/towers/ice-tower.png",
+      "type": "image"
+    }
   },
   {
     "id": "lightning-tower",
@@ -41,7 +51,12 @@
     "chainTargets": 3,
     "chainFalloff": 0.68,
     "upgradeCost": [62, 96],
-    "levelScale": [1, 1.34, 1.9]
+    "levelScale": [1, 1.34, 1.9],
+    "asset": {
+      "textureKey": "tower-lightning",
+      "path": "/games/elemental-duels/towers/lightning-tower.png",
+      "type": "image"
+    }
   },
   {
     "id": "earth-tower",
@@ -55,6 +70,11 @@
     "knockback": 0.065,
     "knockbackChance": 0.46,
     "upgradeCost": [72, 112],
-    "levelScale": [1, 1.48, 2.12]
+    "levelScale": [1, 1.48, 2.12],
+    "asset": {
+      "textureKey": "tower-earth",
+      "path": "/games/elemental-duels/towers/earth-tower.png",
+      "type": "image"
+    }
   }
 ]

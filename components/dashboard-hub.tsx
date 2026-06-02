@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Plus, Search, Ticket } from "lucide-react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { DashboardRoomList } from "@/components/dashboard-room-list";
+import { GameRulesInfoButton } from "@/components/games/game-rules-modal";
 import { GAME_CATALOG } from "@/lib/constants";
 
 type DashboardTab = "games" | "rooms";
@@ -227,7 +228,10 @@ export function DashboardHub({ activeRoomId }: { activeRoomId: string | null }) 
               {visibleGames.map((game) => (
                 <article key={game.id} className="rounded-[1.75rem] bg-white/86 p-4 shadow-sm ring-1 ring-white">
                   <GamePreview gameId={game.id} />
-                  <h2 className="font-black">{game.name}</h2>
+                  <div className="flex items-start justify-between gap-3">
+                    <h2 className="min-w-0 font-black">{game.name}</h2>
+                    <GameRulesInfoButton game={game} />
+                  </div>
                   <p className="mt-1 text-sm font-medium text-slate-500">{game.description}</p>
                   {"turnDurationLabel" in game && <p className="mt-1 text-xs font-bold text-slate-400">{game.turnDurationLabel}</p>}
                   <p className="mt-2 text-xs font-black text-slate-400">

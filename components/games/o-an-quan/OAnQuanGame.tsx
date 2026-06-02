@@ -137,6 +137,11 @@ export function OAnQuanGame({
   const timerPercent = snapshot ? Math.max(0, Math.min(100, (remainingMs / (snapshot.turnDurationSeconds * 1000)) * 100)) : 0;
   const scores = useMemo(() => Object.values(displayPlayers).sort((a) => (a.side === "top" ? -1 : 1)), [displayPlayers]);
   const moveId = snapshot?.lastMove?.createdAt || 0;
+  const hasSnapshot = Boolean(snapshot);
+  const snapshotCurrentTurnUserId = snapshot?.currentTurnUserId ?? null;
+  const snapshotStatus = snapshot?.status ?? null;
+  const snapshotTurnStartedAt = snapshot?.turnStartedAt ?? 0;
+  const snapshotServerTime = snapshot?.serverTime ?? 0;
 
   function submit(direction: OAnQuanDirection) {
     if (!snapshot || selectedPit === null || !isMyTurn || isAnimating) return;
@@ -151,11 +156,11 @@ export function OAnQuanGame({
   useEffect(() => {
     const timer = window.setTimeout(() => setSelectedPit(null), 0);
     return () => window.clearTimeout(timer);
-  }, [snapshot?.currentTurnUserId]);
+  }, [snapshotCurrentTurnUserId]);
 
   useEffect(() => {
-    if (!snapshot) return;
-    const delay = snapshot.turnStartedAt - snapshot.serverTime;
+    if (!hasSnapshot) return;
+    const delay = snapshotTurnStartedAt - snapshotServerTime;
     if (delay <= 0) {
       const timer = window.setTimeout(() => setTurnReady(true), 0);
       return () => window.clearTimeout(timer);
@@ -166,7 +171,7 @@ export function OAnQuanGame({
       window.clearTimeout(resetTimer);
       window.clearTimeout(timer);
     };
-  }, [snapshot?.turnStartedAt]);
+  }, [hasSnapshot, snapshotServerTime, snapshotTurnStartedAt]);
 
   useEffect(() => {
     if (!snapshot || isAnimating) return;
@@ -251,18 +256,18 @@ export function OAnQuanGame({
   }, [moveId]);
 
   useEffect(() => {
-    if (!snapshot) return;
+    if (!hasSnapshot) return;
     const previousTurn = lastTurnRef.current;
-    lastTurnRef.current = snapshot.currentTurnUserId;
-    if (snapshot.status !== "playing" || snapshot.currentTurnUserId !== currentUserId || previousTurn === currentUserId) return;
-    const delay = Math.max(0, snapshot.turnStartedAt - snapshot.serverTime);
+    lastTurnRef.current = snapshotCurrentTurnUserId;
+    if (snapshotStatus !== "playing" || snapshotCurrentTurnUserId !== currentUserId || previousTurn === currentUserId) return;
+    const delay = Math.max(0, snapshotTurnStartedAt - snapshotServerTime);
     const showTimer = window.setTimeout(() => setTurnNotice(true), delay);
     const hideTimer = window.setTimeout(() => setTurnNotice(false), delay + 1700);
     return () => {
       window.clearTimeout(showTimer);
       window.clearTimeout(hideTimer);
     };
-  }, [currentUserId, snapshot?.currentTurnUserId, snapshot?.status]);
+  }, [currentUserId, hasSnapshot, snapshotCurrentTurnUserId, snapshotServerTime, snapshotStatus, snapshotTurnStartedAt]);
 
   const header = (
     <div className="grid gap-3 sm:grid-cols-[auto_1fr] sm:items-center">

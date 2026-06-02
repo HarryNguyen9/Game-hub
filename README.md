@@ -276,6 +276,23 @@ Rules and systems:
 - When you kill a monster, the server sends a new monster to the opponent using your selected element and monster profile.
 - Maps are selected from data-driven map definitions, including classic, buff tiles, and obstacle variants.
 
+### Elemental Duels Assets
+
+Elemental Duels uses real PNG assets served from `public/games/elemental-duels/` for monsters, towers, projectiles, and small effects. Regenerate the current code-made placeholder art with:
+
+```bash
+npm run assets:elemental
+```
+
+The generator is repeatable and overwrites the same filenames consistently. Asset naming follows the gameplay type:
+
+- `monsters/fire-normal.png`, `monsters/ice-armored.png`, `monsters/lightning-splitter-small.png`
+- `towers/fire-tower.png`, `towers/earth-tower.png`
+- `projectiles/fireball.png`, `projectiles/rock.png`
+- `effects/burn.png`, `effects/hit-pop.png`
+
+To replace the generated art later, keep the same filenames and transparent PNG format. Phaser preloads from `/games/elemental-duels/...`; if any PNG is missing or fails to load, the client falls back to the generated canvas texture or simple graphics fallback without changing server-authoritative gameplay.
+
 Manual QA:
 
 1. Account A creates a room, chooses `Elemental Duels 2D`, and sees `1/2` players.

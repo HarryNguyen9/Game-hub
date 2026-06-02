@@ -16,6 +16,12 @@ export type ElementDefinition = {
   weakAgainst: ElementKey;
 };
 
+export type ElementalAssetDefinition = {
+  textureKey: string;
+  path: string;
+  type: "image";
+};
+
 export type TowerDefinition = {
   id: string;
   label: string;
@@ -37,6 +43,7 @@ export type TowerDefinition = {
   knockbackChance?: number;
   upgradeCost: number[];
   levelScale: number[];
+  asset?: ElementalAssetDefinition;
 };
 
 export type MonsterDefinition = {
@@ -50,6 +57,8 @@ export type MonsterDefinition = {
   sendCost: number;
   slowImmune?: boolean;
   splitOnDeath?: boolean;
+  asset?: ElementalAssetDefinition;
+  assetByElement?: Partial<Record<ElementKey, ElementalAssetDefinition>>;
 };
 
 export type MapBuildTile = Point & {
@@ -139,6 +148,20 @@ export type ElementalEvent = {
   y?: number;
 };
 
+export type ElementalVisualEvent = {
+  id: string;
+  type: "tower_attack" | "monster_death" | "base_hit";
+  at: number;
+  sourcePlayerId: string;
+  towerId?: string;
+  targetMonsterId?: string;
+  towerElement?: ElementKey;
+  projectileType?: ElementKey;
+  from: Point;
+  to: Point;
+  hitEffects: ElementalStatusEffect["type"][];
+};
+
 export type ElementalState = {
   sessionId: string;
   roomId: string;
@@ -158,6 +181,7 @@ export type ElementalState = {
   players: Record<string, ElementalPlayerState>;
   map: ElementalMapDefinition;
   events: ElementalEvent[];
+  visualEvents: ElementalVisualEvent[];
 };
 
 export type ElementalSnapshot = ElementalState & {

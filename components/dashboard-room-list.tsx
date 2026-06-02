@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { io, type Socket } from "socket.io-client";
 import { Lock, UsersRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { GameRulesInfoButton } from "@/components/games/game-rules-modal";
 import { ToastPopup } from "@/components/ui/toast-popup";
 import { getGameConfig } from "@/lib/constants";
 
@@ -133,7 +134,10 @@ export function DashboardRoomList({ searchQuery = "", limit }: DashboardRoomList
             <div className="min-w-0">
               <span className="mb-2 inline-flex size-9 items-center justify-center rounded-2xl bg-sky-50 text-xl">{game?.icon || "🎮"}</span>
               <p className="font-black">{room.name}</p>
-              <p className="text-sm font-semibold text-slate-500">{game?.name || "No game selected"}</p>
+              <div className="mt-1 flex items-center gap-2 text-sm font-semibold text-slate-500">
+                <span className="min-w-0 truncate">{game?.name || "No game selected"}</span>
+                {game && <GameRulesInfoButton game={game} className="size-7" />}
+              </div>
               <p className="text-xs font-bold text-slate-400">
                 Host {Array.isArray(room.app_users) ? room.app_users[0]?.display_name || room.app_users[0]?.username : room.app_users?.display_name || room.app_users?.username}
               </p>

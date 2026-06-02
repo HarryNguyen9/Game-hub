@@ -6,8 +6,8 @@ import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
 import { Button } from "@/components/ui/button";
 import { ToastPopup } from "@/components/ui/toast-popup";
 import { ELEMENTAL_CONFIG } from "@/lib/games/elemental-duels/config";
-import type { ElementalSnapshot, Point } from "@/lib/games/elemental-duels/types";
-import { ElementalBuildPanel } from "./ElementalBuildPanel";
+import type { ElementalSnapshot } from "@/lib/games/elemental-duels/types";
+import { ElementalContextMenu, type ElementalSelection } from "./ElementalContextMenu";
 import { ElementalDuelsPhaser } from "./ElementalDuelsPhaser";
 import { ElementalHud } from "./ElementalHud";
 import { ElementalOpponentPanel } from "./ElementalOpponentPanel";
@@ -32,8 +32,10 @@ export function ElementalDuelsGame({
   initialSnapshot?: ElementalSnapshot | null;
   roomStatus: "playing" | "ended";
 }) {
-  const { snapshot, error, connected, buildTower, upgradeTower, sellTower, selectSendElement, selectMonsterType, backToLobby } = useElementalDuelsSocket(roomId, onGameEnd, initialSnapshot, roomStatus === "ended");
-  const [selectedTile, setSelectedTile] = useState<Point | null>(null);
+  const { snapshot, error, connected, buildTower, upgradeTower, sellTower, setTargetMode, selectSendElement, selectMonsterType, backToLobby } = useElementalDuelsSocket(roomId, onGameEnd, initialSnapshot, roomStatus === "ended");
+  const fieldRef = useRef<HTMLDivElement | null>(null);
+  const [selection, setSelection] = useState<ElementalSelection | null>(null);
+  const [fieldBounds, setFieldBounds] = useState<{ width: number; height: number }>({ width: ELEMENTAL_CONFIG.worldWidth, height: ELEMENTAL_CONFIG.worldHeight });
   const [muted, setMuted] = useState(() => (typeof window === "undefined" ? true : window.localStorage.getItem("elemental-muted") !== "false"));
   const previousBaseHpRef = useRef<number | null>(null);
   const previousTowerCountRef = useRef(0);
@@ -88,10 +90,45 @@ export function ElementalDuelsGame({
     previousStatusRef.current = snapshot.status;
   }, [playTone, snapshot, you]);
 
+  useEffect(() => {
+    const element = fieldRef.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(([entry]) => {
+      const rect = entry.contentRect;
+      setFieldBounds({ width: rect.width, height: rect.height });
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!snapshot || !selection || !you) return;
+    let shouldClose = false;
+    if (snapshot.status !== "playing") {
+      shouldClose = true;
+    }
+    if (selection.kind === "tower" && !you.towers.some((tower) => tower.id === selection.towerId)) shouldClose = true;
+    if (selection.kind === "tile" && you.towers.some((tower) => Math.hypot(tower.x - selection.point.x, tower.y - selection.point.y) < 20)) shouldClose = true;
+    if (selection.kind === "obstacle" && snapshot.map.obstacles.some((obstacle) => obstacle.id === selection.obstacleId && obstacle.cleared)) shouldClose = true;
+    if (!shouldClose) return;
+    const timer = window.setTimeout(() => setSelection(null), 0);
+    return () => window.clearTimeout(timer);
+  }, [selection, snapshot, you]);
+
   function handleBuild(towerType: string, x: number, y: number) {
     playTone("build");
     buildTower(towerType, x, y);
   }
+
+  const menuSelection = selection
+    ? {
+        ...selection,
+        screen: {
+          x: (selection.point.x / ELEMENTAL_CONFIG.worldWidth) * fieldBounds.width,
+          y: (selection.point.y / ELEMENTAL_CONFIG.worldHeight) * fieldBounds.height
+        }
+      }
+    : null;
 
   if (!snapshot) {
     return (
@@ -134,8 +171,19 @@ export function ElementalDuelsGame({
         </Button>
       </div>
       <div className="grid gap-4 xl:grid-cols-[1fr_19rem]">
-        <div className="relative">
-          <ElementalDuelsPhaser snapshot={snapshot} currentUserId={currentUserId} onSelectTile={setSelectedTile} />
+        <div ref={fieldRef} className="relative">
+          <ElementalDuelsPhaser snapshot={snapshot} currentUserId={currentUserId} onSelect={setSelection} />
+          <ElementalContextMenu
+            snapshot={snapshot}
+            currentUserId={currentUserId}
+            selection={menuSelection}
+            bounds={fieldBounds}
+            onBuild={handleBuild}
+            onUpgrade={upgradeTower}
+            onSell={sellTower}
+            onTargetMode={setTargetMode}
+            onClose={() => setSelection(null)}
+          />
           {snapshot.status === "ended" && (
             <div className="absolute inset-0 grid place-items-center rounded-[1.5rem] bg-white/76 p-4 backdrop-blur-[2px]">
               <div className="w-full max-w-sm rounded-[2rem] bg-white p-5 text-center shadow-2xl ring-1 ring-orange-100">
@@ -159,7 +207,6 @@ export function ElementalDuelsGame({
           )}
         </div>
         <div className="grid content-start gap-4">
-          <ElementalBuildPanel snapshot={snapshot} currentUserId={currentUserId} selectedTile={selectedTile} onBuild={handleBuild} onUpgrade={upgradeTower} onSell={sellTower} />
           <ElementalOpponentPanel snapshot={snapshot} currentUserId={currentUserId} onSelectElement={selectSendElement} onSelectMonster={selectMonsterType} />
           {process.env.NODE_ENV !== "production" && debugStats && (
             <div className="rounded-3xl bg-slate-900 p-4 text-xs font-bold text-slate-100">

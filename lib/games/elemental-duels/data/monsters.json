@@ -7,7 +7,29 @@
     "speed": 0.071,
     "reward": 7,
     "baseDamage": 1,
-    "sendCost": 0
+    "sendCost": 0,
+    "assetByElement": {
+      "fire": {
+        "textureKey": "monster-fire-normal",
+        "path": "/games/elemental-duels/monsters/fire-normal.png",
+        "type": "image"
+      },
+      "ice": {
+        "textureKey": "monster-ice-normal",
+        "path": "/games/elemental-duels/monsters/ice-normal.png",
+        "type": "image"
+      },
+      "lightning": {
+        "textureKey": "monster-lightning-normal",
+        "path": "/games/elemental-duels/monsters/lightning-normal.png",
+        "type": "image"
+      },
+      "earth": {
+        "textureKey": "monster-earth-normal",
+        "path": "/games/elemental-duels/monsters/earth-normal.png",
+        "type": "image"
+      }
+    }
   },
   {
     "id": "fire-runner",
@@ -17,7 +39,12 @@
     "speed": 0.118,
     "reward": 8,
     "baseDamage": 1,
-    "sendCost": 13
+    "sendCost": 13,
+    "asset": {
+      "textureKey": "monster-fire-fire-runner",
+      "path": "/games/elemental-duels/monsters/fire-runner.png",
+      "type": "image"
+    }
   },
   {
     "id": "ice-armored",
@@ -28,7 +55,12 @@
     "reward": 10,
     "baseDamage": 2,
     "sendCost": 18,
-    "slowImmune": true
+    "slowImmune": true,
+    "asset": {
+      "textureKey": "monster-ice-ice-armored",
+      "path": "/games/elemental-duels/monsters/ice-armored.png",
+      "type": "image"
+    }
   },
   {
     "id": "lightning-splitter",
@@ -39,7 +71,12 @@
     "reward": 10,
     "baseDamage": 1,
     "sendCost": 20,
-    "splitOnDeath": true
+    "splitOnDeath": true,
+    "asset": {
+      "textureKey": "monster-lightning-lightning-splitter",
+      "path": "/games/elemental-duels/monsters/lightning-splitter.png",
+      "type": "image"
+    }
   },
   {
     "id": "earth-giant",
@@ -49,6 +86,11 @@
     "speed": 0.036,
     "reward": 13,
     "baseDamage": 3,
-    "sendCost": 28
+    "sendCost": 28,
+    "asset": {
+      "textureKey": "monster-earth-earth-giant",
+      "path": "/games/elemental-duels/monsters/earth-giant.png",
+      "type": "image"
+    }
   }
 ]

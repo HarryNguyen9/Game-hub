@@ -11,6 +11,7 @@ import type {
   ElementalPlayerInput,
   ElementalPlayerState,
   ElementalState,
+  ElementalVisualEvent,
   ElementalTower,
   MonsterDefinition,
   Point,
@@ -31,6 +32,17 @@ function event(state: ElementalState, item: Omit<ElementalEvent, "id" | "at">) {
     },
     ...state.events
   ].slice(0, ELEMENTAL_CONFIG.maxEventLog);
+}
+
+function visualEvent(state: ElementalState, item: Omit<ElementalVisualEvent, "id" | "at">) {
+  state.visualEvents = [
+    {
+      ...item,
+      id: id("visual", state.tick),
+      at: Date.now()
+    },
+    ...state.visualEvents
+  ].slice(0, ELEMENTAL_CONFIG.maxEventLog * 2);
 }
 
 function asPlayer(member: ElementalPlayerInput, index: number): ElementalPlayerState {
@@ -72,7 +84,8 @@ export function createElementalState(sessionId: string, roomId: string, players:
     nextPathChangeAt: map.variant === "dynamic-path" ? startedAt + ELEMENTAL_CONFIG.countdownSeconds * 1000 + ELEMENTAL_CONFIG.dynamicPathChangeMs : null,
     players: Object.fromEntries(players.map((player, index) => [player.userId, asPlayer(player, index)])),
     map,
-    events: []
+    events: [],
+    visualEvents: []
   };
 }
 
@@ -159,10 +172,12 @@ function getTowerRange(tower: ElementalTower) {
 
 function applyTowerHit(state: ElementalState, owner: ElementalPlayerState, tower: ElementalTower, target: ElementalMonster, definition: TowerDefinition) {
   const damage = towerDamage(definition, tower.level, target);
+  const effects: ElementalVisualEvent["hitEffects"] = [];
   target.hp -= damage;
   tower.targetMonsterId = target.id;
 
   if (definition.splashRadius) {
+    effects.push("burn");
     for (const monster of owner.monsters) {
       if (monster.id !== target.id && distance(monster, target) <= definition.splashRadius) {
         monster.hp -= damage * 0.45;
@@ -171,12 +186,15 @@ function applyTowerHit(state: ElementalState, owner: ElementalPlayerState, tower
   }
 
   if (definition.burnDps && definition.burnDurationMs) {
+    if (!effects.includes("burn")) effects.push("burn");
     target.statusEffects.push({ type: "burn", sourceTowerId: tower.id, remainingMs: definition.burnDurationMs, value: definition.burnDps });
   }
 
   if (definition.slowPercent && definition.slowDurationMs && !getMonsterDefinition(target.monsterType).slowImmune) {
+    effects.push("slow");
     target.statusEffects.push({ type: "slow", sourceTowerId: tower.id, remainingMs: definition.slowDurationMs, value: definition.slowPercent });
     if (definition.stunDurationMs && target.statusEffects.filter((effect) => effect.type === "slow").length >= 3) {
+      effects.push("stun");
       target.statusEffects.push({ type: "stun", sourceTowerId: tower.id, remainingMs: definition.stunDurationMs, value: 1 });
     }
   }
@@ -192,9 +210,22 @@ function applyTowerHit(state: ElementalState, owner: ElementalPlayerState, tower
   }
 
   if (definition.knockback && Math.random() < (definition.knockbackChance || 0)) {
+    effects.push("stun");
     target.pathProgress = Math.max(0, target.pathProgress - definition.knockback);
     Object.assign(target, pointAtProgress(state.map.path, target.pathProgress));
   }
+
+  visualEvent(state, {
+    type: "tower_attack",
+    sourcePlayerId: owner.userId,
+    towerId: tower.id,
+    targetMonsterId: target.id,
+    towerElement: tower.element,
+    projectileType: tower.element,
+    from: { x: tower.x, y: tower.y },
+    to: { x: target.x, y: target.y },
+    hitEffects: effects
+  });
 }
 
 function handleMonsterDeath(state: ElementalState, owner: ElementalPlayerState, monster: ElementalMonster) {

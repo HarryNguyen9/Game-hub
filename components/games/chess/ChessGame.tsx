@@ -60,18 +60,19 @@ export function ChessGame({
   const currentPlayer = snapshot?.players[currentUserId];
   const currentTurnPlayer = snapshot?.currentTurnUserId ? snapshot.players[snapshot.currentTurnUserId] : null;
   const isMyTurn = snapshot?.status === "playing" && snapshot.currentTurnUserId === currentUserId;
+  const currentFen = snapshot?.fen;
 
   const legalMoveSquares = useMemo<Set<string>>(() => {
-    if (!selectedSquare || !snapshot || !isMyTurn) return new Set();
+    if (!selectedSquare || !currentFen || !isMyTurn) return new Set();
     try {
-      const chess = new Chess(snapshot.fen);
+      const chess = new Chess(currentFen);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const moves = chess.moves({ square: selectedSquare as any, verbose: true }) as Array<{ to: string }>;
       return new Set(moves.map((m) => m.to));
     } catch {
       return new Set();
     }
-  }, [selectedSquare, snapshot?.fen, isMyTurn]);
+  }, [selectedSquare, currentFen, isMyTurn]);
   const remainingMs = snapshot ? (now ? Math.max(0, snapshot.turnEndsAt - now) : snapshot.turnDurationSeconds * 1000) : 0;
   const remainingSeconds = Math.ceil(remainingMs / 1000);
   const timerPercent = snapshot ? Math.max(0, Math.min(100, (remainingMs / (snapshot.turnDurationSeconds * 1000)) * 100)) : 0;

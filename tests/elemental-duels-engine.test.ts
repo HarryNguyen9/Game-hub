@@ -53,4 +53,39 @@ describe("elemental duels engine", () => {
     expect(state.players.u1.selectedSendElement).toBe("ice");
     expect(state.players.u1.selectedMonsterType).toBe("earth-giant");
   });
+
+  it("records tower attack events for client-only projectiles without trusting the client for damage", () => {
+    const state = createElementalState("session-1", "room-1", players);
+    state.status = "playing";
+    const tile = state.map.buildTiles[0];
+    expect(buildTower(state, "u1", "fire-tower", tile)).toBeNull();
+    state.players.u1.monsters.push({
+      id: "m1",
+      monsterType: "normal",
+      element: "lightning",
+      hp: 100,
+      maxHp: 100,
+      pathProgress: 0.1,
+      x: tile.x + 12,
+      y: tile.y,
+      speed: 0,
+      reward: 1,
+      baseDamage: 1,
+      statusEffects: []
+    });
+
+    stepElementalState(state, 100);
+
+    const attackEvent = state.visualEvents.find((event) => event.type === "tower_attack");
+    expect(attackEvent).toMatchObject({
+      type: "tower_attack",
+      sourcePlayerId: "u1",
+      towerElement: "fire",
+      towerId: state.players.u1.towers[0].id,
+      targetMonsterId: "m1"
+    });
+    expect(attackEvent?.from).toEqual({ x: tile.x, y: tile.y });
+    expect(attackEvent?.to.x).toBeGreaterThan(tile.x);
+    expect(state.players.u1.monsters[0].hp).toBeLessThan(100);
+  });
 });
