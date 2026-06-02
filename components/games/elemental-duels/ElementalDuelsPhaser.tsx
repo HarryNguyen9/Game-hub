@@ -176,7 +176,7 @@ export function ElementalDuelsPhaser({
               }
               sprite.setTexture(key);
               sprite.setPosition(tower.x, tower.y - 2);
-              sprite.setScale(0.55 + (tower.level - 1) * 0.08);
+              this.fitImage(sprite, 42 + (tower.level - 1) * 6, 48 + (tower.level - 1) * 6);
             } else {
               const existing = this.towerSprites.get(tower.id);
               if (existing) {
@@ -213,6 +213,14 @@ export function ElementalDuelsPhaser({
           }
         }
 
+        fitImage(sprite: Phaser.GameObjects.Image, maxWidth: number, maxHeight = maxWidth) {
+          const frame = sprite.frame;
+          const width = frame?.width || maxWidth;
+          const height = frame?.height || maxHeight;
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          sprite.setDisplaySize(width * ratio, height * ratio);
+        }
+
         drawMonsters(current: ElementalSnapshot, now: number) {
           const you = current.players[currentUserId];
           if (!you) return;
@@ -241,7 +249,7 @@ export function ElementalDuelsPhaser({
             if (!this.textures.exists(key)) sprite.setTexture("monster-fallback");
             else sprite.setTexture(key);
             sprite.setPosition(display.x, y);
-            sprite.setScale(scale);
+            this.fitImage(sprite, 80 * scale, 80 * scale);
             sprite.setAlpha(monster.statusEffects.some((effect) => effect.type === "stun") ? 0.82 : 1);
 
             const hpPercent = Math.max(0, monster.hp / monster.maxHp);
@@ -278,7 +286,7 @@ export function ElementalDuelsPhaser({
               sprite.setTexture(key);
               sprite.setPosition(point.x, point.y);
               sprite.setAlpha(Math.max(0, 1 - point.progress * 0.35));
-              sprite.setScale(projectile.element === "earth" ? 0.72 : 0.62);
+              this.fitImage(sprite, projectile.element === "earth" ? 36 : 30, projectile.element === "earth" ? 36 : 30);
               sprite.setRotation(Math.atan2(projectile.to.y - projectile.from.y, projectile.to.x - projectile.from.x));
               drawProjectileImpact(this.effects, projectile, now);
             } else {

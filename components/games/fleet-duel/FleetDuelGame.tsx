@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { RotateCcw, Shuffle, Trash2, Ship, CheckCircle2 } from "lucide-react";
+import { RotateCcw, Shuffle, Trash2, CheckCircle2 } from "lucide-react";
 import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
+import { GameResultDialog } from "@/components/games/game-result-dialog";
 import { GameMuteButton, useGameAudio } from "@/components/games/use-game-audio";
 import { Button } from "@/components/ui/button";
 import { ToastPopup } from "@/components/ui/toast-popup";
@@ -196,6 +197,18 @@ export function FleetDuelGame({
       }
     >
       <ToastPopup message={error} />
+      <GameResultDialog
+        open={snapshot.status === "ended"}
+        title={winner?.userId === currentUserId ? "You won!" : `${winner?.displayName || "Opponent"} won`}
+        subtitle="Fleet Duel ended."
+        isHost={isHost}
+        returning={returning}
+        onBackToLobby={() => {
+          setReturning(true);
+          backToLobby();
+        }}
+        tone="cyan"
+      />
       {turnNotice && (
         <div className="pointer-events-none absolute left-1/2 top-24 z-30 -translate-x-1/2 animate-[fleet-turn_1600ms_ease-out_forwards] rounded-full bg-cyan-500 px-5 py-3 text-sm font-black text-white shadow-xl">
           Your turn
@@ -274,28 +287,6 @@ export function FleetDuelGame({
         </div>
       )}
 
-      {snapshot.status === "ended" && (
-        <div className="rounded-[2rem] bg-white p-5 text-center shadow-sm">
-          <div className="mx-auto mb-3 grid size-14 place-items-center rounded-full bg-cyan-100 text-2xl">
-            <Ship />
-          </div>
-          <p className="text-2xl font-black">{winner?.userId === currentUserId ? "You won!" : `${winner?.displayName || "Opponent"} won`}</p>
-          {isHost ? (
-            <Button
-              className="mt-4"
-              disabled={returning}
-              onClick={() => {
-                setReturning(true);
-                backToLobby();
-              }}
-            >
-              <RotateCcw size={16} /> Back to Lobby
-            </Button>
-          ) : (
-            <p className="mt-3 text-sm font-bold text-slate-500">Waiting for host to return to lobby.</p>
-          )}
-        </div>
-      )}
     </GameFullscreenShell>
   );
 }

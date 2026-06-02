@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
-import { Flag, RotateCcw, Trophy } from "lucide-react";
+import { Flag } from "lucide-react";
 import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
+import { GameResultDialog } from "@/components/games/game-result-dialog";
 import { GameMuteButton, useGameAudio } from "@/components/games/use-game-audio";
 import { Button } from "@/components/ui/button";
 import { ToastPopup } from "@/components/ui/toast-popup";
@@ -204,6 +205,18 @@ export function ChessGame({
   return (
     <GameFullscreenShell expanded={expanded} onToggleExpanded={onToggleExpanded} header={header}>
       <ToastPopup message={error} />
+      <GameResultDialog
+        open={snapshot.status === "ended"}
+        title={reasonLabel(snapshot.endReason)}
+        subtitle={winner ? `Winner: ${winner.displayName}` : "Draw game"}
+        isHost={isHost}
+        returning={returning}
+        onBackToLobby={() => {
+          setReturning(true);
+          backToLobby();
+        }}
+        tone="indigo"
+      />
       <div className="relative grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
         {turnNotice && (
           <div className="pointer-events-none absolute inset-x-0 top-3 z-30 flex justify-center px-4">
@@ -250,29 +263,6 @@ export function ChessGame({
               moveCount={currentMoveCount}
             />
           </div>
-          {snapshot.status === "ended" && (
-            <div className="mx-auto mt-4 max-w-md rounded-[1.5rem] bg-white/95 p-5 text-center shadow-xl">
-              <div className="mx-auto mb-3 grid size-11 place-items-center rounded-full bg-amber-100 text-amber-600">
-                <Trophy size={22} />
-              </div>
-              <p className="text-2xl font-black">{reasonLabel(snapshot.endReason)}</p>
-              <p className="mt-1 text-sm font-black text-slate-500">{winner ? `Winner: ${winner.displayName}` : "Draw game"}</p>
-              {isHost ? (
-                <Button
-                  className="mt-4 w-full justify-center"
-                  disabled={returning}
-                  onClick={() => {
-                    setReturning(true);
-                    backToLobby();
-                  }}
-                >
-                  <RotateCcw size={18} /> {returning ? "Returning..." : "Back to Lobby"}
-                </Button>
-              ) : (
-                <p className="mt-4 text-sm font-black text-slate-500">Waiting for host to return to lobby.</p>
-              )}
-            </div>
-          )}
         </div>
         <aside className="grid content-start gap-3 rounded-[1.6rem] bg-slate-50 p-4">
           <div className="rounded-2xl bg-white p-3 shadow-sm">

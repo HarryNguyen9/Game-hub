@@ -594,7 +594,7 @@ export function RoomClient({
           </div>
         )}
         <ToastPopup message={message} onDismiss={() => setMessage("")} />
-        {gameExpanded && selectedGame && (
+        {gameExpanded && selectedGame && !isGameLobby && (
           <div className="fixed right-24 top-5 z-[70] sm:right-28">
             <GameRulesInfoButton game={selectedGame} className="size-9" />
           </div>
@@ -604,9 +604,9 @@ export function RoomClient({
             Game is in progress. You&apos;ll join when the next round starts.
           </p>
         )}
+        {isHost && status === "waiting" && (
         <div className="mt-4 rounded-[1.5rem] bg-slate-50 p-4">
-          <p className="text-sm font-black text-slate-500">Selected game · Players {playerCountValue}</p>
-          {isHost && status === "waiting" ? (
+          <p className="text-sm font-black text-slate-500">Choose game · Players {playerCountValue}</p>
             <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
               <button
                 type="button"
@@ -620,15 +620,9 @@ export function RoomClient({
                   <span className="block truncate text-xs text-slate-500">{selectedGame?.description || "Open game catalog"}</span>
                 </span>
               </button>
-              {selectedGame && <GameRulesInfoButton game={selectedGame} className="size-11 rounded-2xl" />}
             </div>
-          ) : (
-            <div className="mt-1 flex items-center justify-between gap-3">
-              <p className="min-w-0 truncate text-xl font-black text-slate-900">{selectedGame?.name || "No game selected yet"}</p>
-              {selectedGame && <GameRulesInfoButton game={selectedGame} className="size-9" />}
-            </div>
-          )}
         </div>
+        )}
         <div className="flex flex-1 flex-col">
         {isFlappyActivePlayer ? (
           <FlappyRushGame

@@ -2,10 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { PointerEvent } from "react";
-import { RotateCcw, Trophy } from "lucide-react";
 import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
+import { GameResultDialog } from "@/components/games/game-result-dialog";
 import { GameMuteButton, useGameAudio } from "@/components/games/use-game-audio";
-import { Button } from "@/components/ui/button";
 import { ToastPopup } from "@/components/ui/toast-popup";
 import type { FlappySnapshot } from "@/lib/games/flappy-rush/types";
 import { renderFlappyRush } from "./renderFlappyRush";
@@ -165,6 +164,38 @@ export function FlappyRushGame({
       footer={<p className="text-center text-sm font-semibold text-slate-500">Tap / click / Space to flap. Server owns score, death, and pipes.</p>}
     >
       <ToastPopup message={error} />
+      <GameResultDialog
+        open={!snapshot && roomEnded}
+        title="Round ended"
+        subtitle="Waiting for the host to return everyone to the lobby."
+        isHost={isHost}
+        returning={returning}
+        onBackToLobby={returnToLobby}
+        tone="amber"
+      />
+      <GameResultDialog
+        open={Boolean(ended && snapshot)}
+        title="Round ended"
+        subtitle={`Winner: ${snapshot?.leaderboard[0]?.displayName || "Nobody"}`}
+        isHost={isHost}
+        returning={returning}
+        onBackToLobby={returnToLobby}
+        tone="amber"
+        details={
+          snapshot ? (
+            <div className="grid gap-2 text-left">
+              {snapshot.leaderboard.map((player, index) => (
+                <div key={player.userId} className={`flex items-center justify-between rounded-2xl px-4 py-2 text-sm font-black ${index === 0 ? "bg-amber-50 text-amber-700" : "bg-slate-50 text-slate-700"}`}>
+                  <span>
+                    #{index + 1} {player.displayName}
+                  </span>
+                  <span>{player.score}</span>
+                </div>
+              ))}
+            </div>
+          ) : null
+        }
+      />
       <div
         className={
           expanded
@@ -187,54 +218,10 @@ export function FlappyRushGame({
           </div>
         )}
         {!snapshot && !countdown && !roomEnded && <div className="absolute inset-0 grid place-items-center font-black text-slate-600">Waiting for game snapshot...</div>}
-        {!snapshot && roomEnded && (
-          <div className="absolute inset-0 grid place-items-center bg-white/82 p-4">
-            <div className="w-full max-w-sm rounded-[2rem] bg-white p-5 text-center shadow-xl">
-              <div className="mx-auto grid size-12 place-items-center rounded-full bg-amber-100 text-amber-600">
-                <Trophy size={24} />
-              </div>
-              <p className="mt-2 text-2xl font-black">Round ended</p>
-              <p className="mt-1 text-sm font-bold text-slate-500">Waiting for the host to return everyone to the lobby.</p>
-              {isHost && (
-                <Button className="mt-4 w-full" disabled={returning} onClick={returnToLobby}>
-                  <RotateCcw size={18} /> {returning ? "Returning..." : "Back to Lobby"}
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
         {currentPlayer && !currentPlayer.alive && !ended && (
           <div className="absolute left-4 top-4 max-w-[15rem] rounded-2xl bg-white/92 px-4 py-3 text-sm shadow-lg">
             <p className="font-black text-red-500">You crashed!</p>
             <p className="mt-1 font-bold text-slate-500">Spectating the rest of the round.</p>
-          </div>
-        )}
-        {ended && snapshot && (
-          <div className="absolute inset-0 grid place-items-center bg-white/82 p-4">
-            <div className="w-full max-w-sm rounded-[2rem] bg-white p-5 text-center shadow-xl">
-              <div className="mx-auto grid size-12 place-items-center rounded-full bg-amber-100 text-amber-600">
-                <Trophy size={24} />
-              </div>
-              <p className="mt-2 text-2xl font-black">Round ended</p>
-              <p className="mt-1 text-sm font-bold text-slate-500">Winner: {snapshot.leaderboard[0]?.displayName || "Nobody"}</p>
-              <div className="mt-4 grid gap-2 text-left">
-                {snapshot.leaderboard.map((player, index) => (
-                  <div key={player.userId} className={`flex items-center justify-between rounded-2xl px-4 py-2 text-sm font-black ${index === 0 ? "bg-amber-50 text-amber-700" : "bg-slate-50"}`}>
-                    <span>
-                      #{index + 1} {player.displayName}
-                    </span>
-                    <span>{player.score}</span>
-                  </div>
-                ))}
-              </div>
-              {isHost ? (
-                <Button className="mt-4 w-full" disabled={returning} onClick={returnToLobby}>
-                  <RotateCcw size={18} /> {returning ? "Returning..." : "Back to Lobby"}
-                </Button>
-              ) : (
-                <p className="mt-4 text-sm font-bold text-slate-500">Waiting for host to return to lobby.</p>
-              )}
-            </div>
           </div>
         )}
       </div>

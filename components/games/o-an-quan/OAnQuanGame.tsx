@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { RotateCcw, Trophy } from "lucide-react";
 import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
+import { GameResultDialog } from "@/components/games/game-result-dialog";
 import { GameMuteButton, useGameAudio } from "@/components/games/use-game-audio";
-import { Button } from "@/components/ui/button";
 import { ToastPopup } from "@/components/ui/toast-popup";
 import { OAQ_CONFIG } from "@/lib/games/o-an-quan/config";
 import type { OAnQuanDirection, OAnQuanMove, OAnQuanPit, OAnQuanPlayer, OAnQuanSnapshot } from "@/lib/games/o-an-quan/types";
@@ -358,6 +357,18 @@ export function OAnQuanGame({
   return (
     <GameFullscreenShell expanded={expanded} onToggleExpanded={onToggleExpanded} header={header}>
       <ToastPopup message={error} />
+      <GameResultDialog
+        open={snapshot.status === "ended"}
+        title={snapshot.result === "draw" ? "Draw!" : `${winner?.displayName || "Winner"} won`}
+        subtitle="Ô Ăn Quan ended."
+        isHost={isHost}
+        returning={returning}
+        onBackToLobby={() => {
+          setReturning(true);
+          backToLobby();
+        }}
+        tone="amber"
+      />
       <div className="grid gap-4">
         <style>{`
           @keyframes oaq-turn {
@@ -420,28 +431,6 @@ export function OAnQuanGame({
           <p className="rounded-2xl bg-white/80 px-4 py-3 text-sm font-bold text-slate-500">
             Last: {snapshot.players[snapshot.lastMove.userId]?.displayName || "Player"} {snapshot.lastMove.reason === "timeout" ? "lost the turn by timeout" : snapshot.lastMove.reason === "no_moves" ? "had no legal moves" : `captured ${snapshot.lastMove.captured} points`}
           </p>
-        )}
-        {snapshot.status === "ended" && (
-          <div className="rounded-[2rem] bg-white p-5 text-center shadow-sm">
-            <div className="mx-auto mb-3 grid size-14 place-items-center rounded-full bg-amber-100 text-amber-600">
-              <Trophy />
-            </div>
-            <p className="text-2xl font-black">{snapshot.result === "draw" ? "Draw!" : `${winner?.displayName || "Winner"} won`}</p>
-            {isHost ? (
-              <Button
-                className="mt-4"
-                disabled={returning}
-                onClick={() => {
-                  setReturning(true);
-                  backToLobby();
-                }}
-              >
-                <RotateCcw size={16} /> Back to Lobby
-              </Button>
-            ) : (
-              <p className="mt-3 text-sm font-bold text-slate-500">Waiting for host to return to lobby.</p>
-            )}
-          </div>
         )}
       </div>
     </GameFullscreenShell>

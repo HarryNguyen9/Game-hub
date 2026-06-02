@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { RotateCcw, Volume2, VolumeX } from "lucide-react";
+import { Volume2, VolumeX } from "lucide-react";
 import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
+import { GameResultDialog } from "@/components/games/game-result-dialog";
 import { Button } from "@/components/ui/button";
 import { ToastPopup } from "@/components/ui/toast-popup";
 import { ELEMENTAL_CONFIG } from "@/lib/games/elemental-duels/config";
@@ -36,6 +37,7 @@ export function ElementalDuelsGame({
   const fieldRef = useRef<HTMLDivElement | null>(null);
   const [selection, setSelection] = useState<ElementalSelection | null>(null);
   const [fieldBounds, setFieldBounds] = useState<{ width: number; height: number }>({ width: ELEMENTAL_CONFIG.worldWidth, height: ELEMENTAL_CONFIG.worldHeight });
+  const [returning, setReturning] = useState(false);
   const [muted, setMuted] = useState(() => (typeof window === "undefined" ? true : window.localStorage.getItem("elemental-muted") !== "false"));
   const previousBaseHpRef = useRef<number | null>(null);
   const previousTowerCountRef = useRef(0);
@@ -120,6 +122,12 @@ export function ElementalDuelsGame({
     buildTower(towerType, x, y);
   }
 
+  function returnToLobby() {
+    if (returning) return;
+    setReturning(true);
+    backToLobby();
+  }
+
   const menuSelection = selection
     ? {
         ...selection,
@@ -156,6 +164,22 @@ export function ElementalDuelsGame({
       }
     >
       <ToastPopup message={error} />
+      <GameResultDialog
+        open={snapshot.status === "ended"}
+        title={winner ? `${winner.displayName} wins!` : "Draw"}
+        subtitle={winner?.userId === currentUserId ? "Victory" : winner ? "Defeat" : "The duel is over."}
+        details={
+          <div className="grid grid-cols-2 gap-2 text-sm font-black">
+            <span className="rounded-2xl bg-emerald-50 px-3 py-2 text-emerald-700">You {you?.baseHp ?? 0} HP</span>
+            <span className="rounded-2xl bg-rose-50 px-3 py-2 text-rose-700">Rival {opponent?.baseHp ?? 0} HP</span>
+          </div>
+        }
+        isHost={isHost}
+        returning={returning}
+        onBackToLobby={returnToLobby}
+        tone="orange"
+        icon={<span className="text-2xl">🔥</span>}
+      />
       <ElementalHud snapshot={snapshot} currentUserId={currentUserId} connected={connected} />
       <div className="grid gap-3 rounded-3xl bg-orange-50/80 p-4 text-sm font-bold text-slate-600 md:grid-cols-3">
         <p><span className="font-black text-orange-700">Build towers:</span> tap a glowing tile, then choose a tower.</p>
@@ -184,27 +208,6 @@ export function ElementalDuelsGame({
             onTargetMode={setTargetMode}
             onClose={() => setSelection(null)}
           />
-          {snapshot.status === "ended" && (
-            <div className="absolute inset-0 grid place-items-center rounded-[1.5rem] bg-white/76 p-4 backdrop-blur-[2px]">
-              <div className="w-full max-w-sm rounded-[2rem] bg-white p-5 text-center shadow-2xl ring-1 ring-orange-100">
-                <div className="mx-auto grid size-14 place-items-center rounded-full bg-orange-100 text-2xl">🔥</div>
-                <p className="mt-3 text-sm font-black uppercase text-orange-500">{winner?.userId === currentUserId ? "Victory" : "Defeat"}</p>
-                <p className="mt-1 text-2xl font-black">{winner ? `${winner.displayName} wins!` : "Draw"}</p>
-                <div className="mt-3 grid grid-cols-2 gap-2 text-sm font-black">
-                  <span className="rounded-2xl bg-emerald-50 px-3 py-2 text-emerald-700">You {you?.baseHp ?? 0} HP</span>
-                  <span className="rounded-2xl bg-rose-50 px-3 py-2 text-rose-700">Rival {opponent?.baseHp ?? 0} HP</span>
-                </div>
-                <p className="mt-3 text-sm font-bold text-slate-500">{snapshot.endReason || "The duel is over."}</p>
-                {isHost ? (
-                  <Button className="mt-4 w-full justify-center" onClick={backToLobby}>
-                    <RotateCcw size={16} /> Back to Lobby
-                  </Button>
-                ) : (
-                  <p className="mt-4 text-sm font-bold text-slate-500">Waiting for host to return to lobby.</p>
-                )}
-              </div>
-            </div>
-          )}
         </div>
         <div className="grid content-start gap-4">
           <ElementalOpponentPanel snapshot={snapshot} currentUserId={currentUserId} onSelectElement={selectSendElement} onSelectMonster={selectMonsterType} />
