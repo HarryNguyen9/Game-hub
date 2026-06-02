@@ -31,6 +31,44 @@ function reasonLabel(reason: ChessSnapshot["endReason"]) {
   return "Game ended";
 }
 
+function ChessPlayerCard({
+  player,
+  isCurrentUser,
+  isTurn,
+  moveCount
+}: {
+  player: ChessSnapshot["players"][string] | null | undefined;
+  isCurrentUser: boolean;
+  isTurn: boolean;
+  moveCount: number;
+}) {
+  if (!player) return null;
+
+  return (
+    <div
+      className={`flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-sm shadow-sm ring-1 ${
+        isCurrentUser
+          ? "bg-indigo-50 text-indigo-700 ring-indigo-100"
+          : "bg-white text-slate-700 ring-slate-100"
+      }`}
+    >
+      <div className="min-w-0">
+        <p className="truncate font-black">{player.displayName}</p>
+        <p className="text-xs font-bold opacity-70">
+          {sideLabel(player.color)} · {moveCount} moves
+        </p>
+      </div>
+      <span
+        className={`shrink-0 rounded-full px-3 py-1 text-xs font-black ${
+          isTurn ? "bg-[#ff7a90] text-white shadow-sm" : "bg-slate-100 text-slate-500"
+        }`}
+      >
+        {isTurn ? "Turn" : sideLabel(player.color)}
+      </span>
+    </div>
+  );
+}
+
 export function ChessGame({
   roomId,
   currentUserId,
@@ -144,6 +182,8 @@ export function ChessGame({
 
   const winner = snapshot.winnerUserId ? snapshot.players[snapshot.winnerUserId] : null;
   const opponent = Object.values(snapshot.players).find((player) => player.userId !== currentUserId);
+  const currentMoveCount = snapshot.moveHistory.filter((record) => record.userId === currentUserId).length;
+  const opponentMoveCount = opponent ? snapshot.moveHistory.filter((record) => record.userId === opponent.userId).length : 0;
 
   return (
     <GameFullscreenShell expanded={expanded} onToggleExpanded={onToggleExpanded} header={header}>
@@ -165,12 +205,17 @@ export function ChessGame({
           }
         `}</style>
         <div className="rounded-[1.6rem] bg-gradient-to-br from-indigo-50 via-white to-amber-50 p-4">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <p className="text-sm font-black text-slate-500">You are {sideLabel(currentPlayer?.color)}</p>
+          <div className="mb-3 grid gap-2">
+            <ChessPlayerCard
+              player={opponent}
+              isCurrentUser={false}
+              isTurn={snapshot.currentTurnUserId === opponent?.userId}
+              moveCount={opponentMoveCount}
+            />
+            <div className="flex flex-wrap items-center justify-between gap-2 px-1">
               <p className="text-xs font-bold text-slate-400">Promotion defaults to Queen in this MVP.</p>
+              {snapshot.check && snapshot.status === "playing" && <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-black text-red-600">Check</span>}
             </div>
-            {snapshot.check && snapshot.status === "playing" && <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-black text-red-600">Check</span>}
           </div>
           <ChessBoard
             fen={snapshot.fen}
@@ -181,6 +226,14 @@ export function ChessGame({
             canInteract={snapshot.status === "playing" && isMyTurn}
             onSquareClick={handleSquareClick}
           />
+          <div className="mt-3">
+            <ChessPlayerCard
+              player={currentPlayer}
+              isCurrentUser
+              isTurn={snapshot.currentTurnUserId === currentUserId}
+              moveCount={currentMoveCount}
+            />
+          </div>
           {snapshot.status === "ended" && (
             <div className="mx-auto mt-4 max-w-md rounded-[1.5rem] bg-white/95 p-5 text-center shadow-xl">
               <div className="mx-auto mb-3 grid size-11 place-items-center rounded-full bg-amber-100 text-amber-600">
@@ -235,7 +288,6 @@ export function ChessGame({
               <Flag size={18} /> Resign
             </Button>
           )}
-          {opponent && <p className="text-xs font-bold text-slate-400">Opponent: {opponent.displayName}</p>}
           <p className="text-xs font-bold text-slate-400">Client only sends from/to. Server validates all chess rules.</p>
         </aside>
       </div>

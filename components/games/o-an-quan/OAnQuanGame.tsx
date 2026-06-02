@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { RotateCcw, Trophy } from "lucide-react";
 import { GameFullscreenShell } from "@/components/games/game-fullscreen-shell";
 import { Button } from "@/components/ui/button";
@@ -82,6 +82,42 @@ function buildMoveFrames(board: OAnQuanPit[], move: OAnQuanMove) {
   return frames;
 }
 
+function PlayerScoreCard({
+  player,
+  isCurrentUser,
+  isTurn,
+  resolvingMove
+}: {
+  player: OAnQuanPlayer | null | undefined;
+  isCurrentUser: boolean;
+  isTurn: boolean;
+  resolvingMove: boolean;
+}) {
+  if (!player) return null;
+
+  return (
+    <div
+      className={`flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-sm shadow-sm ring-1 ${
+        isCurrentUser
+          ? "bg-rose-50 text-rose-700 ring-rose-100"
+          : "bg-white text-slate-700 ring-slate-100"
+      }`}
+    >
+      <div className="min-w-0">
+        <p className="truncate font-black">{player.displayName}</p>
+        <p className="text-xs font-bold opacity-70">{player.score} pts captured</p>
+      </div>
+      <span
+        className={`shrink-0 rounded-full px-3 py-1 text-xs font-black ${
+          isTurn ? "bg-[#ff7a90] text-white shadow-sm" : "bg-slate-100 text-slate-500"
+        }`}
+      >
+        {isTurn ? (resolvingMove ? "Moving" : "Turn") : player.side}
+      </span>
+    </div>
+  );
+}
+
 export function OAnQuanGame({
   roomId,
   currentUserId,
@@ -135,7 +171,6 @@ export function OAnQuanGame({
     : 0;
   const remainingSeconds = Math.ceil(remainingMs / 1000);
   const timerPercent = snapshot ? Math.max(0, Math.min(100, (remainingMs / (snapshot.turnDurationSeconds * 1000)) * 100)) : 0;
-  const scores = useMemo(() => Object.values(displayPlayers).sort((a) => (a.side === "top" ? -1 : 1)), [displayPlayers]);
   const moveId = snapshot?.lastMove?.createdAt || 0;
   const hasSnapshot = Boolean(snapshot);
   const snapshotCurrentTurnUserId = snapshot?.currentTurnUserId ?? null;
@@ -297,6 +332,8 @@ export function OAnQuanGame({
   }
 
   const winner = snapshot.winnerUserId ? snapshot.players[snapshot.winnerUserId] : null;
+  const displayCurrentPlayer = displayPlayers[currentUserId] || currentPlayer;
+  const displayOpponentPlayer = Object.values(displayPlayers).find((player) => player.userId !== currentUserId);
 
   return (
     <GameFullscreenShell expanded={expanded} onToggleExpanded={onToggleExpanded} header={header}>
@@ -322,13 +359,6 @@ export function OAnQuanGame({
             }
           }
         `}</style>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {scores.map((player) => (
-            <div key={player.userId} className={`rounded-2xl px-4 py-3 text-sm font-black shadow-sm ${player.userId === currentUserId ? "bg-rose-50 text-rose-700" : "bg-white text-slate-700"}`}>
-              {player.displayName} · {player.side} · {player.score} pts
-            </div>
-          ))}
-        </div>
         <div className="relative">
           {turnNotice && !isAnimating && (
             <div className="pointer-events-none absolute inset-x-0 top-4 z-30 flex justify-center px-4">
@@ -337,6 +367,14 @@ export function OAnQuanGame({
               </div>
             </div>
           )}
+          <div className="mb-2">
+            <PlayerScoreCard
+              player={displayOpponentPlayer}
+              isCurrentUser={false}
+              isTurn={snapshot.currentTurnUserId === displayOpponentPlayer?.userId}
+              resolvingMove={resolvingMove}
+            />
+          </div>
           <OAnQuanBoard
             board={displayBoard || snapshot.board}
             mySide={currentPlayer?.side || "bottom"}
@@ -349,6 +387,14 @@ export function OAnQuanGame({
             onSelectPit={setSelectedPit}
             onMove={submit}
           />
+          <div className="mt-2">
+            <PlayerScoreCard
+              player={displayCurrentPlayer}
+              isCurrentUser
+              isTurn={snapshot.currentTurnUserId === currentUserId}
+              resolvingMove={resolvingMove}
+            />
+          </div>
         </div>
         {snapshot.lastMove && (
           <p className="rounded-2xl bg-white/80 px-4 py-3 text-sm font-bold text-slate-500">
