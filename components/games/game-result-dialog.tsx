@@ -12,6 +12,7 @@ export function GameResultDialog({
   isHost,
   returning,
   onBackToLobby,
+  actionLabel = "Back to Lobby",
   tone = "amber",
   icon
 }: {
@@ -22,6 +23,7 @@ export function GameResultDialog({
   isHost: boolean;
   returning?: boolean;
   onBackToLobby?: () => void;
+  actionLabel?: string;
   tone?: "amber" | "rose" | "cyan" | "indigo" | "orange";
   icon?: ReactNode;
 }) {
@@ -46,7 +48,7 @@ export function GameResultDialog({
         {details && <div className="mt-4">{details}</div>}
         {isHost ? (
           <Button className="mt-5 w-full justify-center" disabled={returning} onClick={onBackToLobby}>
-            <RotateCcw size={18} /> {returning ? "Returning..." : "Back to Lobby"}
+            <RotateCcw size={18} /> {returning ? "Returning..." : actionLabel}
           </Button>
         ) : (
           <p className="mt-5 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-bold text-slate-500">Waiting for host to return to lobby.</p>

@@ -33,8 +33,8 @@ const menuSize = { width: 172, height: 188 };
 export function clampElementalMenuPosition(point: Point, bounds: Size, size: Size = menuSize) {
   const padding = 8;
   return {
-    x: Math.max(padding, Math.min(point.x, bounds.width - size.width - padding)),
-    y: Math.max(padding, Math.min(point.y, bounds.height - size.height - padding))
+    x: Math.max(padding, Math.min(point.x - size.width / 2, bounds.width - size.width - padding)),
+    y: Math.max(padding, Math.min(point.y - size.height - 12, bounds.height - size.height - padding))
   };
 }
 

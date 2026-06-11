@@ -304,13 +304,17 @@ export function ElementalDuelsPhaser({
         drawTiles(g: Phaser.GameObjects.Graphics, current: ElementalSnapshot) {
           for (const tile of current.map.buildTiles) {
             const blocked = current.map.obstacles.some((obstacle) => !obstacle.cleared && distance(obstacle, tile) < 20);
-            g.fillStyle(blocked ? 0xb8a28c : tile.affinity ? elementColor(tile.affinity) : 0xffffff, blocked ? 0.75 : 0.84);
-            g.lineStyle(3, blocked ? 0x8b735f : 0xfbbf24, 0.9);
+            g.fillStyle(0xffffff, blocked ? 0.45 : 0.88);
+            g.fillRoundedRect(tile.x - 24, tile.y - 24, 48, 48, 14);
+            g.fillStyle(blocked ? 0xb8a28c : tile.affinity ? elementColor(tile.affinity) : 0xf8fafc, blocked ? 0.52 : 0.76);
+            g.lineStyle(4, blocked ? 0x8b735f : 0xf59e0b, blocked ? 0.58 : 0.95);
             g.fillRoundedRect(tile.x - 18, tile.y - 18, 36, 36, 10);
             g.strokeRoundedRect(tile.x - 18, tile.y - 18, 36, 36, 10);
+            g.lineStyle(2, 0xffffff, 0.65);
+            g.strokeRoundedRect(tile.x - 14, tile.y - 14, 28, 28, 8);
             if (tile.affinity) {
-              g.fillStyle(elementColor(tile.affinity), 0.24);
-              g.fillCircle(tile.x, tile.y, 10);
+              g.fillStyle(elementColor(tile.affinity), 0.2);
+              g.fillCircle(tile.x, tile.y, 12);
             }
           }
         }
@@ -330,7 +334,7 @@ export function ElementalDuelsPhaser({
               }
               sprite.setTexture(key);
               sprite.setPosition(tower.x, tower.y - 2);
-              this.fitImage(sprite, 42 + (tower.level - 1) * 6, 48 + (tower.level - 1) * 6);
+              this.fitImage(sprite, 50 + (tower.level - 1) * 7, 56 + (tower.level - 1) * 7);
             } else {
               const existing = this.towerSprites.get(tower.id);
               if (existing) {
@@ -408,14 +412,14 @@ export function ElementalDuelsPhaser({
             if (!this.textures.exists(key)) sprite.setTexture("monster-fallback");
             else sprite.setTexture(key);
             sprite.setPosition(display.x, y);
-            this.fitImage(sprite, 80 * scale, 80 * scale);
+            this.fitImage(sprite, 58 * scale, 58 * scale);
             sprite.setAlpha(monster.statusEffects.some((effect) => effect.type === "stun") ? 0.82 : 1);
 
             const hpPercent = Math.max(0, monster.hp / monster.maxHp);
             this.effects.fillStyle(0xffffff, 0.92);
-            this.effects.fillRoundedRect(display.x - 15, y - 26 * scale - 12, 30, 4, 2);
+            this.effects.fillRoundedRect(display.x - 14, y - 22 * scale - 10, 28, 4, 2);
             this.effects.fillStyle(hpPercent < 0.35 ? 0xfb7185 : 0x22c55e, 1);
-            this.effects.fillRoundedRect(display.x - 15, y - 26 * scale - 12, 30 * hpPercent, 4, 2);
+            this.effects.fillRoundedRect(display.x - 14, y - 22 * scale - 10, 28 * hpPercent, 4, 2);
           }
 
           for (const [monsterId, sprite] of this.monsterSprites.entries()) {

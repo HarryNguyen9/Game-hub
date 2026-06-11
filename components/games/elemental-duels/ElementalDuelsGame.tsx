@@ -129,13 +129,18 @@ export function ElementalDuelsGame({
   }
 
   const menuSelection = selection
-    ? {
-        ...selection,
-        screen: {
-          x: (selection.point.x / ELEMENTAL_CONFIG.worldWidth) * fieldBounds.width,
-          y: (selection.point.y / ELEMENTAL_CONFIG.worldHeight) * fieldBounds.height
-        }
-      }
+    ? (() => {
+        const scale = Math.min(fieldBounds.width / ELEMENTAL_CONFIG.worldWidth, fieldBounds.height / ELEMENTAL_CONFIG.worldHeight);
+        const offsetX = (fieldBounds.width - ELEMENTAL_CONFIG.worldWidth * scale) / 2;
+        const offsetY = (fieldBounds.height - ELEMENTAL_CONFIG.worldHeight * scale) / 2;
+        return {
+          ...selection,
+          screen: {
+            x: offsetX + selection.point.x * scale,
+            y: offsetY + selection.point.y * scale
+          }
+        };
+      })()
     : null;
 
   if (!snapshot) {
@@ -170,7 +175,7 @@ export function ElementalDuelsGame({
       <GameResultDialog
         open={snapshot.status === "ended"}
         title={winner ? `${winner.displayName} wins!` : "Draw"}
-        subtitle={winner?.userId === currentUserId ? "Victory" : winner ? "Defeat" : "The duel is over."}
+        subtitle={winner?.userId === currentUserId ? "Victory! Confirm to return to lobby." : winner ? "Defeat. Host can confirm to return to lobby." : "The duel is over."}
         details={
           <div className="grid grid-cols-2 gap-2 text-sm font-black">
             <span className="rounded-2xl bg-emerald-50 px-3 py-2 text-emerald-700">You {you?.baseHp ?? 0} HP</span>
@@ -180,6 +185,7 @@ export function ElementalDuelsGame({
         isHost={isHost}
         returning={returning}
         onBackToLobby={returnToLobby}
+        actionLabel="OK, Back to Lobby"
         tone="orange"
         icon={<span className="text-2xl">🔥</span>}
       />
