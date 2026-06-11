@@ -260,7 +260,14 @@ export function ElementalDuelsPhaser({
             const scaleX = ELEMENTAL_CONFIG.worldWidth / this.scale.width;
             const scaleY = ELEMENTAL_CONFIG.worldHeight / this.scale.height;
             const point = { x: pointer.x * scaleX, y: pointer.y * scaleY };
-            const screen = { x: pointer.x, y: pointer.y };
+            const canvasRect = this.game.canvas.getBoundingClientRect();
+            const containerRect = containerRef.current?.getBoundingClientRect();
+            const screen = containerRect
+              ? {
+                  x: canvasRect.left - containerRect.left + (point.x / ELEMENTAL_CONFIG.worldWidth) * canvasRect.width,
+                  y: canvasRect.top - containerRect.top + (point.y / ELEMENTAL_CONFIG.worldHeight) * canvasRect.height
+                }
+              : { x: pointer.x, y: pointer.y };
             const you = current.players[currentUserId];
             if (!you) return selectRef.current(null);
 
@@ -473,14 +480,15 @@ export function ElementalDuelsPhaser({
         drawOpponentCard(g: Phaser.GameObjects.Graphics, current: ElementalSnapshot) {
           const opponent = Object.values(current.players).find((player) => player.userId !== currentUserId);
           if (!opponent) return;
-          g.fillStyle(0xffffff, 0.78);
-          g.fillRoundedRect(12, 12, 158, 52, 16);
+          const hpPercent = Math.max(0, opponent.baseHp / ELEMENTAL_CONFIG.baseHp);
+          g.fillStyle(0xffffff, 0.72);
+          g.fillRoundedRect(12, 12, 112, 38, 13);
           g.fillStyle(0xfef3c7, 1);
-          g.fillRoundedRect(26, 42, 80, 7, 4);
+          g.fillRoundedRect(22, 36, 58, 5, 3);
           g.fillStyle(0xf97316, 1);
-          g.fillRoundedRect(26, 42, 80 * Math.max(0, opponent.baseHp / ELEMENTAL_CONFIG.baseHp), 7, 4);
-          this.labels.push(this.add.text(24, 22, opponent.displayName, { fontFamily: "Arial", fontSize: "12px", color: "#334155", fontStyle: "bold" }));
-          this.labels.push(this.add.text(112, 38, `${opponent.monsters.length} mobs`, { fontFamily: "Arial", fontSize: "11px", color: "#64748b", fontStyle: "bold" }));
+          g.fillRoundedRect(22, 36, 58 * hpPercent, 5, 3);
+          this.labels.push(this.add.text(22, 20, opponent.displayName, { fontFamily: "Arial", fontSize: "9px", color: "#334155", fontStyle: "bold" }));
+          this.labels.push(this.add.text(84, 31, `${opponent.monsters.length} mobs`, { fontFamily: "Arial", fontSize: "8px", color: "#64748b", fontStyle: "bold" }));
         }
 
         update() {

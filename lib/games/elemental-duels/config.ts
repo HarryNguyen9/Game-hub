@@ -7,6 +7,7 @@ export const ELEMENTAL_CONFIG = {
   passiveIncomeMs: 4200,
   neutralWaveMs: 5200,
   countdownSeconds: 3,
+  countdownLeadInMs: 450,
   simulationTickRate: 20,
   snapshotRate: 10,
   buildTileRadius: 26,

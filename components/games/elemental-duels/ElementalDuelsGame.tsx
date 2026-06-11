@@ -13,6 +13,21 @@ import { ElementalHud } from "./ElementalHud";
 import { ElementalOpponentPanel } from "./ElementalOpponentPanel";
 import { useElementalDuelsSocket } from "./useElementalDuelsSocket";
 
+function useNow(stepMs = 100) {
+  const [now, setNow] = useState(0);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setNow(Date.now()));
+    const timer = window.setInterval(() => setNow(Date.now()), stepMs);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearInterval(timer);
+    };
+  }, [stepMs]);
+
+  return now;
+}
+
 export function ElementalDuelsGame({
   roomId,
   currentUserId,
@@ -41,9 +56,11 @@ export function ElementalDuelsGame({
   const previousBaseHpRef = useRef<number | null>(null);
   const previousTowerCountRef = useRef(0);
   const previousStatusRef = useRef<string | null>(null);
+  const now = useNow(100);
   const winner = useMemo(() => (snapshot?.winnerUserId ? snapshot.players[snapshot.winnerUserId] : null), [snapshot]);
   const you = snapshot?.players[currentUserId] || null;
   const opponent = snapshot ? Object.values(snapshot.players).find((player) => player.userId !== currentUserId) || null : null;
+  const countdownSeconds = snapshot?.status === "countdown" && now > 0 ? Math.max(1, Math.ceil((snapshot.countdownEndsAt - now) / 1000)) : null;
   const showDebugStats = process.env.NODE_ENV !== "production";
   const debugStats = useMemo(() => {
     if (!snapshot || !you) return null;
@@ -128,20 +145,7 @@ export function ElementalDuelsGame({
     backToLobby();
   }
 
-  const menuSelection = selection
-    ? (() => {
-        const scale = Math.min(fieldBounds.width / ELEMENTAL_CONFIG.worldWidth, fieldBounds.height / ELEMENTAL_CONFIG.worldHeight);
-        const offsetX = (fieldBounds.width - ELEMENTAL_CONFIG.worldWidth * scale) / 2;
-        const offsetY = (fieldBounds.height - ELEMENTAL_CONFIG.worldHeight * scale) / 2;
-        return {
-          ...selection,
-          screen: {
-            x: offsetX + selection.point.x * scale,
-            y: offsetY + selection.point.y * scale
-          }
-        };
-      })()
-    : null;
+  const menuSelection = selection;
 
   if (!snapshot) {
     return (
@@ -193,6 +197,14 @@ export function ElementalDuelsGame({
       <div className={`grid gap-4 ${showDebugStats && debugStats ? "xl:grid-cols-[1fr_19rem]" : ""}`}>
         <div ref={fieldRef} className="relative">
           <ElementalDuelsPhaser snapshot={snapshot} currentUserId={currentUserId} onSelect={setSelection} />
+          {countdownSeconds && (
+            <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center rounded-[1.5rem] bg-sky-50/20 backdrop-blur-[1px]">
+              <div className="rounded-[2rem] bg-white/92 px-8 py-7 text-center shadow-2xl shadow-slate-900/15 ring-1 ring-white/80">
+                <p className="text-xs font-black uppercase tracking-wide text-rose-400">Get ready</p>
+                <p className="mt-1 text-7xl font-black leading-none text-rose-400">{countdownSeconds}</p>
+              </div>
+            </div>
+          )}
           <ElementalOpponentPanel snapshot={snapshot} currentUserId={currentUserId} onSelectElement={selectSendElement} onSelectMonster={selectMonsterType} />
           <ElementalContextMenu
             snapshot={snapshot}

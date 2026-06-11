@@ -65,7 +65,7 @@ export function createElementalState(sessionId: string, roomId: string, players:
   if (map.variant === "dynamic-path") {
     map.alternatePaths = [JSON.parse(JSON.stringify(map.path)) as Point[], ...(map.alternatePaths || [])];
   }
-  const startedAt = Date.now();
+  const startedAt = Date.now() + ELEMENTAL_CONFIG.countdownLeadInMs;
   return {
     sessionId,
     roomId,
